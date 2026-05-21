@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
 import { Lock, User, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +30,9 @@ export const LoginView: React.FC = () => {
 
     try {
       const success = await login(username, password);
-      if (!success) {
+      if (success) {
+        navigate('/dashboard', { replace: true });
+      } else {
         setError('Credenciales incorrectas. Verifique el usuario y contraseña.');
       }
     } catch (err) {
