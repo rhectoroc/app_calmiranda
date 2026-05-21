@@ -95,11 +95,12 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 8. DATOS SEMILLA (SEED DATA)
--- Registra el usuario administrador por defecto si no existe ya en la tabla
+-- Registra o actualiza el usuario administrador por defecto
 INSERT INTO users (email, password_hash, nombre, rol)
-SELECT 'rhectoroc@gmail.com', '$2b$10$vNeEjCUQ0uZC5T.wulHhuuSyWEQCySueqOuTOl9e43lekPYdv57V2', 'Hector Ollarves', 'admin'
-WHERE NOT EXISTS (
-    SELECT 1 FROM users WHERE email = 'rhectoroc@gmail.com'
-);
+VALUES ('rhectoroc@gmail.com', '$2b$10$vNeEjCUQ0uZC5T.wulHhuuSyWEQCySueqOuTOl9e43lekPYdv57V2', 'Hector Ollarves', 'admin')
+ON CONFLICT (email) DO UPDATE 
+SET nombre = EXCLUDED.nombre,
+    password_hash = EXCLUDED.password_hash,
+    rol = EXCLUDED.rol;
 
 
