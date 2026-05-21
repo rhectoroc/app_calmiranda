@@ -34,13 +34,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
+    console.log("=== INICIO DE SESIÓN DEBUG ===");
+    console.log("Usuario ingresado:", username);
+    console.log("Contraseña ingresada:", password);
+
     // Simulación de retraso de red para dar feedback de carga visual en el formulario
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     const u = username.toLowerCase().trim();
 
     // Cuenta de administrador principal (Hector Ollarves)
-    if (u === 'rhectoroc@gmail.com' && password === '987654321') {
+    const expectedUser = 'rhectoroc@gmail.com';
+    const expectedPass = '987654321';
+
+    console.log("Credenciales esperadas en el JS activo:", {
+      username: expectedUser,
+      password: expectedPass
+    });
+
+    if (u === expectedUser && password === expectedPass) {
+      console.log("✅ ¡Credenciales coinciden!");
       const adminUser: User = {
         name: 'Hector Ollarves',
         username: 'rhectoroc@gmail.com',
@@ -51,6 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     }
 
+    console.log("❌ ¡Credenciales NO coinciden!");
     return false;
   };
 
