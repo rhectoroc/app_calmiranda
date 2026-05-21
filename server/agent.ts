@@ -16,7 +16,7 @@ import {
 
 // Inicializar OpenAI configurado para DeepSeek
 const openai = new OpenAI({
-  apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
+  apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || 'no-key-provided',
   baseURL: 'https://api.deepseek.com',
 });
 

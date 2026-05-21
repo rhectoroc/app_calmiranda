@@ -4,7 +4,7 @@ import { saveClientChatMessage, saveBossChatMessage, getSetting, saveSetting, qu
 import { getSheetsClient, getGmailClient, getCalendarClient } from './googleAuth.js';
 // Inicializar OpenAI configurado para DeepSeek
 const openai = new OpenAI({
-    apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
+    apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || 'no-key-provided',
     baseURL: 'https://api.deepseek.com',
 });
 // Cache en memoria con TTL para de-duplicación de mensajes

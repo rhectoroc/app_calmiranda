@@ -6,7 +6,7 @@ import { sendWhatsAppMessage } from './agent.js';
 import { OpenAI } from 'openai';
 // Configurar OpenAI configurado para DeepSeek
 const openai = new OpenAI({
-    apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
+    apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || 'no-key-provided',
     baseURL: 'https://api.deepseek.com',
 });
 const GOOGLE_ACCOUNT_EMAIL = 'inversionesmiranda1311@gmail.com';
