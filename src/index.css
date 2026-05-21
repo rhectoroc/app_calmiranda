@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  
+  --color-cal-emerald: #059669;
+  --color-cal-emerald-dark: #047857;
+  --color-cal-emerald-light: #10b981;
+  --color-cal-charcoal: #090d16;
+  --color-cal-dark-gray: #111827;
+  --color-cal-gray: #1f2937;
+  --color-cal-light-gray: #374151;
+  --color-cal-bone: #e2e8f0;
+  --color-cal-gold: #f59e0b;
+  --color-cal-gold-dark: #d97706;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color-scheme: dark;
+  background-color: var(--color-cal-charcoal);
+  color: #f3f4f6;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-cal-charcoal);
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cal-charcoal);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-cal-light-gray);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cal-emerald);
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-emerald {
+  background: rgba(5, 150, 105, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+/* Glow effects */
+.glow-emerald {
+  box-shadow: 0 0 25px rgba(5, 150, 105, 0.15);
+}
+
+.glow-text-emerald {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+/* Grid backgrounds */
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Pulsing dot animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s infinite;
+}
