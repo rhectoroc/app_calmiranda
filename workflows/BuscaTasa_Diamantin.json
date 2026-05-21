@@ -1,0 +1,172 @@
+{
+  "name": "BuscaTasa_Diamantin",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const html = items[0].json.data;\n\nif (!html) {\n    throw new Error(\"No se recibió contenido HTML del nodo anterior.\");\n}\n\n// 1. Extraer la TASA\nconst regexDolar = /<div id=\"dolar\"[\\s\\S]*?<strong>\\s*([\\d.,]+)\\s*<\\/strong>/i;\nconst matchTasa = html.match(regexDolar);\nif (!matchTasa || !matchTasa[1]) {\n    throw new Error(\"No se pudo encontrar la tasa del dólar en el HTML.\");\n}\nconst tasaString = matchTasa[1].replace(/\\./g, '').replace(',', '.');\nconst tasaNumerica = parseFloat(tasaString);\n\n// 2. Extraer la FECHA DE VIGENCIA (Sigue extrayendo el formato ISO completo)\nconst regexFecha = /<div id=\"dolar\"[\\s\\S]*?Fecha Valor:[\\s\\S]*?content=\"([^\"]+)\"/i;\nconst matchFecha = html.match(regexFecha);\nif (!matchFecha || !matchFecha[1]) {\n    throw new Error(\"No se pudo encontrar la fecha de vigencia en el HTML. La estructura de la página del BCV probablemente ha cambiado.\");\n}\nconst fechaVigenciaISOCompleta = matchFecha[1];\n\n\n// --- MODIFICACIÓN CLAVE: Formatear la fecha ---\n// 1. Separar la fecha de la hora usando 'T'\nconst soloFecha = fechaVigenciaISOCompleta.split('T')[0]; // Esto resulta en '2025-10-29'\n\n// 2. Dividir 'YYYY-MM-DD'\nconst partesFecha = soloFecha.split('-');\nlet fechaFormateada = '';\n\nif (partesFecha.length === 3) {\n    // partesFecha[0] = YYYY, partesFecha[1] = MM, partesFecha[2] = DD\n    // El formato deseado es DD/MM/YYYY\n    fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;\n} else {\n    // En caso de que el formato cambie inesperadamente\n    console.warn(\"La fecha extraída no tiene el formato esperado (YYYY-MM-DD).\");\n    fechaFormateada = soloFecha; \n}\n// ------------------------------------------------\n\n// 3. Devolver ambos resultados para el siguiente nodo\nreturn [{\n    json: {\n        tasa: tasaNumerica,\n        // Usamos la variable formateada\n        fechaVigencia: fechaFormateada \n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3df74f61-57ae-453a-841f-1958c8c67545",
+      "name": "Procesa"
+    },
+    {
+      "parameters": {
+        "url": "https://www.bcv.org.ve",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c1295339-f8cb-4eb5-bee0-d0d8917fad06",
+      "name": "BuscaTasa"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9b6f0550-6fd4-45d9-ad1e-4162e7469606",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_O58lqnRD0lk5vNJp3NLFOkv_jwmtbo-aQgGMy3rHkI",
+          "mode": "list",
+          "cachedResultName": "Pedidos",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_O58lqnRD0lk5vNJp3NLFOkv_jwmtbo-aQgGMy3rHkI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 453193223,
+          "mode": "list",
+          "cachedResultName": "Tasa",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_O58lqnRD0lk5vNJp3NLFOkv_jwmtbo-aQgGMy3rHkI/edit#gid=453193223"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "FECHA": "={{ $json.fechaVigencia }}",
+            "TASA": "={{ $json.tasa }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "FECHA",
+              "displayName": "FECHA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TASA",
+              "displayName": "TASA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e6c9ac8e-9c1f-45f0-9c6a-99123aa9e7e3",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IdosSkJqpyWWr720",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Procesa": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BuscaTasa": {
+      "main": [
+        [
+          {
+            "node": "Procesa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "BuscaTasa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Caracas",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e8b18c42-ae3c-443f-b924-a84ea80dd1a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e403115a59e6aebd7aee6300d9b85e162b5fcfab72326b2df0b3bbcbc4d8babf"
+  },
+  "id": "4opAmgod0TPYzMDA",
+  "tags": []
+}

@@ -1,0 +1,233 @@
+{
+  "name": "Diamantin - Reporte Financiero Diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                3
+              ],
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "ed15fb4d-5c1d-4a5b-8b13-ee89a13bc535",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM",
+          "mode": "list",
+          "cachedResultName": "CUENTAS_TRANSITO",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 629680121,
+          "mode": "list",
+          "cachedResultName": "CUENTAS CAL MIRANDA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM/edit#gid=629680121"
+        },
+        "options": {}
+      },
+      "id": "03d5c4e1-6e9a-432e-a660-7a65d5861b32",
+      "name": "Leer Cuentas Transito",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        176,
+        16
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IdosSkJqpyWWr720",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convertimos las filas de Google Sheets a un solo texto JSON para que DeepSeek lo pueda leer fácilmente.\nconst data = items.map(i => i.json);\nreturn [{ json: { text_data: JSON.stringify(data) } }];"
+      },
+      "id": "47229fa0-7d51-4fce-bb77-b014fd42e594",
+      "name": "Formatear Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Por favor, analiza estos datos crudos del sistema contable y genera el informe:\n\n{{ $json.text_data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Eres DIAMANTIN, Asistente Ejecutivo de Inversiones Miranda.\nTu tarea es leer los datos de \"CUENTAS EN TRÁNSITO\" a primera hora de la mañana y darle al Jefe un reporte de acción rápida.\nEl objetivo principal es mostrarle qué se debe cobrar y pagar HOY para que él pueda delegarlo inmediatamente al personal administrativo.\n\nREGLAS ESTRICTAS:\n1. Extrae los totales exactos en USD.\n2. Identifica las prioridades: busca las cuentas que estén por vencer hoy, mañana, o que ya estén vencidas.\n3. Sé extremadamente breve. Usa EXACTAMENTE la plantilla de abajo.\n\nPLANTILLA EXACTA OBLIGATORIA:\n\n☀️ INFORMATIVO: Jefe, buen día. Plan de acción de Cuentas en Tránsito para delegar hoy.\n\n🎯 PRIORIDAD DE COBRO: \n• [Nombre del cliente 1] - [Monto USD] (Vence: [Fecha o \"Vencido\"])\n• [Nombre del cliente 2] - [Monto USD] (Vence: [Fecha o \"Vencido\"])\n*(Si no hay urgencias, escribe: \"Sin cobros críticos para hoy\")*\n\n💸 PAGOS PENDIENTES:\n• [Nombre del proveedor 1] - [Monto USD] (Vence: [Fecha o \"Vencido\"])\n*(Si no hay urgencias, escribe: \"Sin pagos críticos para hoy\")*\n\n📊 BALANCE GLOBAL:\n• Por Cobrar (CXC): [Total USD]\n• Por Pagar (CXP): [Total USD]\n• Arena/Pego (Cobrar): [Total USD]\n\n¿Desea que pase estas directrices al equipo administrativo? Vamos Positivo."
+            }
+          ]
+        }
+      },
+      "id": "5515c5b0-fa60-40cf-91d6-bd3b78d56c5c",
+      "name": "Redactar Reporte",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "deepseek-chat"
+        },
+        "options": {}
+      },
+      "id": "9e53542c-c043-4913-b5a4-bfde84120c99",
+      "name": "Deepseek Chat Boss",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "QRUVzo4kkg26qkEp",
+          "name": "DeepSeek_Rhectoroc"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        80
+      ],
+      "id": "2a0425fc-38ba-45a8-9dee-29c18f033ffc",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "CalMiranda",
+        "remoteJid": "=584143078681@s.whatsapp.net",
+        "messageText": "={{ $json.text }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        752,
+        16
+      ],
+      "id": "54339477-794e-4721-8216-1b6a46ad56b6",
+      "name": "Send Client1",
+      "credentials": {
+        "evolutionApi": {
+          "id": "XLVPhkQ6j0tCWivw",
+          "name": "Evolution CalMiranda"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Leer Cuentas Transito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Cuentas Transito": {
+      "main": [
+        [
+          {
+            "node": "Formatear Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Datos": {
+      "main": [
+        [
+          {
+            "node": "Redactar Reporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redactar Reporte": {
+      "main": [
+        [
+          {
+            "node": "Send Client1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deepseek Chat Boss": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Redactar Reporte",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Leer Cuentas Transito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "60c2838b-c390-4f24-a628-403ee51a5126",
+  "meta": {
+    "instanceId": "e403115a59e6aebd7aee6300d9b85e162b5fcfab72326b2df0b3bbcbc4d8babf"
+  },
+  "id": "U4NcdnCOjHDAaPcQ",
+  "tags": []
+}
