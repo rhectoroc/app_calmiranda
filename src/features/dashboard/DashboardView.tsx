@@ -110,7 +110,7 @@ export const DashboardView: React.FC = () => {
             <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
               Eficiencia Hornos
             </span>
-            <span className="p-2.5 bg-blue-500/10 text-blue-400 rounded-2xl border border-blue-500/20">
+            <span className="p-2.5 bg-cal-sand/15 text-cal-sand rounded-2xl border border-cal-sand/30">
               <CheckCircle size={18} />
             </span>
           </div>
@@ -131,7 +131,7 @@ export const DashboardView: React.FC = () => {
             <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
               Inventario Total
             </span>
-            <span className="p-2.5 bg-purple-500/10 text-purple-400 rounded-2xl border border-purple-500/20">
+            <span className="p-2.5 bg-cal-earth/15 text-cal-earth rounded-2xl border border-cal-earth/30">
               <Package size={18} />
             </span>
           </div>
@@ -198,8 +198,8 @@ export const DashboardView: React.FC = () => {
                     Ingresos ($)
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 text-blue-400">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  <span className="flex items-center gap-1.5 text-cal-earth">
+                    <span className="w-2 h-2 rounded-full bg-cal-earth" />
                     Volumen (Tn)
                   </span>
                 )}
@@ -254,21 +254,21 @@ export const DashboardView: React.FC = () => {
                 {/* Gradients definition */}
                 <defs>
                   <linearGradient id="salesGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#d97706" />
+                    <stop offset="0%" stopColor="var(--color-cal-emerald)" />
+                    <stop offset="100%" stopColor="var(--color-cal-earth)" />
                   </linearGradient>
                   <linearGradient id="salesGradientBg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                    <stop offset="0%" stopColor="var(--color-cal-emerald)" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="var(--color-cal-emerald)" stopOpacity="0" />
                   </linearGradient>
                   
                   <linearGradient id="volumeGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#06b6d4" />
+                    <stop offset="0%" stopColor="var(--color-cal-earth)" />
+                    <stop offset="100%" stopColor="var(--color-cal-sand)" />
                   </linearGradient>
                   <linearGradient id="volumeGradientBg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                    <stop offset="0%" stopColor="var(--color-cal-earth)" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="var(--color-cal-earth)" stopOpacity="0" />
                   </linearGradient>
                 </defs>
 
@@ -279,7 +279,7 @@ export const DashboardView: React.FC = () => {
                       cx={p.x}
                       cy={p.y}
                       r="4"
-                      className={`${isAdmin ? 'fill-cal-emerald-light' : 'fill-blue-400'} stroke-cal-charcoal stroke-2 hover:r-6 transition-all`}
+                      className={`${isAdmin ? 'fill-cal-emerald' : 'fill-cal-earth'} stroke-cal-charcoal stroke-2 hover:r-6 transition-all`}
                     />
                     <text
                       x={p.x}

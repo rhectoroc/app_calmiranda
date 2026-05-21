@@ -55,15 +55,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <div className="min-h-screen bg-cal-charcoal text-white flex flex-col md:flex-row relative">
+    <div className="min-h-screen bg-cal-dark text-white flex flex-col md:flex-row relative">
       
       {/* Mobile Header */}
       <header className="md:hidden glass border-b border-white/5 px-6 py-4 flex justify-between items-center z-30 shrink-0">
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-lg bg-cal-emerald flex items-center justify-center font-display font-bold text-white text-lg">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-cal-emerald to-cal-earth flex items-center justify-center font-display font-bold text-white text-lg shadow-sm">
             C
           </span>
-          <span className="font-display font-semibold text-lg tracking-wider">
+          <span className="font-display font-bold text-lg tracking-wider text-gradient">
             CalMiranda
           </span>
         </div>
@@ -85,11 +85,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Logo Section */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-cal-emerald flex items-center justify-center font-display font-extrabold text-white text-xl shadow-lg shadow-cal-emerald/20">
+              <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-cal-emerald to-cal-earth flex items-center justify-center font-display font-extrabold text-white text-xl shadow-md shadow-cal-emerald/15">
                 C
               </span>
               <div>
-                <span className="font-display font-bold text-lg tracking-wide block leading-tight">
+                <span className="font-display font-extrabold text-lg tracking-wide block leading-tight text-gradient">
                   CalMiranda
                 </span>
                 <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
@@ -133,7 +133,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 className={({ isActive }) => `
                   flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-300
                   ${isActive 
-                    ? 'bg-cal-emerald text-white shadow-lg shadow-cal-emerald/10 font-semibold' 
+                    ? 'bg-gradient-to-r from-cal-emerald/90 to-cal-emerald/75 text-white shadow-md shadow-cal-emerald/15 font-semibold' 
                     : 'text-gray-400 hover:text-white hover:bg-white/5'}
                 `}
               >
@@ -159,7 +159,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   inline-block text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full mt-1 border
                   ${user.role === 'admin' 
                     ? 'bg-cal-emerald/15 text-cal-emerald-light border-cal-emerald/30' 
-                    : 'bg-cal-gold/15 text-cal-gold-light border-cal-gold/30'}
+                    : 'bg-cal-sand/15 text-cal-sand border-cal-sand/30'}
                 `}>
                   {user.role === 'admin' ? 'Administrador' : 'Empleado'}
                 </span>

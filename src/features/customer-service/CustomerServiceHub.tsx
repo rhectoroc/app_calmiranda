@@ -178,7 +178,7 @@ export const CustomerServiceHub: React.FC = () => {
                   </span>
                 )}
                 {chat.status === 'agent_active' && (
-                  <span className="flex items-center gap-1 text-[9px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">
+                  <span className="flex items-center gap-1 text-[9px] font-bold text-cal-earth bg-cal-earth/15 px-2 py-0.5 rounded-full border border-cal-earth/30">
                     <User size={8} />
                     Humano
                   </span>

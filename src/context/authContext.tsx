@@ -39,27 +39,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const u = username.toLowerCase().trim();
 
-    // Cuenta de administrador
-    if (u === 'admin' && password === 'admin123') {
+    // Cuenta de administrador principal (Hector Ollarves)
+    if (u === 'rhectoroc@gmail.com' && password === '987654321') {
       const adminUser: User = {
-        name: 'Alejandro Miranda',
-        username: 'admin',
+        name: 'Hector Ollarves',
+        username: 'rhectoroc@gmail.com',
         role: 'admin',
       };
       setUser(adminUser);
       localStorage.setItem('calmiranda_session', JSON.stringify(adminUser));
-      return true;
-    }
-
-    // Cuenta de empleado
-    if ((u === 'empleado' || u === 'roberto') && password === 'cal123') {
-      const employeeUser: User = {
-        name: 'Roberto Dávila',
-        username: u,
-        role: 'employee',
-      };
-      setUser(employeeUser);
-      localStorage.setItem('calmiranda_session', JSON.stringify(employeeUser));
       return true;
     }
 
@@ -73,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cal-charcoal flex items-center justify-center">
+      <div className="min-h-screen bg-cal-dark flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-cal-emerald border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
