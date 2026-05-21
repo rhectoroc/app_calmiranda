@@ -125,21 +125,6 @@ export const LoginView: React.FC = () => {
           </button>
         </form>
       </div>
-
-      {/* Debug Panel */}
-      <div className="mt-6 p-4 glass rounded-2xl border border-white/5 text-xs text-gray-400 max-w-md w-full relative z-10">
-        <p className="font-bold text-cal-emerald mb-1 flex items-center gap-1">
-          <span>🛠️</span> Panel de Depuración (Frontend):
-        </p>
-        <div className="space-y-1 mt-2">
-          <p><span className="text-gray-500">Usuario esperado:</span> <code className="bg-white/5 px-1.5 py-0.5 rounded text-white font-mono">rhectoroc@gmail.com</code></p>
-          <p><span className="text-gray-500">Contraseña esperada:</span> <code className="bg-white/5 px-1.5 py-0.5 rounded text-white font-mono">987654321</code></p>
-        </div>
-        <p className="mt-3 text-[10px] text-gray-500 leading-relaxed border-t border-white/5 pt-2">
-          Si ves este panel, significa que estás ejecutando la versión actualizada del código.
-          Si no lo ves, tu navegador tiene en caché una versión antigua o no se ha reconstruido/desplegado en Easypanel.
-        </p>
-      </div>
     </div>
   );
 };
