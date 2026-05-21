@@ -94,3 +94,12 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 8. DATOS SEMILLA (SEED DATA)
+-- Registra el usuario administrador por defecto si no existe ya en la tabla
+INSERT INTO users (email, password_hash, nombre, rol)
+SELECT 'rhectoroc@gmail.com', '$2b$10$vNeEjCUQ0uZC5T.wulHhuuSyWEQCySueqOuTOl9e43lekPYdv57V2', 'Hector Ollarves', 'admin'
+WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE email = 'rhectoroc@gmail.com'
+);
+
+
