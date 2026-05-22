@@ -448,7 +448,31 @@ export async function handleWebhookMessage(payload) {
     }
     // 4. Clasificar emisor (Jefe o Cliente)
     const isBoss = BOSS_NUMBERS.includes(senderJid) || BOSS_NUMBERS.includes(cleanNumber);
-    console.log(`🤖 Procesando mensaje de ${pushName} (${cleanNumber}) - Rol: ${isBoss ? 'Jefe' : 'Cliente'}`);
+    // Buscar si el cliente existe en la base de datos de CalMiranda
+    let clientExists = false;
+    let clientName = pushName || 'Cliente';
+    let clientEstatus = 'Activo';
+    try {
+        const phonePattern = cleanNumber.length >= 10 ? `%${cleanNumber.slice(-10)}` : `%${cleanNumber}`;
+        const clientQuery = `
+      SELECT nombre, estatus FROM clientes 
+      WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+      LIMIT 1;
+    `;
+        const dbClient = await query(clientQuery, [phonePattern]);
+        if (dbClient.length > 0) {
+            clientExists = true;
+            clientName = dbClient[0].nombre;
+            clientEstatus = dbClient[0].estatus || 'Activo';
+        }
+    }
+    catch (err) {
+        console.error('⚠️ Error al buscar cliente en base de datos:', err);
+    }
+    console.log(`🤖 Procesando mensaje de ${clientName} (WhatsApp PushName: ${pushName}) (${cleanNumber}) - Rol: ${isBoss ? 'Jefe' : 'Cliente'} - Estatus: ${clientEstatus}`);
     // 5. Cargar historial de chat de la base de datos
     let history = [];
     try {
@@ -471,7 +495,13 @@ export async function handleWebhookMessage(payload) {
         await saveBossChatMessage(cleanNumber, 'user', messageText);
     }
     else {
-        await saveClientChatMessage(cleanNumber, 'user', messageText);
+        await saveClientChatMessage(cleanNumber, 'user', messageText, pushName);
+    }
+    // Si el contacto es un empleado, transportista o se configuró para ignorar el bot, se omite respuesta de IA
+    const ignoreStatuses = ['Empleado', 'Transportista', 'Ignorar Bot'];
+    if (ignoreStatuses.includes(clientEstatus)) {
+        console.log(`🔕 Contacto etiquetado como "${clientEstatus}" (${clientName} - ${cleanNumber}). Mensaje guardado en BD, pero se omite respuesta del bot.`);
+        return;
     }
     // Verificar si el bot está deshabilitado globalmente
     const globalBotDisabled = await getSetting('global_bot_disabled', false);
@@ -628,28 +658,7 @@ Solo estar disponible para pedidos por encima de las 500 unidades`;
     const defaultBossPrompt = `Eres DIAMANTÍN, el Asistente Ejecutivo del Jefe de Inversiones Miranda. Resuelves requerimientos de forma directa, eficiente y breve usando herramientas. Tu grito es "Vamos positivo".`;
     const extraRulesBot = await getSetting('extra_rules_bot', '');
     const extraRulesAssistant = await getSetting('extra_rules_assistant', '');
-    // Buscar si el cliente existe en la base de datos de CalMiranda
-    let clientExists = false;
-    let clientName = pushName || 'Cliente';
-    try {
-        const phonePattern = cleanNumber.length >= 10 ? `%${cleanNumber.slice(-10)}` : `%${cleanNumber}`;
-        const clientQuery = `
-      SELECT nombre FROM clientes 
-      WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
-         OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
-         OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
-         OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
-      LIMIT 1;
-    `;
-        const dbClient = await query(clientQuery, [phonePattern]);
-        if (dbClient.length > 0) {
-            clientExists = true;
-            clientName = dbClient[0].nombre;
-        }
-    }
-    catch (err) {
-        console.error('⚠️ Error al buscar cliente en base de datos:', err);
-    }
+    // Ya se buscó y definió clientExists y clientName al inicio del manejador de webhook
     let systemMessage = isBoss ? defaultBossPrompt : defaultBotPrompt;
     if (isBoss) {
         if (extraRulesAssistant && extraRulesAssistant.trim() !== '') {

@@ -78,12 +78,12 @@ export async function saveSetting(key, value) {
 // ----------------------------------------------------
 // MÉTODOS PARA HISTORIAL DE CHATS
 // ----------------------------------------------------
-export async function saveClientChatMessage(sessionId, sender, text) {
+export async function saveClientChatMessage(sessionId, sender, text, pushName) {
     const sql = `
-    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
-    VALUES ($1, $2, $3, 'client', NOW());
+    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at, push_name)
+    VALUES ($1, $2, $3, 'client', NOW(), $4);
   `;
-    await query(sql, [sessionId, sender, text]);
+    await query(sql, [sessionId, sender, text, pushName || null]);
 }
 export async function saveBossChatMessage(sessionId, sender, text) {
     const sql = `

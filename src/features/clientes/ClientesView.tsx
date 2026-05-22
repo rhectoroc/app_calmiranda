@@ -295,6 +295,9 @@ export const ClientesView: React.FC = () => {
               <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
               <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
               <option value="Prospecto" className="bg-[#1e2528] text-white">Prospecto</option>
+              <option value="Empleado" className="bg-[#1e2528] text-white">Empleado</option>
+              <option value="Transportista" className="bg-[#1e2528] text-white">Transportista</option>
+              <option value="Ignorar Bot" className="bg-[#1e2528] text-white">Ignorar Bot</option>
             </select>
             <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
@@ -363,6 +366,12 @@ export const ClientesView: React.FC = () => {
                           ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
                           : cliente.estatus === 'Inactivo'
                           ? 'bg-white/5 text-gray-400 border-white/10'
+                          : cliente.estatus === 'Empleado'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          : cliente.estatus === 'Transportista'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                          : cliente.estatus === 'Ignorar Bot'
+                          ? 'bg-red-500/10 text-red-400 border-red-500/20'
                           : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                       }`}>
                         {cliente.estatus}
@@ -434,6 +443,12 @@ export const ClientesView: React.FC = () => {
                     ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
                     : selectedCliente.estatus === 'Inactivo'
                     ? 'bg-white/5 text-gray-400 border-white/10'
+                    : selectedCliente.estatus === 'Empleado'
+                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                    : selectedCliente.estatus === 'Transportista'
+                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                    : selectedCliente.estatus === 'Ignorar Bot'
+                    ? 'bg-red-500/10 text-red-400 border-red-500/20'
                     : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                 }`}>
                   {selectedCliente.estatus}
@@ -760,6 +775,9 @@ export const ClientesView: React.FC = () => {
                         <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
                         <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
                         <option value="Prospecto" className="bg-[#1e2528] text-white">Prospecto</option>
+                        <option value="Empleado" className="bg-[#1e2528] text-white">Empleado</option>
+                        <option value="Transportista" className="bg-[#1e2528] text-white">Transportista</option>
+                        <option value="Ignorar Bot" className="bg-[#1e2528] text-white">Ignorar Bot</option>
                       </select>
                       <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>

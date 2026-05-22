@@ -96,12 +96,12 @@ export async function saveSetting(key: string, value: any): Promise<void> {
 // ----------------------------------------------------
 // MÉTODOS PARA HISTORIAL DE CHATS
 // ----------------------------------------------------
-export async function saveClientChatMessage(sessionId: string, sender: 'user' | 'bot' | 'agent', text: string): Promise<void> {
+export async function saveClientChatMessage(sessionId: string, sender: 'user' | 'bot' | 'agent', text: string, pushName?: string): Promise<void> {
   const sql = `
-    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
-    VALUES ($1, $2, $3, 'client', NOW());
+    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at, push_name)
+    VALUES ($1, $2, $3, 'client', NOW(), $4);
   `;
-  await query(sql, [sessionId, sender, text]);
+  await query(sql, [sessionId, sender, text, pushName || null]);
 }
 
 export async function saveBossChatMessage(sessionId: string, sender: 'user' | 'bot' | 'agent', text: string): Promise<void> {

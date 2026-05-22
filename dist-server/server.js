@@ -347,7 +347,24 @@ app.get('/api/chats', async (req, res) => {
           LIMIT 1;
         `;
                 const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
-                customerName = dbClient.length > 0 ? dbClient[0].nombre : `Cliente (+${cleanPhone})`;
+                if (dbClient.length > 0) {
+                    customerName = dbClient[0].nombre;
+                }
+                else {
+                    const nameQuery = `
+            SELECT push_name FROM chat_messages 
+            WHERE session_id = $1 AND push_name IS NOT NULL 
+            ORDER BY id DESC 
+            LIMIT 1;
+          `;
+                    const nameRows = await query(nameQuery, [sessionId]);
+                    if (nameRows.length > 0 && nameRows[0].push_name) {
+                        customerName = `${nameRows[0].push_name} (+${cleanPhone})`;
+                    }
+                    else {
+                        customerName = `Cliente (+${cleanPhone})`;
+                    }
+                }
             }
             const botStatus = await getSetting(`bot_status_${sessionId}`, 'bot_active');
             chats.push({

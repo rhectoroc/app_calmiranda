@@ -109,5 +109,6 @@ VALUES
 ON CONFLICT (key) DO UPDATE
 SET value = EXCLUDED.value;
 
-
-
+-- 9. MIGRACIONES DE ACTUALIZACIÓN
+-- Asegurar que la columna push_name existe en chat_messages para guardar el nombre de perfil de WhatsApp
+ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS push_name VARCHAR;
