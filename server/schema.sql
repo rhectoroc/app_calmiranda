@@ -51,40 +51,8 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_chat_type ON chat_messages(chat_type);
 
--- Migración segura de datos heredados desde las tablas antiguas (chat_boss y n8n_chat_histories)
-DO $$
-BEGIN
-    -- Solo realizar si la tabla unificada existe y está vacía
-    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'chat_messages') THEN
-        IF (SELECT COUNT(*) FROM chat_messages) = 0 THEN
-            -- 1. Migración segura de chat_boss
-            IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'chat_boss') THEN
-                INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
-                SELECT 
-                    session_id, 
-                    COALESCE(message->>'sender', 'user'), 
-                    COALESCE(message->>'text', ''), 
-                    'boss', 
-                    created_at
-                FROM chat_boss;
-                RAISE NOTICE 'Migrados datos de chat_boss a la tabla unificada chat_messages';
-            END IF;
-            
-            -- 2. Migración segura de n8n_chat_histories
-            IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'n8n_chat_histories') THEN
-                INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
-                SELECT 
-                    session_id, 
-                    COALESCE(message->>'sender', 'user'), 
-                    COALESCE(message->>'text', ''), 
-                    'client', 
-                    COALESCE((message->>'timestamp')::timestamp with time zone, NOW())
-                FROM n8n_chat_histories;
-                RAISE NOTICE 'Migrados datos de n8n_chat_histories a la tabla unificada chat_messages';
-            END IF;
-        END IF;
-    END IF;
-END $$;
+-- Migración segura de datos heredados desde las tablas antiguas (Removida por el usuario)
+
 
 -- ===========================================================================
 -- TABLAS ADICIONALES PARA LA INTEGRACIÓN DE LA APP WEB Y BACKEND
