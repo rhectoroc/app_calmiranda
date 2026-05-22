@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Database, ShieldAlert, Bot, Settings, Save, RefreshCw, CheckCircle } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -29,16 +29,51 @@ export const SettingsView: React.FC = () => {
   const [dbStatus, setDbStatus] = useState<'connected' | 'idle'>('connected');
   const [evoStatus, setEvoStatus] = useState<'connected' | 'idle'>('connected');
 
-  const handleSave = (e: React.FormEvent) => {
+  // Cargar configuraciones reales del backend al montar
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.prompts) {
+            if (data.prompts.bot) setBotPrompt(data.prompts.bot);
+            if (data.prompts.assistant) setAssistantPrompt(data.prompts.assistant);
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando configuraciones del servidor:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-    // En producción esto guardaría en la base de datos o archivo .env
-    localStorage.setItem('calmiranda_settings', JSON.stringify({
-      db: { host: dbHost, port: dbPort, name: dbName, user: dbUser },
-      evo: { url: evoUrl, instance: evoInstance, token: evoToken },
-      prompts: { bot: botPrompt, assistant: assistantPrompt }
-    }));
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompts: {
+            bot: botPrompt,
+            assistant: assistantPrompt
+          }
+        })
+      });
+
+      if (res.ok) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        alert('Error al guardar las configuraciones en el servidor.');
+      }
+    } catch (error) {
+      console.error('Error al guardar configuraciones:', error);
+      alert('Error de red al guardar configuraciones.');
+    }
   };
 
   const testDbConnection = () => {
