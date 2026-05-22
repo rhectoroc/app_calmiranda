@@ -1,29 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Database, ShieldAlert, Bot, Settings, Save, RefreshCw, CheckCircle } from 'lucide-react';
+import { Bot, Save, CheckCircle, ShieldAlert } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  // Configuración de base de datos
-  const [dbHost, setDbHost] = useState('easypanel.calmiranda.local');
-  const [dbPort, setDbPort] = useState('5432');
-  const [dbName, setDbName] = useState('calmiranda_prod');
-  const [dbUser, setDbUser] = useState('cal_admin');
-  const [dbPass, setDbPass] = useState('••••••••••••');
-
-  // Configuración de Evolution API
-  const [evoUrl, setEvoUrl] = useState('https://evolution.calmiranda.com');
-  const [evoInstance, setEvoInstance] = useState('calmiranda-wa-01');
-  const [evoToken, setEvoToken] = useState('evo_tok_991823abce8812');
-
-  // Prompts de IA
+  // Prompts de IA (se mantiene assistantPrompt en estado interno para persistencia)
   const [botPrompt, setBotPrompt] = useState('');
   const [assistantPrompt, setAssistantPrompt] = useState('');
 
   // Estados visuales
-  const [testingDb, setTestingDb] = useState(false);
-  const [testingEvo, setTestingEvo] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [dbStatus, setDbStatus] = useState<'connected' | 'idle'>('connected');
-  const [evoStatus, setEvoStatus] = useState<'connected' | 'idle'>('connected');
 
   // Cargar configuraciones reales del backend al montar
   useEffect(() => {
@@ -33,8 +17,8 @@ export const SettingsView: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           if (data.prompts) {
-            if (data.prompts.bot) setBotPrompt(data.prompts.bot);
-            if (data.prompts.assistant) setAssistantPrompt(data.prompts.assistant);
+            if (data.prompts.bot !== undefined) setBotPrompt(data.prompts.bot);
+            if (data.prompts.assistant !== undefined) setAssistantPrompt(data.prompts.assistant);
           }
         }
       } catch (error) {
@@ -72,34 +56,16 @@ export const SettingsView: React.FC = () => {
     }
   };
 
-  const testDbConnection = () => {
-    setTestingDb(true);
-    setTimeout(() => {
-      setTestingDb(false);
-      setDbStatus('connected');
-    }, 1500);
-  };
-
-  const testEvoConnection = () => {
-    setTestingEvo(true);
-    setTimeout(() => {
-      setTestingEvo(false);
-      setEvoStatus('connected');
-    }, 1500);
-  };
-
   return (
-    <div className="flex flex-col gap-6 md:gap-8 animate-fade-in">
+    <div className="flex flex-col gap-6 md:gap-8 max-w-3xl mx-auto w-full animate-fade-in">
       {/* Title */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
-            Configuración del Sistema
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Administración de credenciales de base de datos, Evolution API y prompts de Inteligencia Artificial.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
+          Configuración del Asistente
+        </h1>
+        <p className="text-gray-400 text-sm">
+          Administración de instrucciones y reglas de negocio del bot de atención al cliente Diamantín.
+        </p>
       </div>
 
       {saveSuccess && (
@@ -109,205 +75,44 @@ export const SettingsView: React.FC = () => {
         </div>
       )}
 
-      {/* Main Settings Form */}
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Left Column: Connections */}
-        <div className="flex flex-col gap-6">
-          
-          {/* Database Section */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-5">
-            <div className="flex justify-between items-center border-b border-white/5 pb-4">
-              <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
-                <Database size={18} className="text-cal-emerald-light" />
-                Base de Datos PostgreSQL (Easypanel)
-              </h3>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                dbStatus === 'connected' 
-                  ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
-                  : 'bg-white/5 text-gray-500 border-white/5'
-              }`}>
-                {dbStatus === 'connected' ? 'Sincronizado' : 'Desconectado'}
-              </span>
-            </div>
+      {/* Main Settings Card */}
+      <form onSubmit={handleSave} className="glass rounded-3xl p-6 md:p-8 border border-white/5 flex flex-col gap-6">
+        <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+          <Bot size={22} className="text-cal-emerald-light" />
+          <h3 className="text-lg font-bold font-display text-white">
+            Reglas de Diamantín (Atención al Cliente)
+          </h3>
+        </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Host</label>
-                <input
-                  type="text"
-                  value={dbHost}
-                  onChange={(e) => setDbHost(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Puerto</label>
-                <input
-                  type="text"
-                  value={dbPort}
-                  onChange={(e) => setDbPort(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Nombre BD</label>
-                <input
-                  type="text"
-                  value={dbName}
-                  onChange={(e) => setDbName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Usuario</label>
-                <input
-                  type="text"
-                  value={dbUser}
-                  onChange={(e) => setDbUser(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Contraseña</label>
-                <input
-                  type="password"
-                  value={dbPass}
-                  onChange={(e) => setDbPass(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={testDbConnection}
-              disabled={testingDb}
-              className="mt-2 w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw size={14} className={testingDb ? 'animate-spin' : ''} />
-              <span>{testingDb ? 'Probando conexión...' : 'Probar Conexión'}</span>
-            </button>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">
+              Instrucciones y Reglas Extras (Tiempo Real)
+            </label>
+            <textarea
+              value={botPrompt}
+              onChange={(e) => setBotPrompt(e.target.value)}
+              placeholder="Ingresa reglas de negocio, ofertas de la semana o novedades (ej: 'No hay stock de cal en pasta de 7kg esta semana', 'Cerraremos temprano este sábado por inventario')."
+              rows={12}
+              className="w-full bg-white/5 border border-white/5 focus:border-cal-emerald/55 focus:bg-white/10 rounded-2xl p-4 text-sm text-gray-200 focus:outline-none transition-all leading-relaxed"
+            />
           </div>
 
-          {/* Evolution API Section */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-5">
-            <div className="flex justify-between items-center border-b border-white/5 pb-4">
-              <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
-                <Settings size={18} className="text-cal-emerald-light" />
-                Evolution API (Mensajería)
-              </h3>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                evoStatus === 'connected' 
-                  ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
-                  : 'bg-white/5 text-gray-500 border-white/5'
-              }`}>
-                {evoStatus === 'connected' ? 'Activo' : 'Desconectado'}
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs text-gray-400 font-semibold mb-2">Evolution URL</label>
-              <input
-                type="text"
-                value={evoUrl}
-                onChange={(e) => setEvoUrl(e.target.value)}
-                className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Nombre Instancia</label>
-                <input
-                  type="text"
-                  value={evoInstance}
-                  onChange={(e) => setEvoInstance(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">Global Token</label>
-                <input
-                  type="password"
-                  value={evoToken}
-                  onChange={(e) => setEvoToken(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-cal-emerald"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={testEvoConnection}
-              disabled={testingEvo}
-              className="mt-2 w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw size={14} className={testingEvo ? 'animate-spin' : ''} />
-              <span>{testingEvo ? 'Verificando Instancia...' : 'Probar Evolution API'}</span>
-            </button>
+          <div className="p-4 rounded-2xl bg-cal-emerald/5 border border-cal-emerald/15 flex gap-3 text-xs text-gray-400 leading-normal">
+            <ShieldAlert size={18} className="text-cal-emerald-light shrink-0 mt-0.5" />
+            <span>
+              La personalidad básica, el flujo principal y el catálogo base de Diamantín se encuentran protegidos en el servidor. Usa este espacio para agregar indicaciones especiales o condiciones dinámicas del negocio.
+            </span>
           </div>
         </div>
 
-        {/* Right Column: AI Prompts */}
-        <div className="flex flex-col gap-6">
-          
-          {/* Prompts Section */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-5 flex-1">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
-              <Bot size={18} className="text-cal-emerald-light" />
-              <h3 className="text-base font-bold font-display text-white">
-                Personalización de Asistentes IA
-              </h3>
-            </div>
-
-            <div className="flex flex-col gap-4 flex-1">
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">
-                  Instrucciones y Reglas Extras: Diamantín (Atención al Cliente)
-                </label>
-                <textarea
-                  value={botPrompt}
-                  onChange={(e) => setBotPrompt(e.target.value)}
-                  placeholder="Ingresa reglas extras o notas temporales (ej: 'No hay stock de cal en pasta de 7kg esta semana', 'Cerraremos temprano este sábado por inventario')."
-                  rows={5}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-gray-300 focus:outline-none focus:border-cal-emerald resize-none leading-relaxed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-400 font-semibold mb-2">
-                  Instrucciones y Reglas Extras: Asistente Corporativo (Uso Interno)
-                </label>
-                <textarea
-                  value={assistantPrompt}
-                  onChange={(e) => setAssistantPrompt(e.target.value)}
-                  placeholder="Ingresa reglas adicionales para el análisis interno del asistente corporativo..."
-                  rows={5}
-                  className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-gray-300 focus:outline-none focus:border-cal-emerald resize-none leading-relaxed"
-                />
-              </div>
-
-              <div className="p-4 rounded-2xl bg-cal-emerald/5 border border-cal-emerald/15 flex gap-3 text-xs text-gray-400 leading-normal">
-                <ShieldAlert size={16} className="text-cal-emerald-light shrink-0 mt-0.5" />
-                <span>
-                  La personalidad, identidad base y conocimientos estáticos de los agentes están integrados de forma segura en el código del servidor. Utiliza este panel para añadir reglas de negocio y notas operativas en tiempo real.
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-4 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cal-emerald/20 cursor-pointer"
-            >
-              <Save size={16} />
-              <span>Guardar Todos los Cambios</span>
-            </button>
-          </div>
-        </div>
+        <button
+          type="submit"
+          className="w-full py-4 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cal-emerald/20 cursor-pointer"
+        >
+          <Save size={16} />
+          <span>Guardar Cambios</span>
+        </button>
       </form>
     </div>
   );

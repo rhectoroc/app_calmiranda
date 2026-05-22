@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   MessageSquare, 
-  Bot, 
+  Users, 
   Settings, 
   LogOut, 
   Menu, 
@@ -39,9 +39,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       roles: ['admin', 'employee']
     },
     {
-      to: '/business-assistant',
-      label: 'Asistente IA',
-      icon: <Bot size={20} />,
+      to: '/clientes',
+      label: 'Clientes',
+      icon: <Users size={20} />,
       roles: ['admin', 'employee']
     },
     {

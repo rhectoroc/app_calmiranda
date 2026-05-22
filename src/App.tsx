@@ -5,7 +5,7 @@ import { Layout } from './components/Layout';
 import { LoginView } from './features/auth/LoginView';
 import { DashboardView } from './features/dashboard/DashboardView';
 import { CustomerServiceHub } from './features/customer-service/CustomerServiceHub';
-import { BusinessAssistantView } from './features/business-assistant/BusinessAssistantView';
+import { ClientesView } from './features/clientes/ClientesView';
 import { SettingsView } from './features/settings/SettingsView';
 
 // Componente para proteger rutas según autenticación general
@@ -58,10 +58,10 @@ function App() {
           />
           
           <Route 
-            path="/business-assistant" 
+            path="/clientes" 
             element={
               <ProtectedRoute>
-                <BusinessAssistantView />
+                <ClientesView />
               </ProtectedRoute>
             } 
           />

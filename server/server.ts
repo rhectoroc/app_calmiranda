@@ -138,6 +138,182 @@ app.post('/api/settings', async (req, res) => {
 });
 
 // ----------------------------------------------------
+// ENDPOINTS PARA CRUD DE CLIENTES (PAGINACIÓN, BÚSQUEDA Y CRUD)
+// ----------------------------------------------------
+
+// Listar clientes con paginación y búsqueda
+app.get('/api/clientes', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const search = (req.query.search as string) || '';
+    const status = (req.query.status as string) || 'Todos';
+    const offset = (page - 1) * limit;
+
+    let queryText = `SELECT * FROM clientes`;
+    let countQueryText = `SELECT COUNT(*) as total FROM clientes`;
+    const whereClauses: string[] = [];
+    const params: any[] = [];
+
+    if (search.trim() !== '') {
+      params.push(`%${search.trim()}%`);
+      whereClauses.push(`(nombre ILIKE $${params.length} 
+        OR RIF ILIKE $${params.length} 
+        OR telefono_1 ILIKE $${params.length} 
+        OR contacto_1 ILIKE $${params.length} 
+        OR zona ILIKE $${params.length})`);
+    }
+
+    if (status !== 'Todos') {
+      params.push(status);
+      whereClauses.push(`estatus = $${params.length}`);
+    }
+
+    if (whereClauses.length > 0) {
+      const whereStr = ` WHERE ` + whereClauses.join(' AND ');
+      queryText += whereStr;
+      countQueryText += whereStr;
+    }
+
+    // Ordenar por nombre alfabéticamente
+    queryText += ` ORDER BY nombre ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    
+    const countParams = [...params];
+    const queryParams = [...params, limit, offset];
+
+    const data = await query(queryText, queryParams);
+    const countData = await query(countQueryText, countParams);
+    const total = parseInt(countData[0]?.total || '0');
+
+    res.json({
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Obtener un cliente específico
+app.get('/api/clientes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const sql = `SELECT * FROM clientes WHERE id_cliente = $1;`;
+    const rows = await query(sql, [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado.' });
+    }
+    res.json(rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Crear un nuevo cliente
+app.post('/api/clientes', async (req, res) => {
+  try {
+    const fields = [
+      'zona', 'nombre', 'rif', 'direccion', 'ubicacion', 
+      'contacto_1', 'telefono_1', 'movil', 'telefono_2', 
+      'contacto_2', 'telefono_3', 'email', 'estatus', 
+      'vendedor', 'tiempo_promedio_pedido', 'historial_negociacion', 
+      'comentario', 'ultimo_precio', 'dias_credito', 
+      'ultima_llamada', 'proxima_llamada'
+    ];
+
+    const values = fields.map(field => {
+      let val = req.body[field];
+      if (val === undefined || val === '') {
+        if (field === 'dias_credito') return 0;
+        if (field === 'ultimo_precio') return null;
+        if (field === 'estatus') return 'Activo';
+        return null;
+      }
+      if (field === 'dias_credito') return parseInt(val) || 0;
+      if (field === 'ultimo_precio') return parseFloat(val) || null;
+      return val;
+    });
+
+    const columnsStr = fields.join(', ');
+    const placeholdersStr = fields.map((_, i) => `$${i + 1}`).join(', ');
+
+    const sql = `
+      INSERT INTO clientes (${columnsStr}, fecha_creacion, fecha_actualizacion)
+      VALUES (${placeholdersStr}, NOW(), NOW())
+      RETURNING *;
+    `;
+
+    const rows = await query(sql, values);
+    res.status(201).json(rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Actualizar un cliente existente
+app.put('/api/clientes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const fields = [
+      'zona', 'nombre', 'rif', 'direccion', 'ubicacion', 
+      'contacto_1', 'telefono_1', 'movil', 'telefono_2', 
+      'contacto_2', 'telefono_3', 'email', 'estatus', 
+      'vendedor', 'tiempo_promedio_pedido', 'historial_negociacion', 
+      'comentario', 'ultimo_precio', 'dias_credito', 
+      'ultima_llamada', 'proxima_llamada'
+    ];
+
+    const values = fields.map(field => {
+      let val = req.body[field];
+      if (val === undefined || val === '') {
+        if (field === 'dias_credito') return 0;
+        if (field === 'ultimo_precio') return null;
+        if (field === 'estatus') return 'Activo';
+        return null;
+      }
+      if (field === 'dias_credito') return parseInt(val) || 0;
+      if (field === 'ultimo_precio') return parseFloat(val) || null;
+      return val;
+    });
+
+    const setClauses = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
+
+    const sql = `
+      UPDATE clientes
+      SET ${setClauses}, fecha_actualizacion = NOW()
+      WHERE id_cliente = $${fields.length + 1}
+      RETURNING *;
+    `;
+
+    const rows = await query(sql, [...values, id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+    res.json(rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Eliminar un cliente
+app.delete('/api/clientes/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const sql = `DELETE FROM clientes WHERE id_cliente = $1 RETURNING *;`;
+    const rows = await query(sql, [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+    res.json({ status: 'ok', message: 'Cliente eliminado correctamente.', deleted: rows[0] });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ----------------------------------------------------
 // ENDPOINTS PARA CHATS EN TIEMPO REAL (INTEGRACIÓN FRONTEND)
 // ----------------------------------------------------
 
