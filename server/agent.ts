@@ -459,12 +459,44 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
     return;
   }
 
-  // Ignorar mensajes enviados por el propio bot (fromMe = true)
-  if (payload.data?.key?.fromMe === true || payload.conversation?.messages?.[0]?.fromMe === true) {
-    return;
+  // Obtener el número limpio (solo dígitos)
+  const cleanNumber = senderJid.split('@')[0].replace(/\D/g, '');
+
+  // Clasificar emisor (Jefe o Cliente)
+  const isBoss = BOSS_NUMBERS.includes(senderJid) || BOSS_NUMBERS.includes(cleanNumber);
+  const chatType = isBoss ? 'boss' : 'client';
+
+  // Si el mensaje es saliente (enviado desde el mismo número del bot)
+  const isOutgoing = payload.data?.key?.fromMe === true || payload.conversation?.messages?.[0]?.fromMe === true;
+
+  if (isOutgoing) {
+    try {
+      // Verificar si ya fue guardado en los últimos 15 segundos
+      const recentMatches = await query(
+        `SELECT id FROM chat_messages 
+         WHERE session_id = $1 AND message_text = $2 AND chat_type = $3 AND created_at > NOW() - INTERVAL '15 seconds' 
+         LIMIT 1`,
+        [cleanNumber, messageText.trim(), chatType]
+      );
+      
+      if (recentMatches.length === 0) {
+        // Registrar el mensaje saliente del teléfono (enviado directamente en WhatsApp)
+        if (isBoss) {
+          await saveBossChatMessage(cleanNumber, 'agent', messageText);
+        } else {
+          await saveClientChatMessage(cleanNumber, 'agent', messageText, pushName);
+        }
+        console.log(`📤 Mensaje saliente registrado en BD para ${cleanNumber} (${chatType})`);
+      } else {
+        console.log(`⏭️ Mensaje saliente ya existente en BD (duplicado omitido) para ${cleanNumber}`);
+      }
+    } catch (err) {
+      console.error('⚠️ Error al registrar mensaje saliente en base de datos:', err);
+    }
+    return; // El bot no debe responder a sus propios mensajes salientes
   }
 
-  // 2. De-duplicación
+  // 2. De-duplicación (solo para mensajes entrantes)
   if (messageId) {
     if (processedMessageIds.has(messageId)) {
       console.log(`⏭️ Ignorando mensaje duplicado: ${messageId}`);
@@ -475,18 +507,12 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
     setTimeout(() => processedMessageIds.delete(messageId), 300000);
   }
 
-  // Obtener el número limpio (solo dígitos)
-  const cleanNumber = senderJid.split('@')[0].replace(/\D/g, '');
-
   // 3. Verificar Handoff (Si el bot está silenciado para este número)
   const botStatus = await getSetting(`bot_status_${cleanNumber}`, 'bot_active');
   if (botStatus === 'agent_active') {
     console.log(`🤫 Bot silenciado para ${cleanNumber} (Handoff activo).`);
     return;
   }
-
-  // 4. Clasificar emisor (Jefe o Cliente)
-  const isBoss = BOSS_NUMBERS.includes(senderJid) || BOSS_NUMBERS.includes(cleanNumber);
 
   // Buscar si el cliente existe en la base de datos de CalMiranda
   let clientExists = false;
