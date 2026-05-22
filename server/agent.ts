@@ -670,12 +670,16 @@ Solo estar disponible para pedidos por encima de las 500 unidades`;
   let clientExists = false;
   let clientName = pushName || 'Cliente';
   try {
+    const phonePattern = cleanNumber.length >= 10 ? `%${cleanNumber.slice(-10)}` : `%${cleanNumber}`;
     const clientQuery = `
       SELECT nombre FROM clientes 
-      WHERE telefono_1 LIKE $1 OR movil LIKE $1 OR telefono_2 LIKE $1 OR telefono_3 LIKE $1 
+      WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
       LIMIT 1;
     `;
-    const dbClient = await query(clientQuery, [`%${cleanNumber}%`]);
+    const dbClient = await query(clientQuery, [phonePattern]);
     if (dbClient.length > 0) {
       clientExists = true;
       clientName = dbClient[0].nombre;
