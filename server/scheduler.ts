@@ -167,6 +167,75 @@ PLANTILLA EXACTA OBLIGATORIA:
 }
 
 // ----------------------------------------------------
+// CRON 3: Reporte Semanal de Nómina (Friday at 9:00 AM)
+// ----------------------------------------------------
+export async function runNominaReport(): Promise<void> {
+  console.log('⏳ Iniciando compilación de Reporte Semanal de Nómina...');
+  try {
+    const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: '1M7IoLTEhKPW2HUbwqBKptMG7ZaSdZhWoCT-3Ni0tgHE',
+      range: 'A1:H100'
+    });
+    const rows = res.data.values || [];
+    if (rows.length === 0) {
+      throw new Error('La hoja de nómina está vacía.');
+    }
+
+    const csvData = rows.map(row => 
+      row.map(val => {
+        const cellStr = String(val).replace(/"/g, '""');
+        if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
+          return `"${cellStr}"`;
+        }
+        return cellStr;
+      }).join(',')
+    ).join('\n');
+
+    const systemPrompt = `Eres DIAMANTIN, Asistente Ejecutivo de Inversiones Miranda.
+Tu tarea es leer los datos de la hoja de nómina semanal provista en formato CSV y generar un reporte ejecutivo estructurado para el Jefe (Julio Borges).
+
+El reporte debe incluir la siguiente información de forma clara y profesional:
+1. Resumen de Nómina Caracas (listar empleados y montos correspondientes en USD y Bs).
+2. Resumen de Nómina Guatire (listar empleados y montos correspondientes en USD y Bs).
+3. Resumen de Bonos y Otros (listar conceptos/empleados y montos correspondientes en USD y Bs).
+4. Totales generales a pagar resumidos en Dólares (USD) y en Bolívares (Bs.S) utilizando la tasa oficial de cambio indicada en la misma hoja.
+
+REGLAS DE FORMATO:
+- Sé sumamente profesional, claro y ordenado.
+- Utiliza emojis apropiados para estructurar y dar formato amigable en WhatsApp.
+- Empieza con un saludo al Jefe (Julio Borges).
+- Finaliza el reporte con el grito de guerra del bot: "¡Vamos positivo!".`;
+
+    const response = await openai.chat.completions.create({
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Por favor, analiza estos datos en formato CSV de la nómina y genera el informe:\n\n${csvData}` }
+      ],
+      temperature: 0.3
+    });
+
+    const reportText = response.choices[0].message.content || '';
+
+    if (!reportText) {
+      throw new Error('DeepSeek no devolvió contenido para el reporte de nómina.');
+    }
+
+    console.log('📊 Reporte de nómina generado exitosamente.');
+
+    // Enviar por WhatsApp a Julio Borges
+    await sendWhatsAppMessage(JULIO_WHATSAPP_JID, reportText);
+
+    // Guardar el reporte en configuración para auditoría si es necesario
+    await saveSetting('ultimo_reporte_nomina', { fecha: new Date().toLocaleDateString(), texto: reportText });
+
+  } catch (error: any) {
+    console.error('❌ Error en Reporte Semanal de Nómina:', error.message || error);
+  }
+}
+
+// ----------------------------------------------------
 // INICIALIZACIÓN DE PLANIFICADORES
 // ----------------------------------------------------
 export function initScheduler(): void {
@@ -191,5 +260,13 @@ export function initScheduler(): void {
     timezone: 'America/Caracas'
   });
 
-  console.log('🚀 Schedulers registrados: BuscaTasa (9:00 AM diario) y Reporte Financiero (Lunes/Miércoles 10:00 AM).');
+  // Reporte de Nómina: Viernes a las 9:00 AM (Hora de Caracas)
+  // 9:00 AM en Venezuela equivale a 1:00 PM UTC.
+  cron.schedule('0 9 * * 5', async () => {
+    await runNominaReport();
+  }, {
+    timezone: 'America/Caracas'
+  });
+
+  console.log('🚀 Schedulers registrados: BuscaTasa (9:00 AM diario), Reporte Financiero (Lunes/Miércoles 10:00 AM) y Reporte de Nómina (Viernes 9:00 AM).');
 }

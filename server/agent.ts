@@ -212,6 +212,14 @@ const agentTools: any[] = [
       description: 'Transfiere la conversación a un agente humano, silenciando al bot de IA para este número de teléfono.',
       parameters: { type: 'object', properties: {} }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'consultar_nomina',
+      description: 'Consulta los detalles de la nómina semanal de CalMiranda desde el documento de Google Sheets (incluye empleados de Caracas, Guatire, bonos y totales generales). Solo disponible para jefes o personal autorizado.',
+      parameters: { type: 'object', properties: {} }
+    }
   }
 ];
 
@@ -408,6 +416,37 @@ async function executeTool(name: string, args: any, sessionId: string): Promise<
         }
 
         return 'Modo handoff (humano) activado. El bot se ha silenciado para este número.';
+      }
+
+      case 'consultar_nomina': {
+        const isBoss = BOSS_NUMBERS.includes(sessionId) || BOSS_NUMBERS.some(num => num.split('@')[0] === sessionId);
+        if (!isBoss) {
+          return 'No tienes permisos para consultar la nómina de la empresa.';
+        }
+        try {
+          const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
+          const res = await sheets.spreadsheets.values.get({
+            spreadsheetId: '1M7IoLTEhKPW2HUbwqBKptMG7ZaSdZhWoCT-3Ni0tgHE',
+            range: 'A1:H100'
+          });
+          const rows = res.data.values || [];
+          if (rows.length === 0) {
+            return 'La hoja de nómina está vacía.';
+          }
+          const csvData = rows.map(row => 
+            row.map(val => {
+              const cellStr = String(val).replace(/"/g, '""');
+              if (cellStr.includes(',') || cellStr.includes('\n') || cellStr.includes('"')) {
+                return `"${cellStr}"`;
+              }
+              return cellStr;
+            }).join(',')
+          ).join('\n');
+          return csvData;
+        } catch (err: any) {
+          console.error('❌ Error al obtener el CSV de nómina en executeTool:', err.message || err);
+          return `Error al obtener la nómina: ${err.message || err}`;
+        }
       }
 
       default:
