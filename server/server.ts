@@ -683,12 +683,14 @@ app.get('/api/setup-webhook', async (req, res) => {
 
   try {
     const response = await axios.post(`${evoUrl}/webhook/set/${instance}`, {
-      enabled: true,
-      url: myPublicUrl,
-      webhookByEvents: false,
-      events: [
-        "MESSAGES_UPSERT"
-      ]
+      webhook: {
+        enabled: true,
+        url: myPublicUrl,
+        webhookByEvents: false,
+        events: [
+          "MESSAGES_UPSERT"
+        ]
+      }
     }, {
       headers: {
         'apikey': apiKey,
