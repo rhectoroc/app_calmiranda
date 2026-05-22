@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/authContext';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -18,8 +18,11 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [botDisabled, setBotDisabled] = useState(false);
+
+  const isChatHub = location.pathname === '/customer-service';
 
   useEffect(() => {
     const fetchBotStatus = async () => {
@@ -99,7 +102,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <div className="min-h-screen bg-cal-dark text-white flex flex-col md:flex-row relative">
+    <div className={`min-h-screen bg-cal-dark text-white flex flex-col md:flex-row relative ${isChatHub ? 'h-screen md:h-screen overflow-hidden' : ''}`}>
       
       {/* Mobile Header */}
       <header className="md:hidden glass border-b border-white/5 px-6 py-4 flex justify-between items-center z-30 shrink-0">
@@ -236,9 +239,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 md:h-screen overflow-y-auto">
-        <div className="p-6 md:p-8 max-w-7xl w-full mx-auto flex flex-col gap-6 md:gap-8">
+      <main className={`flex-1 flex flex-col min-w-0 ${isChatHub ? 'overflow-hidden' : 'md:h-screen overflow-y-auto'}`}>
+        <div className={`p-6 md:p-8 max-w-7xl w-full mx-auto flex flex-col gap-6 md:gap-8 ${isChatHub ? 'h-full overflow-hidden' : ''}`}>
           {children}
         </div>
       </main>

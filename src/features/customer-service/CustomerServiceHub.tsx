@@ -214,7 +214,7 @@ export const CustomerServiceHub: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row glass rounded-3xl border border-white/5 overflow-hidden h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] animate-fade-in shrink-0">
+    <div className="flex-1 flex flex-col md:flex-row glass rounded-3xl border border-white/5 overflow-hidden h-full animate-fade-in shrink-0">
       
       {/* Sidebar de Chats */}
       <div className="w-full md:w-80 border-r border-white/5 flex flex-col h-1/2 md:h-full shrink-0">
