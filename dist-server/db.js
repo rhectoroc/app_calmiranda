@@ -1,5 +1,10 @@
 import pg from 'pg';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 const { Pool } = pg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // Crear pool de conexión a base de datos usando la variable de entorno DATABASE_URL
 export const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -98,4 +103,30 @@ export async function searchClientes(searchTerm) {
     LIMIT 10;
   `;
     return query(sql, [`%${searchTerm}%`]);
+}
+// Inicializar la base de datos ejecutando schema.sql
+export async function initDb() {
+    try {
+        console.log('🔄 Inicializando base de datos...');
+        // Intentar buscar schema.sql en diferentes ubicaciones posibles
+        let schemaPath = path.join(process.cwd(), 'server/schema.sql');
+        if (!fs.existsSync(schemaPath)) {
+            schemaPath = path.join(__dirname, '../server/schema.sql');
+        }
+        if (!fs.existsSync(schemaPath)) {
+            schemaPath = path.join(__dirname, 'schema.sql');
+        }
+        if (!fs.existsSync(schemaPath)) {
+            throw new Error(`No se pudo encontrar schema.sql en ninguna ruta conocida.`);
+        }
+        console.log(`📖 Leyendo esquema desde: ${schemaPath}`);
+        const sql = fs.readFileSync(schemaPath, 'utf8');
+        // Ejecutar el script completo
+        await query(sql);
+        console.log('✅ Base de datos inicializada y migrada exitosamente.');
+    }
+    catch (error) {
+        console.error('❌ Error al inicializar la base de datos:', error.message || error);
+        throw error;
+    }
 }

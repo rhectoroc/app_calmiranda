@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
-import { query, getSetting, saveSetting, saveClientChatMessage } from './db.js';
+import { query, getSetting, saveSetting, saveClientChatMessage, initDb } from './db.js';
 // Resolver __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -324,6 +324,13 @@ app.get('*', (req, res) => {
 // Iniciar el servidor y schedulers
 app.listen(PORT, async () => {
     console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
+    // Inicializar base de datos
+    try {
+        await initDb();
+    }
+    catch (dbErr) {
+        console.error('⚠️ Advertencia: No se pudo inicializar la base de datos automáticamente:', dbErr.message);
+    }
     // Inicializar schedulers (node-cron)
     initScheduler();
     // Verificar si el grupo de asesores humanos está configurado
