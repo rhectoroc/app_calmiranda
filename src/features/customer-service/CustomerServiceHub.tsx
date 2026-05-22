@@ -411,7 +411,7 @@ export const CustomerServiceHub: React.FC = () => {
                             setEditedName(activeChat.customerName);
                             setIsEditingName(true);
                           }}
-                          className="p-1 text-gray-400 hover:text-white transition-opacity cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          className="p-1 text-gray-400 hover:text-cal-emerald-light transition-all cursor-pointer opacity-70 hover:opacity-100"
                           title="Editar nombre"
                         >
                           <Edit2 size={12} />
