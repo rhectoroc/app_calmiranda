@@ -620,8 +620,8 @@ DERIVACIÓN OBLIGATORIA (ADMIN): Si el cliente pide "Fichas Técnicas", "Instruc
 ESCENARIO CRÍTICO: CAL EN PASTA 5KG
 Solo estar disponible para pedidos por encima de las 500 unidades`;
     const defaultBossPrompt = `Eres DIAMANTÍN, el Asistente Ejecutivo del Jefe de Inversiones Miranda. Resuelves requerimientos de forma directa, eficiente y breve usando herramientas. Tu grito es "Vamos positivo".`;
-    const customBotPrompt = await getSetting('prompt_bot', defaultBotPrompt);
-    const customBossPrompt = await getSetting('prompt_assistant', defaultBossPrompt);
+    const extraRulesBot = await getSetting('extra_rules_bot', '');
+    const extraRulesAssistant = await getSetting('extra_rules_assistant', '');
     // Buscar si el cliente existe en la base de datos de CalMiranda
     let clientExists = false;
     let clientName = pushName || 'Cliente';
@@ -644,7 +644,17 @@ Solo estar disponible para pedidos por encima de las 500 unidades`;
     catch (err) {
         console.error('⚠️ Error al buscar cliente en base de datos:', err);
     }
-    let systemMessage = isBoss ? customBossPrompt : customBotPrompt;
+    let systemMessage = isBoss ? defaultBossPrompt : defaultBotPrompt;
+    if (isBoss) {
+        if (extraRulesAssistant && extraRulesAssistant.trim() !== '') {
+            systemMessage += `\n\nREGLAS EXTRAS Y NOTAS EN TIEMPO REAL DEL NEGOCIO:\n${extraRulesAssistant}`;
+        }
+    }
+    else {
+        if (extraRulesBot && extraRulesBot.trim() !== '') {
+            systemMessage += `\n\nREGLAS EXTRAS Y NOTAS EN TIEMPO REAL DEL NEGOCIO:\n${extraRulesBot}`;
+        }
+    }
     // Si es un cliente, procesar placeholders dinámicos
     if (!isBoss) {
         const nowVE = new Date();

@@ -15,12 +15,8 @@ export const SettingsView: React.FC = () => {
   const [evoToken, setEvoToken] = useState('evo_tok_991823abce8812');
 
   // Prompts de IA
-  const [botPrompt, setBotPrompt] = useState(
-    'Eres Diamantín, el asistente virtual oficial de CalMiranda. Tu objetivo es atender consultas de clientes sobre cal en pasta, cal en polvo y pintura ecológica, recopilar volumen requerido y coordinar desvíos a humanos.'
-  );
-  const [assistantPrompt, setAssistantPrompt] = useState(
-    'Eres el Asistente Empresarial de CalMiranda. Respondes consultas internas de la empresa utilizando bases de datos PostgreSQL sobre stock de inventario, volúmenes de producción diarios y métricas de ventas.'
-  );
+  const [botPrompt, setBotPrompt] = useState('');
+  const [assistantPrompt, setAssistantPrompt] = useState('');
 
   // Estados visuales
   const [testingDb, setTestingDb] = useState(false);
@@ -271,11 +267,12 @@ export const SettingsView: React.FC = () => {
             <div className="flex flex-col gap-4 flex-1">
               <div>
                 <label className="block text-xs text-gray-400 font-semibold mb-2">
-                  System Prompt: Diamantín (Atención al Cliente)
+                  Instrucciones y Reglas Extras: Diamantín (Atención al Cliente)
                 </label>
                 <textarea
                   value={botPrompt}
                   onChange={(e) => setBotPrompt(e.target.value)}
+                  placeholder="Ingresa reglas extras o notas temporales (ej: 'No hay stock de cal en pasta de 7kg esta semana', 'Cerraremos temprano este sábado por inventario')."
                   rows={5}
                   className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-gray-300 focus:outline-none focus:border-cal-emerald resize-none leading-relaxed"
                 />
@@ -283,11 +280,12 @@ export const SettingsView: React.FC = () => {
 
               <div>
                 <label className="block text-xs text-gray-400 font-semibold mb-2">
-                  System Prompt: Asistente Corporativo (Uso Interno)
+                  Instrucciones y Reglas Extras: Asistente Corporativo (Uso Interno)
                 </label>
                 <textarea
                   value={assistantPrompt}
                   onChange={(e) => setAssistantPrompt(e.target.value)}
+                  placeholder="Ingresa reglas adicionales para el análisis interno del asistente corporativo..."
                   rows={5}
                   className="w-full bg-white/5 border border-white/5 rounded-xl p-3 text-sm text-gray-300 focus:outline-none focus:border-cal-emerald resize-none leading-relaxed"
                 />
@@ -296,7 +294,7 @@ export const SettingsView: React.FC = () => {
               <div className="p-4 rounded-2xl bg-cal-emerald/5 border border-cal-emerald/15 flex gap-3 text-xs text-gray-400 leading-normal">
                 <ShieldAlert size={16} className="text-cal-emerald-light shrink-0 mt-0.5" />
                 <span>
-                  Los prompts del sistema definen la personalidad, restricciones y bases de conocimiento locales que guían las respuestas generadas por los modelos.
+                  La personalidad, identidad base y conocimientos estáticos de los agentes están integrados de forma segura en el código del servidor. Utiliza este panel para añadir reglas de negocio y notas operativas en tiempo real.
                 </span>
               </div>
             </div>

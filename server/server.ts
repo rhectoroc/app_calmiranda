@@ -107,14 +107,14 @@ app.post('/webhooks/whatsapp', async (req, res) => {
 // Obtener todas las configuraciones configuradas
 app.get('/api/settings', async (req, res) => {
   try {
-    const promptBot = await getSetting('prompt_bot', 'Eres Diamantín, el asistente virtual oficial de CalMiranda...');
-    const promptAssistant = await getSetting('prompt_assistant', 'Eres DIAMANTÍN, el Asistente Ejecutivo del Jefe...');
+    const extraRulesBot = await getSetting('extra_rules_bot', '');
+    const extraRulesAssistant = await getSetting('extra_rules_assistant', '');
     const bcvRate = await getSetting('bcv_rate', null);
     
     res.json({
       prompts: {
-        bot: promptBot,
-        assistant: promptAssistant
+        bot: extraRulesBot,
+        assistant: extraRulesAssistant
       },
       bcvRate
     });
@@ -127,11 +127,9 @@ app.get('/api/settings', async (req, res) => {
 app.post('/api/settings', async (req, res) => {
   const { prompts } = req.body;
   try {
-    if (prompts?.bot) {
-      await saveSetting('prompt_bot', prompts.bot);
-    }
-    if (prompts?.assistant) {
-      await saveSetting('prompt_assistant', prompts.assistant);
+    if (prompts) {
+      await saveSetting('extra_rules_bot', prompts.bot ?? '');
+      await saveSetting('extra_rules_assistant', prompts.assistant ?? '');
     }
     res.json({ status: 'ok', message: 'Configuraciones actualizadas en la base de datos.' });
   } catch (error: any) {
