@@ -376,6 +376,37 @@ async function executeTool(name: string, args: any, sessionId: string): Promise<
 
       case 'activar_handoff': {
         await saveSetting(`bot_status_${sessionId}`, 'agent_active');
+        
+        // Intentar enviar notificación al grupo de asesores humanos
+        try {
+          const groupJid = await getSetting('advisors_group_jid', null);
+          if (groupJid) {
+            // Obtener el nombre del cliente desde la base de datos para dar más contexto
+            let clientName = 'Cliente';
+            try {
+              const clientQuery = `
+                SELECT nombre FROM clientes 
+                WHERE telefono_1 LIKE $1 OR movil LIKE $1 OR telefono_2 LIKE $1 OR telefono_3 LIKE $1 
+                LIMIT 1;
+              `;
+              const dbClient = await query(clientQuery, [`%${sessionId}%`]);
+              if (dbClient.length > 0) {
+                clientName = dbClient[0].nombre;
+              }
+            } catch (dbErr) {
+              console.error('⚠️ Error al buscar nombre del cliente para notificación:', dbErr);
+            }
+
+            const alertMessage = `⚠️ *Atención Humana Requerida*\n\nEl cliente *${clientName}* (+${sessionId}) ha solicitado hablar con un asesor humano. El bot de IA se ha desactivado para esta conversación.\n\nPor favor, atiendan al cliente en el Panel de Control.`;
+            await sendWhatsAppMessage(groupJid, alertMessage);
+            console.log(`📢 Notificación de handoff enviada al grupo ${groupJid} para el cliente ${sessionId}`);
+          } else {
+            console.log('⚠️ No se envió notificación al grupo de asesores porque "advisors_group_jid" no está configurado en app_settings.');
+          }
+        } catch (notifErr: any) {
+          console.error('❌ Error al procesar notificación de handoff:', notifErr.message || notifErr);
+        }
+
         return 'Modo handoff (humano) activado. El bot se ha silenciado para este número.';
       }
 
@@ -402,7 +433,8 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   if (payload.event === 'messages.upsert' && payload.data) {
     const data = payload.data;
     messageId = data.key?.id || '';
-    senderJid = data.key?.remoteJid || '';
+    // Preferir remoteJidAlt (JID de número de teléfono) si remoteJid es un ID interno @lid
+    senderJid = data.key?.remoteJidAlt || data.key?.remoteJid || '';
     pushName = payload.pushName || data.pushName || 'Cliente';
     
     if (data.message) {
@@ -416,7 +448,8 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   else if (payload.conversation?.messages?.[0]) {
     const msg = payload.conversation.messages[0];
     messageId = msg.id || '';
-    senderJid = msg.sender?.identifier || '';
+    // Preferir número de teléfono si está disponible en Chatwoot
+    senderJid = msg.sender?.phone_number || msg.sender?.identifier || '';
     pushName = msg.sender?.name || 'Cliente';
     messageText = msg.text || '';
   }
@@ -442,8 +475,8 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
     setTimeout(() => processedMessageIds.delete(messageId), 300000);
   }
 
-  // Obtener el número limpio
-  const cleanNumber = senderJid.split('@')[0];
+  // Obtener el número limpio (solo dígitos)
+  const cleanNumber = senderJid.split('@')[0].replace(/\D/g, '');
 
   // 3. Verificar Handoff (Si el bot está silenciado para este número)
   const botStatus = await getSetting(`bot_status_${cleanNumber}`, 'bot_active');

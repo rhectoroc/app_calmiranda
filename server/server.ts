@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage } from './agent.js';
@@ -74,6 +75,17 @@ app.get('/api/auth/google/callback', async (req, res) => {
 // ENDPOINT DE WEBHOOK PARA EVOLUTION API / WHATSAPP
 // ----------------------------------------------------
 app.post('/webhooks/whatsapp', async (req, res) => {
+  console.log(`📥 Webhook recibido en /webhooks/whatsapp: Evento = ${req.body?.event || 'desconocido'}`);
+  
+  if (req.body?.event === 'messages.upsert') {
+    const data = req.body?.data;
+    const sender = data?.key?.remoteJidAlt || data?.key?.remoteJid || 'desconocido';
+    const text = data?.message?.conversation || data?.message?.extendedTextMessage?.text || '';
+    console.log(`💬 Mensaje de WhatsApp recibido de: ${sender} | Texto: "${text}"`);
+  } else {
+    console.log('📦 Payload completo del webhook recibido:', JSON.stringify(req.body));
+  }
+
   try {
     // Procesar mensaje asíncronamente para responder rápido al webhook
     handleWebhookMessage(req.body).catch(err => {
@@ -83,6 +95,7 @@ app.post('/webhooks/whatsapp', async (req, res) => {
     // Responder inmediatamente para confirmar recepción del webhook
     res.status(200).json({ status: 'received' });
   } catch (error: any) {
+    console.error('❌ Error en endpoint de webhook:', error.message || error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -265,6 +278,52 @@ app.post('/api/test/reporte', async (req, res) => {
   }
 });
 
+app.get('/api/setup-webhook', async (req, res) => {
+  const evoUrl = process.env.EVOLUTION_API_URL || 'https://evolution.calmiranda.com';
+  const instance = process.env.EVOLUTION_INSTANCE_NAME || 'CalMiranda';
+  const apiKey = process.env.EVOLUTION_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'EVOLUTION_API_KEY no está configurada en las variables de entorno.' });
+  }
+
+  // Detectar la URL pública de este servidor
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers['x-forwarded-host'] || req.get('host');
+  const myPublicUrl = `${protocol}://${host}/webhooks/whatsapp`;
+
+  console.log(`🔧 Configurando webhook de Evolution API. URL destino: ${myPublicUrl}`);
+
+  try {
+    const response = await axios.post(`${evoUrl}/webhook/set/${instance}`, {
+      enabled: true,
+      url: myPublicUrl,
+      webhookByEvents: false,
+      events: [
+        "MESSAGES_UPSERT"
+      ]
+    }, {
+      headers: {
+        'apikey': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    res.json({
+      status: 'ok',
+      message: 'Webhook registrado exitosamente en la instancia de Evolution API.',
+      registeredUrl: myPublicUrl,
+      evolutionResponse: response.data
+    });
+  } catch (error: any) {
+    console.error('❌ Error registrando webhook en Evolution API:', error.response?.data || error.message);
+    res.status(500).json({
+      error: 'Error registrando el webhook en Evolution API',
+      details: error.response?.data || error.message
+    });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Servidor de CalMiranda en funcionamiento e integrado.' });
 });
@@ -279,9 +338,21 @@ app.get('*', (req, res) => {
 });
 
 // Iniciar el servidor y schedulers
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
   
   // Inicializar schedulers (node-cron)
   initScheduler();
+
+  // Verificar si el grupo de asesores humanos está configurado
+  try {
+    const groupJid = await getSetting('advisors_group_jid', null);
+    if (groupJid) {
+      console.log(`📢 Grupo de asesores de WhatsApp configurado: "${groupJid}"`);
+    } else {
+      console.log('⚠️ Advertencia: "advisors_group_jid" no está configurado en app_settings. Las alertas de atención humana no se enviarán a WhatsApp.');
+    }
+  } catch (err: any) {
+    console.error('⚠️ Error al verificar "advisors_group_jid" en la base de datos:', err.message || err);
+  }
 });
