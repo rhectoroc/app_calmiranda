@@ -356,22 +356,33 @@ app.get('/api/chats', async (req, res) => {
       const phoneNumber = isWeb ? '-' : cleanPhone;
 
       let customerName = '';
+      let isRegistered = false;
+      let clientId = null;
+      let clientEstatus = 'Prospecto';
+
       if (isWeb) {
         customerName = `Cliente Web (${sessionId.slice(4)})`;
+        clientEstatus = 'Activo';
       } else {
-        // Buscar si el cliente existe en la tabla comercial clientes
+        // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
         const clientQuery = `
-          SELECT nombre FROM clientes 
-          WHERE telefono_1 LIKE $1 
-             OR movil LIKE $1 
-             OR telefono_2 LIKE $1 
-             OR telefono_3 LIKE $1 
+          SELECT id_cliente, nombre, estatus FROM clientes 
+          WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
+             OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
+             OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
+             OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
           LIMIT 1;
         `;
         const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
         if (dbClient.length > 0) {
+          isRegistered = true;
           customerName = dbClient[0].nombre;
+          clientEstatus = dbClient[0].estatus || 'Activo';
+          clientId = dbClient[0].id_cliente;
         } else {
+          isRegistered = false;
+          clientId = null;
+          clientEstatus = 'Prospecto';
           const nameQuery = `
             SELECT push_name FROM chat_messages 
             WHERE session_id = $1 AND push_name IS NOT NULL 
@@ -396,7 +407,10 @@ app.get('/api/chats', async (req, res) => {
         lastMessage: r.message_text,
         lastMessageTime: r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hace poco',
         channel,
-        status: botStatus // 'bot_active' | 'agent_active' | 'waiting_handover'
+        status: botStatus, // 'bot_active' | 'agent_active' | 'waiting_handover'
+        isRegistered,
+        clientId,
+        clientEstatus
       });
     }
 
@@ -457,6 +471,74 @@ app.post('/api/chats/:sessionId/release', async (req, res) => {
     await saveClientChatMessage(sessionId, 'agent', `⚠️ [Sistema] El bot Diamantín ha retomado el control de la conversación.`);
     
     res.json({ status: 'ok', message: 'Handoff desactivado. Bot de IA reactivado.' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Actualizar o crear estatus de cliente desde el Hub de Atención al Cliente
+app.post('/api/chats/:sessionId/client-status', async (req, res) => {
+  const { sessionId } = req.params;
+  const { estatus, customerName } = req.body;
+  try {
+    if (sessionId.startsWith('web_')) {
+      return res.status(400).json({ error: 'Los clientes web no admiten estatus de WhatsApp.' });
+    }
+
+    const cleanPhone = sessionId.replace(/\D/g, '');
+
+    // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
+    const clientQuery = `
+      SELECT id_cliente FROM clientes 
+      WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+      LIMIT 1;
+    `;
+    const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
+
+    if (dbClient.length > 0) {
+      // Actualizar el estatus
+      const updateSql = `
+        UPDATE clientes 
+        SET estatus = $1, fecha_actualizacion = NOW() 
+        WHERE id_cliente = $2 
+        RETURNING *;
+      `;
+      const updatedRows = await query(updateSql, [estatus, dbClient[0].id_cliente]);
+      return res.json({ success: true, action: 'updated', client: updatedRows[0] });
+    } else {
+      // Obtener el pushName o el nombre provisto en la petición
+      let finalName = customerName || '';
+      if (!finalName || finalName.startsWith('Cliente (+') || finalName.includes('(+')) {
+        // Intentar obtener el pushName de los mensajes
+        const nameQuery = `
+          SELECT push_name FROM chat_messages 
+          WHERE session_id = $1 AND push_name IS NOT NULL 
+          ORDER BY id DESC 
+          LIMIT 1;
+        `;
+        const nameRows = await query(nameQuery, [sessionId]);
+        if (nameRows.length > 0 && nameRows[0].push_name) {
+          finalName = nameRows[0].push_name;
+        } else {
+          finalName = `Cliente (+${cleanPhone})`;
+        }
+      }
+
+      // Crear un cliente nuevo con estatus seleccionado
+      const insertSql = `
+        INSERT INTO clientes (
+          zona, nombre, telefono_1, estatus, vendedor, comentario, 
+          dias_credito, fecha_creacion, fecha_actualizacion
+        )
+        VALUES ('General', $1, $2, $3, 'Bot/Sistema', 'Creado automáticamente desde el Panel de Atención al Cliente', 0, NOW(), NOW())
+        RETURNING *;
+      `;
+      const insertedRows = await query(insertSql, [finalName, cleanPhone, estatus]);
+      return res.json({ success: true, action: 'created', client: insertedRows[0] });
+    }
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

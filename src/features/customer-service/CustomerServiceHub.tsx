@@ -8,9 +8,27 @@ import {
   Send, 
   AlertCircle,
   Check, 
-  Sparkles,
-  Phone
+  Phone,
+  ChevronDown
 } from 'lucide-react';
+
+const getStatusSelectClass = (estatus?: string) => {
+  switch (estatus) {
+    case 'Empleado':
+      return 'border-blue-500/30 text-blue-400 focus:border-blue-500 bg-blue-500/10';
+    case 'Transportista':
+      return 'border-purple-500/30 text-purple-400 focus:border-purple-500 bg-purple-500/10';
+    case 'Ignorar Bot':
+      return 'border-red-500/30 text-red-400 focus:border-red-500 bg-red-500/10';
+    case 'Activo':
+      return 'border-cal-emerald/30 text-cal-emerald-light focus:border-cal-emerald bg-cal-emerald/10';
+    case 'Inactivo':
+      return 'border-white/10 text-gray-400 focus:border-white bg-white/5';
+    case 'Prospecto':
+    default:
+      return 'border-amber-500/30 text-amber-400 focus:border-amber-500 bg-amber-500/10';
+  }
+};
 
 export const CustomerServiceHub: React.FC = () => {
   const { user } = useAuth();
@@ -139,6 +157,32 @@ export const CustomerServiceHub: React.FC = () => {
     }
   };
 
+  // Cambiar el estatus del cliente (Empleado, Transportista, etc.)
+  const handleStatusChange = async (chatId: string, newEstatus: string) => {
+    try {
+      const chatObj = chats.find(c => c.id === chatId);
+      const res = await fetch(`/api/chats/${chatId}/client-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          estatus: newEstatus,
+          customerName: chatObj?.customerName 
+        }),
+      });
+      if (!res.ok) throw new Error('Error al cambiar estatus');
+      
+      // Actualizar el estado local de chats
+      setChats(prev => prev.map(c => {
+        if (c.id === chatId) {
+          return { ...c, clientEstatus: newEstatus };
+        }
+        return c;
+      }));
+    } catch (error) {
+      console.error('Error en status change:', error);
+    }
+  };
+
   // Enviar mensaje humano
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,32 +272,35 @@ export const CustomerServiceHub: React.FC = () => {
                   <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wider">
                     {chat.channel}
                   </span>
-                  
-                  {/* Status Badges */}
-                  {chat.status === 'bot_active' && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold text-cal-emerald-light bg-cal-emerald/10 px-2 py-0.5 rounded-full border border-cal-emerald/20">
-                      <Sparkles size={8} />
-                      IA Activa
-                    </span>
-                  )}
-                  {chat.status === 'waiting_handover' && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold text-cal-gold-light bg-cal-gold/10 px-2 py-0.5 rounded-full border border-cal-gold/20 animate-pulse">
-                      <AlertCircle size={8} />
-                      Espera
-                    </span>
-                  )}
-                  {chat.status === 'agent_active' && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold text-cal-earth bg-cal-earth/15 px-2 py-0.5 rounded-full border border-cal-earth/30">
-                      <User size={8} />
-                      Humano
-                    </span>
-                  )}
-                  {chat.status === 'resolved' && (
-                    <span className="flex items-center gap-1 text-[9px] font-bold text-gray-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
-                      <Check size={8} />
-                      Resuelto
-                    </span>
-                  )}
+                  <div className="flex gap-1.5 items-center">
+                    {chat.status === 'bot_active' && (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-cal-emerald-light bg-cal-emerald/10 border-cal-emerald/20 flex items-center gap-1">
+                        <Bot size={10} /> IA
+                      </span>
+                    )}
+                    {chat.status === 'waiting_handover' && (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-cal-gold-light bg-cal-gold/10 border-cal-gold/20 flex items-center gap-1">
+                        <AlertCircle size={10} /> Espera
+                      </span>
+                    )}
+                    {chat.status === 'agent_active' && (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-white bg-white/10 border-white/20 flex items-center gap-1">
+                        <User size={10} /> Humano
+                      </span>
+                    )}
+                    {chat.status === 'resolved' && (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-gray-400 bg-white/5 border-white/5 flex items-center gap-1">
+                        <Check size={10} /> Resuelto
+                      </span>
+                    )}
+                    {chat.channel === 'WhatsApp' && chat.clientEstatus && ['Empleado', 'Transportista', 'Ignorar Bot'].includes(chat.clientEstatus) && (
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                        chat.clientEstatus === 'Empleado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                        chat.clientEstatus === 'Transportista' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
+                        'text-red-400 bg-red-500/10 border-red-500/20'
+                      }`}>{chat.clientEstatus}</span>
+                    )}
+                  </div>
                 </div>
               </button>
             ))
@@ -285,10 +332,29 @@ export const CustomerServiceHub: React.FC = () => {
                   <h4 className="font-semibold text-sm text-white leading-tight">
                     {activeChat.customerName}
                   </h4>
-                  <span className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
-                    <Phone size={10} />
-                    {activeChat.phoneNumber}
-                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                      <Phone size={10} />
+                      {activeChat.phoneNumber}
+                    </span>
+                    {activeChat.channel === 'WhatsApp' && (
+                      <div className="relative flex items-center">
+                        <select
+                          value={activeChat.clientEstatus || 'Prospecto'}
+                          onChange={(e) => handleStatusChange(activeChat.id, e.target.value)}
+                          className={`border rounded-lg px-2 py-0.5 pr-6 text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEstatus)}`}
+                        >
+                          <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
+                          <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
+                          <option value="Prospecto" className="bg-[#1e2528] text-white">Prospecto</option>
+                          <option value="Empleado" className="bg-[#1e2528] text-blue-400">Empleado</option>
+                          <option value="Transportista" className="bg-[#1e2528] text-purple-400">Transportista</option>
+                          <option value="Ignorar Bot" className="bg-[#1e2528] text-red-400">Ignorar Bot</option>
+                        </select>
+                        <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

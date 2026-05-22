@@ -37,6 +37,9 @@ export interface CustomerChat {
   lastMessageTime: string;
   messages: ChatMessage[];
   productOfInterest?: string;
+  isRegistered?: boolean;
+  clientId?: string | null;
+  clientEstatus?: string;
 }
 
 export interface SalesHistory {
