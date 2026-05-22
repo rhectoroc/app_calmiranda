@@ -498,6 +498,7 @@ app.get('/api/chats', async (req, res) => {
         SELECT DISTINCT ON (session_id) session_id, id, sender, message_text, created_at
         FROM chat_messages
         WHERE chat_type = 'client'
+          AND (NOT (session_id ~ '^[0-9]+$') OR length(session_id) <= 15)
         ORDER BY session_id, id DESC
       )
       SELECT session_id, sender, message_text, created_at 
@@ -697,6 +698,59 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
         RETURNING *;
       `;
       const insertedRows = await query(insertSql, [finalName, cleanPhone, estatus]);
+      return res.json({ success: true, action: 'created', client: insertedRows[0] });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Renombrar un contacto desde el Panel de Atención al Cliente
+app.post('/api/chats/:sessionId/rename', async (req, res) => {
+  const { sessionId } = req.params;
+  const { name } = req.body;
+  try {
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'El nombre es requerido.' });
+    }
+    if (sessionId.startsWith('web_')) {
+      return res.status(400).json({ error: 'Los clientes web no se pueden renombrar.' });
+    }
+
+    const cleanPhone = sessionId.replace(/\D/g, '');
+
+    // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
+    const clientQuery = `
+      SELECT id_cliente FROM clientes 
+      WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
+         OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+      LIMIT 1;
+    `;
+    const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
+
+    if (dbClient.length > 0) {
+      // Actualizar el nombre comercial del cliente existente
+      const updateSql = `
+        UPDATE clientes 
+        SET nombre = $1, fecha_actualizacion = NOW() 
+        WHERE id_cliente = $2 
+        RETURNING *;
+      `;
+      const updatedRows = await query(updateSql, [name.trim(), dbClient[0].id_cliente]);
+      return res.json({ success: true, action: 'updated', client: updatedRows[0] });
+    } else {
+      // Crear un cliente nuevo con estatus Prospecto y el nombre especificado
+      const insertSql = `
+        INSERT INTO clientes (
+          zona, nombre, telefono_1, estatus, vendedor, comentario, 
+          dias_credito, fecha_creacion, fecha_actualizacion
+        )
+        VALUES ('General', $1, $2, 'Prospecto', 'Bot/Sistema', 'Creado automáticamente al renombrar contacto en el chat', 0, NOW(), NOW())
+        RETURNING *;
+      `;
+      const insertedRows = await query(insertSql, [name.trim(), cleanPhone]);
       return res.json({ success: true, action: 'created', client: insertedRows[0] });
     }
   } catch (error: any) {

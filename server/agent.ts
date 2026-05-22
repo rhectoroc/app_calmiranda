@@ -462,6 +462,11 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   // Obtener el número limpio (solo dígitos)
   const cleanNumber = senderJid.split('@')[0].replace(/\D/g, '');
 
+  if (cleanNumber.length > 15) {
+    console.log(`⏭️ Ignorando mensaje de grupo/lista: ${cleanNumber}`);
+    return;
+  }
+
   // Clasificar emisor (Jefe o Cliente)
   const isBoss = BOSS_NUMBERS.includes(senderJid) || BOSS_NUMBERS.includes(cleanNumber);
   const chatType = isBoss ? 'boss' : 'client';

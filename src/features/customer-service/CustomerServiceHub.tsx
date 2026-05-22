@@ -9,7 +9,9 @@ import {
   AlertCircle,
   Check, 
   Phone,
-  ChevronDown
+  ChevronDown,
+  Edit2,
+  X
 } from 'lucide-react';
 
 const getStatusSelectClass = (estatus?: string) => {
@@ -44,6 +46,15 @@ export const CustomerServiceHub: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const activeChat = chats.find(c => c.id === selectedChatId) || null;
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+
+  // Resetear estado de edición de nombre al cambiar de chat o nombre
+  useEffect(() => {
+    setIsEditingName(false);
+    setEditedName(activeChat?.customerName || '');
+  }, [selectedChatId, activeChat?.customerName]);
 
   // Cargar chats desde la API
   const fetchChats = async (isFirst = false) => {
@@ -180,6 +191,41 @@ export const CustomerServiceHub: React.FC = () => {
       }));
     } catch (error) {
       console.error('Error en status change:', error);
+    }
+  };
+
+  // Renombrar el contacto
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedChatId || !editedName.trim() || activeChat?.id.startsWith('web_')) return;
+
+    try {
+      const res = await fetch(`/api/chats/${selectedChatId}/rename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editedName.trim() }),
+      });
+      if (!res.ok) throw new Error('Error al renombrar el contacto');
+      
+      const data = await res.json();
+      
+      // Actualizar el estado local de chats
+      setChats(prev => prev.map(c => {
+        if (c.id === selectedChatId) {
+          return { 
+            ...c, 
+            customerName: editedName.trim(),
+            isRegistered: true,
+            clientEstatus: data.client?.estatus || c.clientEstatus || 'Prospecto',
+            clientId: data.client?.id_cliente || c.clientId
+          };
+        }
+        return c;
+      }));
+      
+      setIsEditingName(false);
+    } catch (error) {
+      console.error('Error al renombrar contacto:', error);
     }
   };
 
@@ -329,9 +375,50 @@ export const CustomerServiceHub: React.FC = () => {
                   {activeChat.customerName ? activeChat.customerName.charAt(0) : '+'}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm text-white leading-tight">
-                    {activeChat.customerName}
-                  </h4>
+                  {isEditingName ? (
+                    <form onSubmit={handleRename} className="flex items-center gap-2 mb-1">
+                      <input
+                        type="text"
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white focus:outline-none focus:border-cal-emerald"
+                        autoFocus
+                      />
+                      <button
+                        type="submit"
+                        className="p-1 text-cal-emerald-light hover:text-cal-emerald cursor-pointer"
+                        title="Guardar"
+                      >
+                        <Check size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingName(false)}
+                        className="p-1 text-gray-400 hover:text-white cursor-pointer"
+                        title="Cancelar"
+                      >
+                        <X size={14} />
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-2 group mb-0.5">
+                      <h4 className="font-semibold text-sm text-white leading-tight">
+                        {activeChat.customerName}
+                      </h4>
+                      {!activeChat.id.startsWith('web_') && (
+                        <button
+                          onClick={() => {
+                            setEditedName(activeChat.customerName);
+                            setIsEditingName(true);
+                          }}
+                          className="p-1 text-gray-400 hover:text-white transition-opacity cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Editar nombre"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] text-gray-500 flex items-center gap-1">
                       <Phone size={10} />
