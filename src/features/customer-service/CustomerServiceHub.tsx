@@ -38,6 +38,7 @@ export const CustomerServiceHub: React.FC = () => {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'whatsapp' | 'web'>('all');
   const [replyText, setReplyText] = useState('');
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -117,10 +118,21 @@ export const CustomerServiceHub: React.FC = () => {
   }, [messages.length, selectedChatId]);
 
   // Filtrar chats
-  const filteredChats = chats.filter(c => 
-    c.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.phoneNumber.includes(searchQuery)
-  );
+  const filteredChats = chats.filter(c => {
+    const matchesSearch = 
+      c.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phoneNumber.includes(searchQuery);
+    
+    if (!matchesSearch) return false;
+    
+    if (activeTab === 'whatsapp') {
+      return c.channel === 'WhatsApp';
+    }
+    if (activeTab === 'web') {
+      return c.channel === 'Web';
+    }
+    return true;
+  });
 
   // Intervenir conversación (Toma de control humana)
   const handleTakeOver = async (chatId: string) => {
@@ -266,7 +278,7 @@ export const CustomerServiceHub: React.FC = () => {
       <div className="w-full md:w-80 border-r border-white/5 flex flex-col h-1/2 md:h-full shrink-0">
         
         {/* Search */}
-        <div className="p-4 border-b border-white/5 shrink-0">
+        <div className="p-4 border-b border-white/5 shrink-0 flex flex-col gap-3">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
             <input
@@ -276,6 +288,27 @@ export const CustomerServiceHub: React.FC = () => {
               placeholder="Buscar por cliente o teléfono..."
               className="w-full bg-white/5 border border-white/5 rounded-2xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all duration-300"
             />
+          </div>
+          
+          {/* Tab Filters */}
+          <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/5 shrink-0">
+            {(['all', 'whatsapp', 'web'] as const).map((tab) => {
+              const label = tab === 'all' ? 'Todos' : tab === 'whatsapp' ? 'WhatsApp' : 'Clientes Web';
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                    activeTab === tab
+                      ? 'bg-cal-emerald text-white shadow-sm'
+                      : 'bg-transparent text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -325,8 +358,8 @@ export const CustomerServiceHub: React.FC = () => {
                       </span>
                     )}
                     {chat.status === 'waiting_handover' && (
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-cal-gold-light bg-cal-gold/10 border-cal-gold/20 flex items-center gap-1">
-                        <AlertCircle size={10} /> Espera
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-red-500 bg-red-500/10 border-red-500/30 flex items-center gap-1 animate-pulse">
+                        <AlertCircle size={10} /> Requiere Asesor
                       </span>
                     )}
                     {chat.status === 'agent_active' && (
@@ -468,9 +501,9 @@ export const CustomerServiceHub: React.FC = () => {
 
             {/* Status Warning Banner */}
             {activeChat.status === 'waiting_handover' && (
-              <div className="bg-cal-gold/10 border-b border-cal-gold/20 px-4 py-2.5 text-xs text-cal-gold-light flex items-center gap-2 font-medium shrink-0 animate-pulse">
-                <AlertCircle size={14} className="shrink-0" />
-                <span>El cliente requiere atención humana. Presiona "Intervenir Conversación" para responder.</span>
+              <div className="bg-red-500/10 border-b border-red-500/20 px-4 py-2.5 text-xs text-red-400 flex items-center gap-2 font-semibold shrink-0 animate-pulse">
+                <AlertCircle size={14} className="shrink-0 text-red-500" />
+                <span>El cliente requiere atención humana (Requiere Asesor). Presiona "Intervenir Conversación" para responder.</span>
               </div>
             )}
 

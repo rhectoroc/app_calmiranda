@@ -52,6 +52,26 @@ export async function sendWhatsAppMessage(to, text) {
         console.error(`❌ Error enviando WhatsApp por Evolution API:`, error.message || error);
     }
 }
+// Helper para detectar si el cliente solicita atención humana
+export function detectHandoffRequest(text) {
+    if (!text)
+        return false;
+    const normalized = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const keywords = [
+        'asesor',
+        'humano',
+        'operador',
+        'agente',
+        'colaborador',
+        'hablar con alguien',
+        'atencion humana',
+        'persona',
+        'hablar con una persona',
+        'soporte tecnico',
+        'contacte directamente'
+    ];
+    return keywords.some(keyword => normalized.includes(keyword));
+}
 // ----------------------------------------------------
 // DEFINICIÓN DE HERRAMIENTAS (TOOLS)
 // ----------------------------------------------------
@@ -353,7 +373,7 @@ async function executeTool(name, args, sessionId) {
                 return 'Correo enviado de manera directa.';
             }
             case 'activar_handoff': {
-                await saveSetting(`bot_status_${sessionId}`, 'agent_active');
+                await saveSetting(`bot_status_${sessionId}`, 'waiting_handover');
                 // Intentar enviar notificación al grupo de asesores humanos
                 try {
                     const groupJid = await getSetting('advisors_group_jid', null);
@@ -507,12 +527,6 @@ export async function handleWebhookMessage(payload) {
         // Eliminar del caché después de 5 minutos
         setTimeout(() => processedMessageIds.delete(messageId), 300000);
     }
-    // 3. Verificar Handoff (Si el bot está silenciado para este número)
-    const botStatus = await getSetting(`bot_status_${cleanNumber}`, 'bot_active');
-    if (botStatus === 'agent_active') {
-        console.log(`🤫 Bot silenciado para ${cleanNumber} (Handoff activo).`);
-        return;
-    }
     // Buscar si el cliente existe en la base de datos de CalMiranda
     let clientExists = false;
     let clientName = pushName || 'Cliente';
@@ -561,6 +575,21 @@ export async function handleWebhookMessage(payload) {
     }
     else {
         await saveClientChatMessage(cleanNumber, 'user', messageText, pushName);
+    }
+    // 3. Verificar Handoff (Si el bot está silenciado para este número)
+    const botStatus = await getSetting(`bot_status_${cleanNumber}`, 'bot_active');
+    if (botStatus === 'agent_active' || botStatus === 'waiting_handover') {
+        console.log(`🤫 Bot silenciado para ${cleanNumber} (Handoff activo/espera: ${botStatus}). Mensaje guardado en BD para atención humana.`);
+        return;
+    }
+    // 4. Analizar si el mensaje entrante solicita asesor humano directamente
+    if (!isBoss) {
+        const hasHandoffRequest = detectHandoffRequest(messageText);
+        if (hasHandoffRequest) {
+            console.log(`🔍 Palabra clave de handoff detectada en mensaje de WhatsApp de ${cleanNumber}. Activando handoff automático.`);
+            await executeTool('activar_handoff', {}, cleanNumber);
+            return; // Detener ejecución para que el bot no responda por WhatsApp
+        }
     }
     // Si el contacto es un empleado, transportista o se configuró para ignorar el bot, se omite respuesta de IA
     const ignoreStatuses = ['Empleado', 'Transportista', 'Ignorar Bot'];

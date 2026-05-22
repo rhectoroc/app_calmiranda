@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
 import bcryptjs from 'bcryptjs';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
-import { handleWebhookMessage, sendWhatsAppMessage } from './agent.js';
+import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
 import { query, getSetting, saveSetting, saveClientChatMessage, initDb } from './db.js';
 // Resolver __dirname en módulos ES
@@ -726,13 +726,20 @@ app.post('/api/web-chatbot', async (req, res) => {
         if (globalBotDisabled === true || String(globalBotDisabled) === 'true') {
             return res.json({ output: 'El chatbot está temporalmente inactivo. Por favor, comunícate con nosotros por nuestros teléfonos. ¡Vamos positivos!' });
         }
-        // 2. Verificar Handoff (si un agente humano ha tomado control de esta conversación)
-        const botStatus = await getSetting(`bot_status_${finalSessionId}`, 'bot_active');
-        if (botStatus === 'agent_active') {
-            return res.json({ output: 'Un asesor humano ha intervenido la conversación. En breve le responderemos.' });
-        }
-        // 3. Registrar mensaje del usuario en la base de datos (chat_type: 'client')
+        // 2. Registrar mensaje del usuario en la base de datos (chat_type: 'client')
         await saveClientChatMessage(finalSessionId, 'user', chatInput);
+        // 3. Verificar Handoff (si un agente humano ha tomado control de esta conversación)
+        const botStatus = await getSetting(`bot_status_${finalSessionId}`, 'bot_active');
+        if (botStatus === 'agent_active' || botStatus === 'waiting_handover') {
+            return res.json({ output: '', handoff: true });
+        }
+        // 3.5. Analizar si el mensaje entrante solicita asesor humano directamente
+        if (detectHandoffRequest(chatInput)) {
+            await saveSetting(`bot_status_${finalSessionId}`, 'waiting_handover');
+            const transferMessage = 'Entendido, le estoy transfiriendo con un asesor humano. Por favor espere un momento...';
+            await saveClientChatMessage(finalSessionId, 'bot', transferMessage);
+            return res.json({ output: transferMessage, handoff: true });
+        }
         // 4. Cargar el historial reciente de chat (últimos 10 mensajes)
         const sql = `
       SELECT sender, message_text as text 
@@ -851,6 +858,11 @@ Occasionally and naturally use quotes from Spanish-speaking thinkers, adapted to
         const botReply = response.choices[0].message.content || '';
         // 9. Guardar la respuesta del bot en base de datos (chat_type: 'client')
         await saveClientChatMessage(finalSessionId, 'bot', botReply);
+        // ANALIZAR SI SE REQUIERE HANDOFF DEBIDO A LA RESPUESTA DEL BOT
+        if (detectHandoffRequest(botReply)) {
+            await saveSetting(`bot_status_${finalSessionId}`, 'waiting_handover');
+            console.log(`⚠️ Handoff detectado en web-chatbot por respuesta de bot para ${finalSessionId}. Status cambiado a waiting_handover.`);
+        }
         res.json({ output: botReply });
     }
     catch (error) {
