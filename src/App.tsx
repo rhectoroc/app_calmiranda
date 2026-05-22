@@ -7,6 +7,7 @@ import { DashboardView } from './features/dashboard/DashboardView';
 import { CustomerServiceHub } from './features/customer-service/CustomerServiceHub';
 import { ClientesView } from './features/clientes/ClientesView';
 import { SettingsView } from './features/settings/SettingsView';
+import { UsuariosView } from './features/users/UsuariosView';
 
 // Componente para proteger rutas según autenticación general
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -23,7 +24,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   
-  if (user?.role !== 'admin') {
+  if (user?.role !== 'admin' && user?.role !== 'superadmin') {
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -73,6 +74,17 @@ function App() {
               <ProtectedRoute>
                 <AdminRoute>
                   <SettingsView />
+                </AdminRoute>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/usuarios" 
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <UsuariosView />
                 </AdminRoute>
               </ProtectedRoute>
             } 

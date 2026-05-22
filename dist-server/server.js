@@ -4,6 +4,7 @@ import path from 'path';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
+import bcryptjs from 'bcryptjs';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
@@ -69,6 +70,131 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
     catch (error) {
         res.status(500).send(`Error guardando tokens: ${error.message}`);
+    }
+});
+// ----------------------------------------------------
+// ENDPOINTS DE AUTENTICACIÓN Y GESTIÓN DE USUARIOS
+// ----------------------------------------------------
+// POST /api/auth/login
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Usuario (email) y contraseña son requeridos.' });
+    }
+    const emailLower = username.toLowerCase().trim();
+    try {
+        const rows = await query('SELECT id, email, password_hash, nombre, rol FROM users WHERE email = $1', [emailLower]);
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Credenciales inválidas.' });
+        }
+        const dbUser = rows[0];
+        const passwordMatch = await bcryptjs.compare(password, dbUser.password_hash);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Credenciales inválidas.' });
+        }
+        res.json({
+            name: dbUser.nombre,
+            username: dbUser.email,
+            role: dbUser.rol
+        });
+    }
+    catch (error) {
+        console.error('❌ Error en login:', error.message || error);
+        res.status(500).json({ error: error.message || 'Error interno del servidor.' });
+    }
+});
+// GET /api/users
+app.get('/api/users', async (req, res) => {
+    try {
+        const rows = await query('SELECT id, email, nombre, rol, created_at FROM users ORDER BY nombre ASC');
+        res.json(rows);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// POST /api/users
+app.post('/api/users', async (req, res) => {
+    const { nombre, email, password, rol } = req.body;
+    if (!nombre || !email || !password || !rol) {
+        return res.status(400).json({ error: 'Todos los campos son requeridos.' });
+    }
+    const emailLower = email.toLowerCase().trim();
+    try {
+        // Verificar si ya existe
+        const exists = await query('SELECT id FROM users WHERE email = $1', [emailLower]);
+        if (exists.length > 0) {
+            return res.status(400).json({ error: 'El email ya está registrado.' });
+        }
+        // Hashear contraseña
+        const passwordHash = await bcryptjs.hash(password, 10);
+        const result = await query('INSERT INTO users (nombre, email, password_hash, rol, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id, nombre, email, rol, created_at', [nombre.trim(), emailLower, passwordHash, rol]);
+        res.status(201).json(result[0]);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// PUT /api/users/:id
+app.put('/api/users/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, email, password, rol } = req.body;
+    const currentEmail = req.headers['x-current-user-email'];
+    if (!nombre || !email || !rol) {
+        return res.status(400).json({ error: 'Nombre, email y rol son requeridos.' });
+    }
+    const emailLower = email.toLowerCase().trim();
+    try {
+        // Obtener datos actuales del usuario a actualizar
+        const userRows = await query('SELECT email, rol FROM users WHERE id = $1', [id]);
+        if (userRows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+        const existingUser = userRows[0];
+        // Verificar si el email editado ya está en uso por otro ID
+        const exists = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [emailLower, id]);
+        if (exists.length > 0) {
+            return res.status(400).json({ error: 'El email ya está en uso por otro usuario.' });
+        }
+        // Protección autolock: no dejar que el usuario se cambie su propio rol
+        if (existingUser.email === currentEmail && rol !== existingUser.rol) {
+            return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
+        }
+        let result;
+        if (password && password.trim() !== '') {
+            // Hashear nueva contraseña
+            const passwordHash = await bcryptjs.hash(password, 10);
+            result = await query('UPDATE users SET nombre = $1, email = $2, password_hash = $3, rol = $4, updated_at = NOW() WHERE id = $5 RETURNING id, nombre, email, rol, created_at', [nombre.trim(), emailLower, passwordHash, rol, id]);
+        }
+        else {
+            result = await query('UPDATE users SET nombre = $1, email = $2, rol = $3, updated_at = NOW() WHERE id = $4 RETURNING id, nombre, email, rol, created_at', [nombre.trim(), emailLower, rol, id]);
+        }
+        res.json(result[0]);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// DELETE /api/users/:id
+app.delete('/api/users/:id', async (req, res) => {
+    const { id } = req.params;
+    const currentEmail = req.headers['x-current-user-email'];
+    try {
+        // Obtener datos actuales del usuario a eliminar
+        const userRows = await query('SELECT email FROM users WHERE id = $1', [id]);
+        if (userRows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+        const userToDelete = userRows[0];
+        // Protección autolock: no dejar que el usuario se elimine a sí mismo
+        if (userToDelete.email === currentEmail) {
+            return res.status(400).json({ error: 'No puedes eliminar tu propio usuario.' });
+        }
+        await query('DELETE FROM users WHERE id = $1', [id]);
+        res.json({ status: 'ok', message: 'Usuario eliminado correctamente.' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 // ----------------------------------------------------

@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut, 
   Menu, 
-  X
+  X,
+  UserCog
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -77,25 +78,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       to: '/dashboard',
       label: 'Dashboard',
       icon: <LayoutDashboard size={20} />,
-      roles: ['admin', 'employee']
+      roles: ['superadmin', 'admin', 'operador']
     },
     {
       to: '/customer-service',
       label: 'Atención Cliente',
       icon: <MessageSquare size={20} />,
-      roles: ['admin', 'employee']
+      roles: ['superadmin', 'admin', 'operador']
     },
     {
       to: '/clientes',
       label: 'Clientes',
       icon: <Users size={20} />,
-      roles: ['admin', 'employee']
+      roles: ['superadmin', 'admin', 'operador']
+    },
+    {
+      to: '/usuarios',
+      label: 'Usuarios',
+      icon: <UserCog size={20} />,
+      roles: ['superadmin', 'admin']
     },
     {
       to: '/settings',
       label: 'Configuración',
       icon: <Settings size={20} />,
-      roles: ['admin'] // Solo administradores
+      roles: ['superadmin', 'admin']
     }
   ];
 
@@ -168,7 +175,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 Online
               </span>
             </div>
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <div className="flex items-center justify-between text-xs border-t border-white/5 pt-2 mt-1">
                 <span className="text-gray-500 font-medium">Estado Bot</span>
                 <button 
@@ -219,11 +226,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </span>
                 <span className={`
                   inline-block text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full mt-1 border
-                  ${user.role === 'admin' 
-                    ? 'bg-cal-emerald/15 text-cal-emerald-light border-cal-emerald/30' 
+                  ${user.role === 'superadmin'
+                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                    : user.role === 'admin'
+                    ? 'bg-cal-emerald/15 text-cal-emerald-light border-cal-emerald/30'
                     : 'bg-cal-sand/15 text-cal-sand border-cal-sand/30'}
                 `}>
-                  {user.role === 'admin' ? 'Administrador' : 'Empleado'}
+                  {user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : 'Operador'}
                 </span>
               </div>
             </div>

@@ -20,7 +20,7 @@ import {
 
 export const DashboardView: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   const [inventory] = useState<ProductStock[]>(initialInventory);
   const [plants] = useState<PlantProduction[]>(initialPlants);

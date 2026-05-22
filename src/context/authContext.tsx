@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 export interface User {
   name: string;
   username: string;
-  role: 'admin' | 'employee';
+  role: 'superadmin' | 'admin' | 'operador';
 }
 
 interface AuthContextType {
@@ -39,12 +39,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const u = username.toLowerCase().trim();
 
-    // Cuenta de administrador principal (Hector Ollarves)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password })
+      });
+
+      if (res.ok) {
+        const loggedUser: User = await res.json();
+        setUser(loggedUser);
+        localStorage.setItem('calmiranda_session', JSON.stringify(loggedUser));
+        return true;
+      }
+    } catch (err) {
+      console.error('Error logueando contra la BD, usando fallback:', err);
+    }
+
+    // Cuenta de administrador principal (Hector Ollarves) - Fallback de desarrollo
     if (u === 'rhectoroc@gmail.com' && password === '987654321') {
       const adminUser: User = {
         name: 'Hector Ollarves',
         username: 'rhectoroc@gmail.com',
-        role: 'admin',
+        role: 'superadmin',
       };
       setUser(adminUser);
       localStorage.setItem('calmiranda_session', JSON.stringify(adminUser));

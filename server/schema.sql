@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR UNIQUE NOT NULL,
     password_hash VARCHAR NOT NULL,
     nombre VARCHAR NOT NULL,
-    rol VARCHAR NOT NULL CHECK (rol IN ('admin', 'empleado')) DEFAULT 'empleado',
+    rol VARCHAR NOT NULL CHECK (rol IN ('admin', 'superadmin', 'operador')) DEFAULT 'operador',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 8. DATOS SEMILLA (SEED DATA)
 -- Registra o actualiza el usuario administrador por defecto
 INSERT INTO users (email, password_hash, nombre, rol)
-VALUES ('rhectoroc@gmail.com', '$2b$10$8VHYaB7PROf/yJJ3PIfZFeNKayqOCZ5bi1Z/hB92XcUKeSzYBrZYC', 'Hector Ollarves', 'admin')
+VALUES ('rhectoroc@gmail.com', '$2b$10$8VHYaB7PROf/yJJ3PIfZFeNKayqOCZ5bi1Z/hB92XcUKeSzYBrZYC', 'Hector Ollarves', 'superadmin')
 ON CONFLICT (email) DO UPDATE 
 SET nombre = EXCLUDED.nombre,
     password_hash = EXCLUDED.password_hash,
@@ -112,3 +112,15 @@ SET value = EXCLUDED.value;
 -- 9. MIGRACIONES DE ACTUALIZACIÓN
 -- Asegurar que la columna push_name existe en chat_messages para guardar el nombre de perfil de WhatsApp
 ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS push_name VARCHAR;
+
+-- 10. MIGRACIONES DE ROLES DE USUARIOS
+-- Cambiar el rol por defecto en la tabla users
+ALTER TABLE users ALTER COLUMN rol SET DEFAULT 'operador';
+
+-- Actualizar roles heredados de 'empleado' a 'operador'
+UPDATE users SET rol = 'operador' WHERE rol = 'empleado';
+
+-- Reemplazar la restricción check anterior por la nueva que admite superadmin y operador
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_rol_check;
+ALTER TABLE users ADD CONSTRAINT users_rol_check CHECK (rol IN ('admin', 'superadmin', 'operador'));
+
