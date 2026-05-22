@@ -91,29 +91,19 @@ export async function saveSetting(key: string, value: any): Promise<void> {
 // MÉTODOS PARA HISTORIAL DE CHATS
 // ----------------------------------------------------
 export async function saveClientChatMessage(sessionId: string, sender: 'user' | 'bot' | 'agent', text: string): Promise<void> {
-  const messageObj = {
-    sender,
-    text,
-    timestamp: new Date().toISOString()
-  };
   const sql = `
-    INSERT INTO n8n_chat_histories (session_id, message)
-    VALUES ($1, $2);
+    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
+    VALUES ($1, $2, $3, 'client', NOW());
   `;
-  await query(sql, [sessionId, JSON.stringify(messageObj)]);
+  await query(sql, [sessionId, sender, text]);
 }
 
 export async function saveBossChatMessage(sessionId: string, sender: 'user' | 'bot' | 'agent', text: string): Promise<void> {
-  const messageObj = {
-    sender,
-    text,
-    timestamp: new Date().toISOString()
-  };
   const sql = `
-    INSERT INTO chat_boss (session_id, message, created_at)
-    VALUES ($1, $2, NOW());
+    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
+    VALUES ($1, $2, $3, 'boss', NOW());
   `;
-  await query(sql, [sessionId, JSON.stringify(messageObj)]);
+  await query(sql, [sessionId, sender, text]);
 }
 
 // ----------------------------------------------------

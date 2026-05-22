@@ -148,18 +148,21 @@ app.get('/api/chats', async (req, res) => {
   try {
     const sql = `
       WITH latest_messages AS (
-        SELECT DISTINCT ON (session_id) session_id, id, message
-        FROM n8n_chat_histories
+        SELECT DISTINCT ON (session_id) session_id, id, sender, message_text, created_at
+        FROM chat_messages
+        WHERE chat_type = 'client'
         ORDER BY session_id, id DESC
       )
-      SELECT session_id, message FROM latest_messages ORDER BY id DESC LIMIT 50;
+      SELECT session_id, sender, message_text, created_at 
+      FROM latest_messages 
+      ORDER BY id DESC 
+      LIMIT 50;
     `;
     const rows = await query(sql);
     
     const chats = [];
     for (const r of rows) {
       const sessionId = r.session_id;
-      const lastMsg = r.message;
       const cleanPhone = sessionId.replace(/\D/g, '');
 
       // Buscar si el cliente existe en la tabla comercial clientes
@@ -180,8 +183,8 @@ app.get('/api/chats', async (req, res) => {
         id: sessionId,
         customerName,
         phoneNumber: cleanPhone,
-        lastMessage: lastMsg.text,
-        lastMessageTime: lastMsg.timestamp ? new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hace poco',
+        lastMessage: r.message_text,
+        lastMessageTime: r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hace poco',
         channel: 'WhatsApp',
         status: botStatus // 'bot_active' | 'agent_active' | 'waiting_handover'
       });
@@ -199,16 +202,17 @@ app.get('/api/chats/:sessionId/messages', async (req, res) => {
   const { sessionId } = req.params;
   try {
     const sql = `
-      SELECT message FROM n8n_chat_histories 
-      WHERE session_id = $1 
+      SELECT id, sender, message_text, created_at 
+      FROM chat_messages 
+      WHERE session_id = $1 AND chat_type = 'client'
       ORDER BY id ASC;
     `;
     const rows = await query(sql, [sessionId]);
-    const messages = rows.map((r, i) => ({
-      id: i.toString(),
-      sender: r.message.sender === 'bot' || r.message.sender === 'agent' ? 'agent' : 'user',
-      text: r.message.text,
-      timestamp: r.message.timestamp ? new Date(r.message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+    const messages = rows.map((r) => ({
+      id: r.id.toString(),
+      sender: r.sender === 'bot' || r.sender === 'agent' ? 'agent' : 'user',
+      text: r.message_text,
+      timestamp: r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
     }));
     res.json(messages);
   } catch (error: any) {

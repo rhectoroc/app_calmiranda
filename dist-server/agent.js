@@ -452,16 +452,16 @@ export async function handleWebhookMessage(payload) {
     // 5. Cargar historial de chat de la base de datos
     let history = [];
     try {
-        if (isBoss) {
-            const sql = `SELECT message FROM chat_boss WHERE session_id = $1 ORDER BY created_at DESC LIMIT 10`;
-            const rows = await query(sql, [cleanNumber]);
-            history = rows.map(r => r.message).reverse();
-        }
-        else {
-            const sql = `SELECT message FROM n8n_chat_histories WHERE session_id = $1 ORDER BY id DESC LIMIT 10`;
-            const rows = await query(sql, [cleanNumber]);
-            history = rows.map(r => r.message).reverse();
-        }
+        const chatType = isBoss ? 'boss' : 'client';
+        const sql = `
+      SELECT sender, message_text as text, created_at as timestamp 
+      FROM chat_messages 
+      WHERE session_id = $1 AND chat_type = $2 
+      ORDER BY id DESC 
+      LIMIT 10
+    `;
+        const rows = await query(sql, [cleanNumber, chatType]);
+        history = rows.reverse();
     }
     catch (error) {
         console.error('⚠️ Error cargando historial de chat de Postgres:', error);
@@ -483,15 +483,38 @@ export async function handleWebhookMessage(payload) {
     const messages = [
         { role: 'system', content: systemMessage }
     ];
-    // Incorporar el historial
+    // Incorporar el historial con validación robusta
     for (const msg of history) {
-        messages.push({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.text
-        });
+        if (!msg)
+            continue;
+        // Determinar el rol
+        let role = 'assistant';
+        if (msg.sender === 'user' || msg.role === 'user') {
+            role = 'user';
+        }
+        // Determinar el contenido de texto de forma flexible
+        let text = '';
+        if (typeof msg.text === 'string') {
+            text = msg.text.trim();
+        }
+        else if (typeof msg.message === 'string') {
+            text = msg.message.trim();
+        }
+        else if (typeof msg.content === 'string') {
+            text = msg.content.trim();
+        }
+        // Evitar añadir mensajes vacíos que rompen la API de DeepSeek (Error 400)
+        if (text) {
+            messages.push({
+                role: role,
+                content: text
+            });
+        }
     }
     // Mensaje actual
-    messages.push({ role: 'user', content: messageText });
+    if (messageText && typeof messageText === 'string') {
+        messages.push({ role: 'user', content: messageText.trim() });
+    }
     // 8. Bucle del Agente DeepSeek (con soporte de llamadas a herramientas)
     let botReply = '';
     try {
@@ -531,7 +554,12 @@ export async function handleWebhookMessage(payload) {
     }
     catch (error) {
         console.error('❌ Error en el bucle del agente DeepSeek:', error.message || error);
-        botReply = 'Jefe, disculpe, he tenido un problema interno al procesar su solicitud. El equipo técnico ha sido notificado.';
+        if (isBoss) {
+            botReply = 'Jefe, disculpe, he tenido un problema interno al procesar su solicitud. El equipo técnico ha sido notificado.';
+        }
+        else {
+            botReply = 'Disculpe, he tenido un problema interno al procesar su solicitud. El equipo técnico ha sido notificado.';
+        }
     }
     if (botReply) {
         // 9. Enviar la respuesta por WhatsApp

@@ -4,8 +4,6 @@
 -- ===========================================================================
 
 -- 1. SECUENCIAS EXISTENTES
-CREATE SEQUENCE IF NOT EXISTS chat_boss_id_seq;
-CREATE SEQUENCE IF NOT EXISTS n8n_chat_histories_id_seq;
 CREATE SEQUENCE IF NOT EXISTS clientes_id_cliente_seq;
 
 -- 2. TABLA: clientes
@@ -38,24 +36,55 @@ CREATE TABLE IF NOT EXISTS clientes (
     CONSTRAINT clientes_pkey PRIMARY KEY (id_cliente)
 );
 
--- 3. TABLA: chat_boss
--- Registro histórico de conversaciones del agente con los administradores (Jefes).
-CREATE TABLE IF NOT EXISTS chat_boss (
-    id INTEGER NOT NULL DEFAULT nextval('chat_boss_id_seq'::regclass),
+-- 3. TABLA: chat_messages
+-- Registro histórico unificado de conversaciones (tanto para clientes como para administradores/jefes).
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id SERIAL PRIMARY KEY,
     session_id VARCHAR NOT NULL,
-    message JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chat_boss_pkey PRIMARY KEY (id)
+    sender VARCHAR NOT NULL, -- 'user', 'bot', 'agent'
+    message_text TEXT NOT NULL,
+    chat_type VARCHAR NOT NULL DEFAULT 'client', -- 'client' o 'boss'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. TABLA: n8n_chat_histories
--- Historial heredado de chats del flujo de n8n para el bot de atención a clientes.
-CREATE TABLE IF NOT EXISTS n8n_chat_histories (
-    id INTEGER NOT NULL DEFAULT nextval('n8n_chat_histories_id_seq'::regclass),
-    session_id VARCHAR NOT NULL,
-    message JSONB NOT NULL,
-    CONSTRAINT n8n_chat_histories_pkey PRIMARY KEY (id)
-);
+-- Crear índices para optimizar búsquedas frecuentes
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_chat_type ON chat_messages(chat_type);
+
+-- Migración segura de datos heredados desde las tablas antiguas (chat_boss y n8n_chat_histories)
+DO $$
+BEGIN
+    -- Solo realizar si la tabla unificada existe y está vacía
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'chat_messages') THEN
+        IF (SELECT COUNT(*) FROM chat_messages) = 0 THEN
+            -- 1. Migración segura de chat_boss
+            IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'chat_boss') THEN
+                INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
+                SELECT 
+                    session_id, 
+                    COALESCE(message->>'sender', 'user'), 
+                    COALESCE(message->>'text', ''), 
+                    'boss', 
+                    created_at
+                FROM chat_boss;
+                RAISE NOTICE 'Migrados datos de chat_boss a la tabla unificada chat_messages';
+            END IF;
+            
+            -- 2. Migración segura de n8n_chat_histories
+            IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'n8n_chat_histories') THEN
+                INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
+                SELECT 
+                    session_id, 
+                    COALESCE(message->>'sender', 'user'), 
+                    COALESCE(message->>'text', ''), 
+                    'client', 
+                    COALESCE((message->>'timestamp')::timestamp with time zone, NOW())
+                FROM n8n_chat_histories;
+                RAISE NOTICE 'Migrados datos de n8n_chat_histories a la tabla unificada chat_messages';
+            END IF;
+        END IF;
+    END IF;
+END $$;
 
 -- ===========================================================================
 -- TABLAS ADICIONALES PARA LA INTEGRACIÓN DE LA APP WEB Y BACKEND
