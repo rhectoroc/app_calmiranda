@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
-import { query, getSetting, saveSetting, searchClientes } from './db.js';
+import { query, getSetting, saveSetting, searchClientes, saveClientChatMessage } from './db.js';
 
 // Resolver __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
@@ -210,7 +210,7 @@ app.get('/api/chats/:sessionId/messages', async (req, res) => {
     const rows = await query(sql, [sessionId]);
     const messages = rows.map((r) => ({
       id: r.id.toString(),
-      sender: r.sender === 'bot' || r.sender === 'agent' ? 'agent' : 'user',
+      sender: r.sender,
       text: r.message_text,
       timestamp: r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
     }));
@@ -223,8 +223,14 @@ app.get('/api/chats/:sessionId/messages', async (req, res) => {
 // Toma de control humana (Handoff)
 app.post('/api/chats/:sessionId/takeover', async (req, res) => {
   const { sessionId } = req.params;
+  const { agentName } = req.body;
   try {
     await saveSetting(`bot_status_${sessionId}`, 'agent_active');
+    
+    // Registrar mensaje de sistema en el historial de chat
+    const name = agentName || 'un agente';
+    await saveClientChatMessage(sessionId, 'agent', `⚠️ [Sistema] El agente ${name} ha tomado control de la conversación.`);
+    
     res.json({ status: 'ok', message: 'Handoff activado. Bot de IA pausado para este cliente.' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -236,6 +242,10 @@ app.post('/api/chats/:sessionId/release', async (req, res) => {
   const { sessionId } = req.params;
   try {
     await saveSetting(`bot_status_${sessionId}`, 'bot_active');
+    
+    // Registrar mensaje de sistema en el historial de chat
+    await saveClientChatMessage(sessionId, 'agent', `⚠️ [Sistema] El bot Diamantín ha retomado el control de la conversación.`);
+    
     res.json({ status: 'ok', message: 'Handoff desactivado. Bot de IA reactivado.' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -255,6 +265,8 @@ app.post('/api/chats/:sessionId/send', async (req, res) => {
     await sendWhatsAppMessage(sessionId, text);
     
     // Registrar mensaje en la base de datos
+    await saveClientChatMessage(sessionId, 'agent', text);
+    
     res.json({ status: 'ok', message: 'Mensaje enviado y registrado.' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
