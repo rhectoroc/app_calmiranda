@@ -25,8 +25,9 @@ const openai = new OpenAI({
 // Configurar CORS
 app.use(cors());
 
-// Middleware para parsear JSON
-app.use(express.json());
+// Middleware para parsear JSON con límite incrementado para webhooks de gran tamaño
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ----------------------------------------------------
 // ENDPOINTS DE AUTENTICACIÓN GOOGLE OAUTH
