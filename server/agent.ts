@@ -514,6 +514,13 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
     await saveClientChatMessage(cleanNumber, 'user', messageText);
   }
 
+  // Verificar si el bot está deshabilitado globalmente
+  const globalBotDisabled = await getSetting('global_bot_disabled', false);
+  if (globalBotDisabled === true || String(globalBotDisabled) === 'true') {
+    console.log(`📴 El bot está deshabilitado globalmente. Mensaje de ${cleanNumber} guardado en BD, pero se omite la respuesta automática.`);
+    return;
+  }
+
   // 6. Obtener Prompts personalizados (de app_settings o por defecto)
   const defaultBotPrompt = `PROMPT DE IDENTIDAD Y PROPÓSITO
 

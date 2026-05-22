@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/authContext';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
@@ -19,6 +19,50 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [botDisabled, setBotDisabled] = useState(false);
+
+  useEffect(() => {
+    const fetchBotStatus = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setBotDisabled(!!data.globalBotDisabled);
+        }
+      } catch (err) {
+        console.error('Error fetching bot status:', err);
+      }
+    };
+    fetchBotStatus();
+
+    const handleStatusChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail !== undefined) {
+        setBotDisabled(customEvent.detail);
+      }
+    };
+    window.addEventListener('bot-status-changed', handleStatusChange);
+    return () => window.removeEventListener('bot-status-changed', handleStatusChange);
+  }, []);
+
+  const toggleBot = async () => {
+    const newStatus = !botDisabled;
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ globalBotDisabled: newStatus })
+      });
+      if (res.ok) {
+        setBotDisabled(newStatus);
+        window.dispatchEvent(new CustomEvent('bot-status-changed', { detail: newStatus }));
+      } else {
+        alert('Error al cambiar el estado del bot.');
+      }
+    } catch (err) {
+      console.error('Error toggling bot status:', err);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -121,6 +165,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 Online
               </span>
             </div>
+            {user?.role === 'admin' && (
+              <div className="flex items-center justify-between text-xs border-t border-white/5 pt-2 mt-1">
+                <span className="text-gray-500 font-medium">Estado Bot</span>
+                <button 
+                  onClick={toggleBot}
+                  className={`px-2.5 py-1 rounded-full font-bold uppercase tracking-wide text-[10px] cursor-pointer transition-colors duration-300 ${
+                    botDisabled 
+                      ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/25' 
+                      : 'bg-cal-emerald/10 text-cal-emerald-light border border-cal-emerald/20 hover:bg-cal-emerald/25'
+                  }`}
+                >
+                  {botDisabled ? 'Inactivo' : 'Activo'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Navigation Links */}

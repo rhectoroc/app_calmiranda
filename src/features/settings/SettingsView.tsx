@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, Save, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Bot, Save, CheckCircle, ShieldAlert, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
   // Prompts de IA (se mantiene assistantPrompt en estado interno para persistencia)
   const [botPrompt, setBotPrompt] = useState('');
   const [assistantPrompt, setAssistantPrompt] = useState('');
+  const [globalBotDisabled, setGlobalBotDisabled] = useState(false);
 
   // Estados visuales
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -20,13 +21,48 @@ export const SettingsView: React.FC = () => {
             if (data.prompts.bot !== undefined) setBotPrompt(data.prompts.bot);
             if (data.prompts.assistant !== undefined) setAssistantPrompt(data.prompts.assistant);
           }
+          if (data.globalBotDisabled !== undefined) {
+            setGlobalBotDisabled(!!data.globalBotDisabled);
+          }
         }
       } catch (error) {
         console.error('Error cargando configuraciones del servidor:', error);
       }
     };
     fetchSettings();
+
+    const handleStatusChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail !== undefined) {
+        setGlobalBotDisabled(customEvent.detail);
+      }
+    };
+    window.addEventListener('bot-status-changed', handleStatusChange);
+    return () => window.removeEventListener('bot-status-changed', handleStatusChange);
   }, []);
+
+  const handleToggleBot = async () => {
+    const nextVal = !globalBotDisabled;
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          globalBotDisabled: nextVal
+        })
+      });
+      if (res.ok) {
+        setGlobalBotDisabled(nextVal);
+        window.dispatchEvent(new CustomEvent('bot-status-changed', { detail: nextVal }));
+      } else {
+        alert('Error al actualizar el estado del bot.');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +102,42 @@ export const SettingsView: React.FC = () => {
         <p className="text-gray-400 text-sm">
           Administración de instrucciones y reglas de negocio del bot de atención al cliente Diamantín.
         </p>
+      </div>
+
+      {/* Bot Global Status Card */}
+      <div className="glass rounded-3xl p-6 border border-white/5 flex items-center justify-between gap-6">
+        <div className="flex flex-col gap-1 min-w-0">
+          <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
+            <span className={`inline-block w-2.5 h-2.5 rounded-full ${globalBotDisabled ? 'bg-red-500 animate-pulse' : 'bg-cal-emerald animate-pulse'}`} />
+            Estado del Chatbot: {globalBotDisabled ? 'Desactivado' : 'Activo'}
+          </h3>
+          <p className="text-xs text-gray-400 leading-normal">
+            {globalBotDisabled 
+              ? 'El bot está apagado. Los mensajes entrantes se guardarán en base de datos para atención humana pero no se enviarán respuestas automáticas por IA.' 
+              : 'El bot está activo y responderá automáticamente en WhatsApp a tus clientes utilizando DeepSeek.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggleBot}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 border shrink-0 ${
+            globalBotDisabled 
+              ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/25 shadow-md shadow-red-500/5' 
+              : 'bg-cal-emerald/10 hover:bg-cal-emerald/20 text-cal-emerald-light border-cal-emerald/25 shadow-md shadow-cal-emerald/5'
+          }`}
+        >
+          {globalBotDisabled ? (
+            <>
+              <ToggleLeft size={16} />
+              <span>Encender Bot</span>
+            </>
+          ) : (
+            <>
+              <ToggleRight size={16} />
+              <span>Apagar Bot</span>
+            </>
+          )}
+        </button>
       </div>
 
       {saveSuccess && (

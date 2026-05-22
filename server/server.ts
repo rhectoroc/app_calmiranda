@@ -110,13 +110,15 @@ app.get('/api/settings', async (req, res) => {
     const extraRulesBot = await getSetting('extra_rules_bot', '');
     const extraRulesAssistant = await getSetting('extra_rules_assistant', '');
     const bcvRate = await getSetting('bcv_rate', null);
+    const globalBotDisabled = await getSetting('global_bot_disabled', false);
     
     res.json({
       prompts: {
         bot: extraRulesBot,
         assistant: extraRulesAssistant
       },
-      bcvRate
+      bcvRate,
+      globalBotDisabled
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -125,11 +127,14 @@ app.get('/api/settings', async (req, res) => {
 
 // Guardar configuraciones
 app.post('/api/settings', async (req, res) => {
-  const { prompts } = req.body;
+  const { prompts, globalBotDisabled } = req.body;
   try {
     if (prompts) {
       await saveSetting('extra_rules_bot', prompts.bot ?? '');
       await saveSetting('extra_rules_assistant', prompts.assistant ?? '');
+    }
+    if (globalBotDisabled !== undefined) {
+      await saveSetting('global_bot_disabled', globalBotDisabled);
     }
     res.json({ status: 'ok', message: 'Configuraciones actualizadas en la base de datos.' });
   } catch (error: any) {

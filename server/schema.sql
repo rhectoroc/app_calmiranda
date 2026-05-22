@@ -100,11 +100,12 @@ SET nombre = EXCLUDED.nombre,
     password_hash = EXCLUDED.password_hash,
     rol = EXCLUDED.rol;
 
--- Semilla de app_settings para las reglas extras de los bots
+-- Semilla de app_settings para las reglas extras de los bots y estado global
 INSERT INTO app_settings (key, value)
 VALUES 
   ('extra_rules_bot', '""'::jsonb),
-  ('extra_rules_assistant', '""'::jsonb)
+  ('extra_rules_assistant', '""'::jsonb),
+  ('global_bot_disabled', 'false'::jsonb)
 ON CONFLICT (key) DO UPDATE
 SET value = EXCLUDED.value;
 
