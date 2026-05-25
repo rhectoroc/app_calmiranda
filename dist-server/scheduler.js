@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import axios from 'axios';
+import https from 'https';
 import { getSheetsClient } from './googleAuth.js';
 import { saveSetting } from './db.js';
 import { sendWhatsAppMessage } from './agent.js';
@@ -21,6 +22,7 @@ export async function runTasaScraper() {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
+            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
             timeout: 15000
         });
         const html = response.data;
