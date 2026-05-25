@@ -413,12 +413,22 @@ async function executeTool(name: string, args: any, sessionId: string): Promise<
             // Obtener el nombre del cliente desde la base de datos para dar más contexto
             let clientName = 'Cliente';
             try {
+              const cleanPhone = sessionId.replace(/\D/g, '');
+              const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
               const clientQuery = `
                 SELECT nombre FROM clientes 
-                WHERE telefono_1 LIKE $1 OR movil LIKE $1 OR telefono_2 LIKE $1 OR telefono_3 LIKE $1 
+                WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
+                   OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
+                   OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
+                   OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+                ORDER BY 
+                  (CASE WHEN rif IS NOT NULL AND rif <> '' THEN 0 ELSE 1 END) ASC,
+                  (CASE WHEN zona IS NOT NULL AND zona <> '' AND zona <> 'General' THEN 0 ELSE 1 END) ASC,
+                  (CASE WHEN id_cliente ~ '^[0-9]+$' THEN id_cliente::integer ELSE 999999 END) ASC,
+                  id_cliente ASC
                 LIMIT 1;
               `;
-              const dbClient = await query(clientQuery, [`%${sessionId}%`]);
+              const dbClient = await query(clientQuery, [phonePattern]);
               if (dbClient.length > 0) {
                 clientName = dbClient[0].nombre;
               }
@@ -585,6 +595,11 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
          OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+      ORDER BY 
+        (CASE WHEN rif IS NOT NULL AND rif <> '' THEN 0 ELSE 1 END) ASC,
+        (CASE WHEN zona IS NOT NULL AND zona <> '' AND zona <> 'General' THEN 0 ELSE 1 END) ASC,
+        (CASE WHEN id_cliente ~ '^[0-9]+$' THEN id_cliente::integer ELSE 999999 END) ASC,
+        id_cliente ASC
       LIMIT 1;
     `;
     const dbClient = await query(clientQuery, [phonePattern]);

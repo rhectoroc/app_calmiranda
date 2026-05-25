@@ -537,6 +537,11 @@ app.get('/api/chats', async (req, res) => {
              OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
              OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
              OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+          ORDER BY 
+            (CASE WHEN rif IS NOT NULL AND rif <> '' THEN 0 ELSE 1 END) ASC,
+            (CASE WHEN zona IS NOT NULL AND zona <> '' AND zona <> 'General' THEN 0 ELSE 1 END) ASC,
+            (CASE WHEN id_cliente ~ '^[0-9]+$' THEN id_cliente::integer ELSE 999999 END) ASC,
+            id_cliente ASC
           LIMIT 1;
         `;
         const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
@@ -668,6 +673,11 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
          OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+      ORDER BY 
+        (CASE WHEN rif IS NOT NULL AND rif <> '' THEN 0 ELSE 1 END) ASC,
+        (CASE WHEN zona IS NOT NULL AND zona <> '' AND zona <> 'General' THEN 0 ELSE 1 END) ASC,
+        (CASE WHEN id_cliente ~ '^[0-9]+$' THEN id_cliente::integer ELSE 999999 END) ASC,
+        id_cliente ASC
       LIMIT 1;
     `;
     const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
@@ -740,6 +750,11 @@ app.post('/api/chats/:sessionId/rename', async (req, res) => {
          OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
+      ORDER BY 
+        (CASE WHEN rif IS NOT NULL AND rif <> '' THEN 0 ELSE 1 END) ASC,
+        (CASE WHEN zona IS NOT NULL AND zona <> '' AND zona <> 'General' THEN 0 ELSE 1 END) ASC,
+        (CASE WHEN id_cliente ~ '^[0-9]+$' THEN id_cliente::integer ELSE 999999 END) ASC,
+        id_cliente ASC
       LIMIT 1;
     `;
     const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
