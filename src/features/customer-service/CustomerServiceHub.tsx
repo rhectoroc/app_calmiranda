@@ -189,10 +189,18 @@ export const CustomerServiceHub: React.FC = () => {
       });
       if (!res.ok) throw new Error('Error al cambiar estatus');
       
+      const data = await res.json();
       // Actualizar el estado local de chats
       setChats(prev => prev.map(c => {
         if (c.id === chatId) {
-          return { ...c, clientEstatus: newEstatus };
+          return { 
+            ...c, 
+            clientEstatus: newEstatus,
+            isRegistered: true,
+            clientId: data.client?.id_cliente || c.clientId,
+            clientRif: data.client?.rif || c.clientRif || null,
+            clientZona: data.client?.zona || c.clientZona || null
+          };
         }
         return c;
       }));
@@ -224,7 +232,9 @@ export const CustomerServiceHub: React.FC = () => {
             customerName: editedName.trim(),
             isRegistered: true,
             clientEstatus: data.client?.estatus || c.clientEstatus || '',
-            clientId: data.client?.id_cliente || c.clientId
+            clientId: data.client?.id_cliente || c.clientId,
+            clientRif: data.client?.rif || c.clientRif || null,
+            clientZona: data.client?.zona || c.clientZona || null
           };
         }
         return c;
@@ -470,6 +480,36 @@ export const CustomerServiceHub: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Info del Cliente Registrado */}
+              {activeChat.isRegistered && (
+                <div className="hidden md:flex items-center gap-4 bg-white/5 border border-white/5 rounded-2xl px-4 py-2 text-xs text-gray-300 shrink-0">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Cliente / RIF</span>
+                    <span className="text-white font-semibold">
+                      {activeChat.clientRif || 'Sin RIF'}
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-white/10" />
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Zona</span>
+                    <span className="text-cal-emerald-light font-semibold">
+                      {activeChat.clientZona || 'Sin Zona'}
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-white/10" />
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Estatus</span>
+                    <span className={`font-semibold ${
+                      activeChat.clientEstatus === 'Empleado' ? 'text-blue-400' :
+                      activeChat.clientEstatus === 'Transportista' ? 'text-purple-400' :
+                      activeChat.clientEstatus === 'Otros' ? 'text-red-400' : 'text-gray-400'
+                    }`}>
+                      {activeChat.clientEstatus || 'Sin Etiqueta'}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Handoff Status Buttons */}
               <div className="flex gap-2">

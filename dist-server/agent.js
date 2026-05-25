@@ -1,3 +1,4 @@
+process.env.TZ = 'America/Caracas';
 import { OpenAI } from 'openai';
 import axios from 'axios';
 import { saveClientChatMessage, saveBossChatMessage, getSetting, saveSetting, query, searchClientes } from './db.js';

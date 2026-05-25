@@ -40,6 +40,8 @@ export interface CustomerChat {
   isRegistered?: boolean;
   clientId?: string | null;
   clientEstatus?: string;
+  clientRif?: string | null;
+  clientZona?: string | null;
 }
 
 export interface SalesHistory {

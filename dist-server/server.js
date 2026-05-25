@@ -1,3 +1,4 @@
+process.env.TZ = 'America/Caracas';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -464,6 +465,8 @@ app.get('/api/chats', async (req, res) => {
             let isRegistered = false;
             let clientId = null;
             let clientEstatus = '';
+            let clientRif = null;
+            let clientZona = null;
             if (isWeb) {
                 customerName = `Cliente Web (${sessionId.slice(4)})`;
                 clientEstatus = '';
@@ -471,7 +474,7 @@ app.get('/api/chats', async (req, res) => {
             else {
                 // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
                 const clientQuery = `
-          SELECT id_cliente, nombre, estatus FROM clientes 
+          SELECT id_cliente, nombre, estatus, rif, zona FROM clientes 
           WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
              OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
              OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
@@ -485,6 +488,8 @@ app.get('/api/chats', async (req, res) => {
                     customerName = dbClient[0].nombre;
                     clientEstatus = dbClient[0].estatus || '';
                     clientId = dbClient[0].id_cliente;
+                    clientRif = dbClient[0].rif || null;
+                    clientZona = dbClient[0].zona || null;
                 }
                 else {
                     isRegistered = false;
@@ -516,7 +521,9 @@ app.get('/api/chats', async (req, res) => {
                 status: botStatus, // 'bot_active' | 'agent_active' | 'waiting_handover'
                 isRegistered,
                 clientId,
-                clientEstatus
+                clientEstatus,
+                clientRif,
+                clientZona
             });
         }
         // Si no hay ningún chat en la base de datos, retornar lista vacía

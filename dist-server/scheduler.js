@@ -1,3 +1,4 @@
+process.env.TZ = 'America/Caracas';
 import cron from 'node-cron';
 import axios from 'axios';
 import https from 'https';
