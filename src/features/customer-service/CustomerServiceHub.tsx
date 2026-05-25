@@ -11,7 +11,8 @@ import {
   Phone,
   ChevronDown,
   Edit2,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 
 const getStatusSelectClass = (estatus?: string) => {
@@ -485,28 +486,50 @@ export const CustomerServiceHub: React.FC = () => {
 
               {/* Info del Cliente Registrado */}
               {activeChat.isRegistered && (
-                <div className="hidden md:flex items-center gap-4 bg-white/5 border border-white/5 rounded-2xl px-4 py-2 text-xs text-gray-300 shrink-0">
-                  <div className="flex flex-col">
-                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Cliente / RIF</span>
-                    <span className="text-white font-semibold">
+                <div className="hidden lg:flex items-center gap-6 bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl px-5 py-2.5 text-xs text-gray-300 shrink-0 shadow-lg shadow-black/10">
+                  {/* RIF */}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <User size={10} className="text-gray-400" />
+                      Cliente / RIF
+                    </span>
+                    <span className="text-white font-medium font-mono text-[11px] bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
                       {activeChat.clientRif || 'Sin RIF'}
                     </span>
                   </div>
-                  <div className="h-6 w-px bg-white/10" />
-                  <div className="flex flex-col">
-                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Zona</span>
-                    <span className="text-cal-emerald-light font-semibold">
+
+                  {/* Divider */}
+                  <div className="h-8 w-px bg-white/[0.08]" />
+
+                  {/* Zona */}
+                  <div className="flex flex-col gap-0.5 max-w-[180px]">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <MapPin size={10} className="text-cal-emerald-light" />
+                      Zona
+                    </span>
+                    <span className="text-cal-emerald-light font-semibold truncate text-[11px]" title={activeChat.clientZona || 'Sin Zona'}>
                       {activeChat.clientZona || 'Sin Zona'}
                     </span>
                   </div>
-                  <div className="h-6 w-px bg-white/10" />
-                  <div className="flex flex-col">
-                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Estatus Comercial</span>
-                    <span className={`font-semibold ${
-                      activeChat.clientEstatus === 'Activo' ? 'text-cal-emerald-light' :
-                      activeChat.clientEstatus === 'Inactivo' ? 'text-red-400' :
-                      activeChat.clientEstatus === 'Por captar' ? 'text-blue-400' :
-                      activeChat.clientEstatus === 'Prospecto' ? 'text-amber-400' : 'text-gray-400'
+
+                  {/* Divider */}
+                  <div className="h-8 w-px bg-white/[0.08]" />
+
+                  {/* Estatus Comercial */}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                      Estatus Comercial
+                    </span>
+                    <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border text-center ${
+                      (activeChat.clientEstatus || '').toLowerCase().trim() === 'activo' || (activeChat.clientEstatus || '').toLowerCase().trim() === 'activa'
+                        ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20 shadow-sm shadow-cal-emerald/5'
+                        : (activeChat.clientEstatus || '').toLowerCase().trim() === 'inactivo' || (activeChat.clientEstatus || '').toLowerCase().trim() === 'inactiva'
+                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                        : (activeChat.clientEstatus || '').toLowerCase().trim() === 'por captar'
+                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                        : (activeChat.clientEstatus || '').toLowerCase().trim() === 'prospecto'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        : 'bg-white/5 text-gray-400 border-white/10'
                     }`}>
                       {activeChat.clientEstatus || 'Prospecto'}
                     </span>
