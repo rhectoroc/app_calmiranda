@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     contacto_2 VARCHAR,
     telefono_3 VARCHAR,
     email VARCHAR,
-    estatus VARCHAR DEFAULT 'Activo'::character varying,
+    estatus VARCHAR DEFAULT ''::character varying,
     vendedor VARCHAR,
     tiempo_promedio_pedido VARCHAR,
     historial_negociacion TEXT,
@@ -123,4 +123,9 @@ UPDATE users SET rol = 'operador' WHERE rol = 'empleado';
 -- Reemplazar la restricción check anterior por la nueva que admite superadmin y operador
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_rol_check;
 ALTER TABLE users ADD CONSTRAINT users_rol_check CHECK (rol IN ('admin', 'superadmin', 'operador'));
+
+-- 11. MIGRACIÓN DE ESTATUS DE CLIENTES (AUDITORÍA DE ETIQUETAS DE ATENCIÓN AL CLIENTE)
+UPDATE clientes SET estatus = '' WHERE estatus IS NULL OR estatus IN ('Activo', 'Inactivo', 'Prospecto');
+UPDATE clientes SET estatus = 'Otros' WHERE estatus = 'Ignorar Bot';
+
 

@@ -20,15 +20,10 @@ const getStatusSelectClass = (estatus?: string) => {
       return 'border-blue-500/30 text-blue-400 focus:border-blue-500 bg-blue-500/10';
     case 'Transportista':
       return 'border-purple-500/30 text-purple-400 focus:border-purple-500 bg-purple-500/10';
-    case 'Ignorar Bot':
+    case 'Otros':
       return 'border-red-500/30 text-red-400 focus:border-red-500 bg-red-500/10';
-    case 'Activo':
-      return 'border-cal-emerald/30 text-cal-emerald-light focus:border-cal-emerald bg-cal-emerald/10';
-    case 'Inactivo':
-      return 'border-white/10 text-gray-400 focus:border-white bg-white/5';
-    case 'Prospecto':
     default:
-      return 'border-amber-500/30 text-amber-400 focus:border-amber-500 bg-amber-500/10';
+      return 'border-white/10 text-gray-400 focus:border-white bg-white/5';
   }
 };
 
@@ -228,7 +223,7 @@ export const CustomerServiceHub: React.FC = () => {
             ...c, 
             customerName: editedName.trim(),
             isRegistered: true,
-            clientEstatus: data.client?.estatus || c.clientEstatus || 'Prospecto',
+            clientEstatus: data.client?.estatus || c.clientEstatus || '',
             clientId: data.client?.id_cliente || c.clientId
           };
         }
@@ -372,7 +367,7 @@ export const CustomerServiceHub: React.FC = () => {
                         <Check size={10} /> Resuelto
                       </span>
                     )}
-                    {chat.channel === 'WhatsApp' && chat.clientEstatus && ['Empleado', 'Transportista', 'Ignorar Bot'].includes(chat.clientEstatus) && (
+                    {chat.channel === 'WhatsApp' && chat.clientEstatus && ['Empleado', 'Transportista', 'Otros'].includes(chat.clientEstatus) && (
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
                         chat.clientEstatus === 'Empleado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
                         chat.clientEstatus === 'Transportista' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
@@ -460,16 +455,14 @@ export const CustomerServiceHub: React.FC = () => {
                     {activeChat.channel === 'WhatsApp' && (
                       <div className="relative flex items-center">
                         <select
-                          value={activeChat.clientEstatus || 'Prospecto'}
+                          value={activeChat.clientEstatus || ''}
                           onChange={(e) => handleStatusChange(activeChat.id, e.target.value)}
                           className={`border rounded-lg px-2 py-0.5 pr-6 text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEstatus)}`}
                         >
-                          <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
-                          <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
-                          <option value="Prospecto" className="bg-[#1e2528] text-white">Prospecto</option>
+                          <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
                           <option value="Empleado" className="bg-[#1e2528] text-blue-400">Empleado</option>
                           <option value="Transportista" className="bg-[#1e2528] text-purple-400">Transportista</option>
-                          <option value="Ignorar Bot" className="bg-[#1e2528] text-red-400">Ignorar Bot</option>
+                          <option value="Otros" className="bg-[#1e2528] text-red-400">Otros</option>
                         </select>
                         <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       </div>

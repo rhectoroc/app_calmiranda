@@ -574,7 +574,7 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   // Buscar si el cliente existe en la base de datos de CalMiranda
   let clientExists = false;
   let clientName = pushName || 'Cliente';
-  let clientEstatus = 'Activo';
+  let clientEstatus = '';
   try {
     const phonePattern = cleanNumber.length >= 10 ? `%${cleanNumber.slice(-10)}` : `%${cleanNumber}`;
     const clientQuery = `
@@ -589,7 +589,7 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
     if (dbClient.length > 0) {
       clientExists = true;
       clientName = dbClient[0].nombre;
-      clientEstatus = dbClient[0].estatus || 'Activo';
+      clientEstatus = dbClient[0].estatus || '';
     }
   } catch (err) {
     console.error('⚠️ Error al buscar cliente en base de datos:', err);
@@ -639,7 +639,7 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   }
 
   // Si el contacto es un empleado, transportista o se configuró para ignorar el bot, se omite respuesta de IA
-  const ignoreStatuses = ['Empleado', 'Transportista', 'Ignorar Bot'];
+  const ignoreStatuses = ['Empleado', 'Transportista', 'Otros'];
   if (ignoreStatuses.includes(clientEstatus)) {
     console.log(`🔕 Contacto etiquetado como "${clientEstatus}" (${clientName} - ${cleanNumber}). Mensaje guardado en BD, pero se omite respuesta del bot.`);
     return;

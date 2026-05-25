@@ -402,7 +402,7 @@ app.post('/api/clientes', async (req, res) => {
       if (val === undefined || val === '') {
         if (field === 'dias_credito') return 0;
         if (field === 'ultimo_precio') return null;
-        if (field === 'estatus') return 'Activo';
+        if (field === 'estatus') return '';
         return null;
       }
       if (field === 'dias_credito') return parseInt(val) || 0;
@@ -444,7 +444,7 @@ app.put('/api/clientes/:id', async (req, res) => {
       if (val === undefined || val === '') {
         if (field === 'dias_credito') return 0;
         if (field === 'ultimo_precio') return null;
-        if (field === 'estatus') return 'Activo';
+        if (field === 'estatus') return '';
         return null;
       }
       if (field === 'dias_credito') return parseInt(val) || 0;
@@ -519,11 +519,11 @@ app.get('/api/chats', async (req, res) => {
       let customerName = '';
       let isRegistered = false;
       let clientId = null;
-      let clientEstatus = 'Prospecto';
+      let clientEstatus = '';
 
       if (isWeb) {
         customerName = `Cliente Web (${sessionId.slice(4)})`;
-        clientEstatus = 'Activo';
+        clientEstatus = '';
       } else {
         // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
         const clientQuery = `
@@ -538,12 +538,12 @@ app.get('/api/chats', async (req, res) => {
         if (dbClient.length > 0) {
           isRegistered = true;
           customerName = dbClient[0].nombre;
-          clientEstatus = dbClient[0].estatus || 'Activo';
+          clientEstatus = dbClient[0].estatus || '';
           clientId = dbClient[0].id_cliente;
         } else {
           isRegistered = false;
           clientId = null;
-          clientEstatus = 'Prospecto';
+          clientEstatus = '';
           const nameQuery = `
             SELECT push_name FROM chat_messages 
             WHERE session_id = $1 AND push_name IS NOT NULL 
@@ -741,13 +741,13 @@ app.post('/api/chats/:sessionId/rename', async (req, res) => {
       const updatedRows = await query(updateSql, [name.trim(), dbClient[0].id_cliente]);
       return res.json({ success: true, action: 'updated', client: updatedRows[0] });
     } else {
-      // Crear un cliente nuevo con estatus Prospecto y el nombre especificado
+      // Crear un cliente nuevo con estatus vacío y el nombre especificado
       const insertSql = `
         INSERT INTO clientes (
           zona, nombre, telefono_1, estatus, vendedor, comentario, 
           dias_credito, fecha_creacion, fecha_actualizacion
         )
-        VALUES ('General', $1, $2, 'Prospecto', 'Bot/Sistema', 'Creado automáticamente al renombrar contacto en el chat', 0, NOW(), NOW())
+        VALUES ('General', $1, $2, '', 'Bot/Sistema', 'Creado automáticamente al renombrar contacto en el chat', 0, NOW(), NOW())
         RETURNING *;
       `;
       const insertedRows = await query(insertSql, [name.trim(), cleanPhone]);
