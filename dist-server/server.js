@@ -478,7 +478,8 @@ app.get('/api/chats', async (req, res) => {
              OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
           LIMIT 1;
         `;
-                const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
+                const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
+                const dbClient = await query(clientQuery, [phonePattern]);
                 if (dbClient.length > 0) {
                     isRegistered = true;
                     customerName = dbClient[0].nombre;
@@ -594,7 +595,8 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
          OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
       LIMIT 1;
     `;
-        const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
+        const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
+        const dbClient = await query(clientQuery, [phonePattern]);
         if (dbClient.length > 0) {
             // Actualizar el estatus
             const updateSql = `
@@ -663,7 +665,8 @@ app.post('/api/chats/:sessionId/rename', async (req, res) => {
          OR regexp_replace(COALESCE(telefono_3, ''), '\\D', '', 'g') LIKE $1 
       LIMIT 1;
     `;
-        const dbClient = await query(clientQuery, [`%${cleanPhone}%`]);
+        const phonePattern = cleanPhone.length >= 10 ? `%${cleanPhone.slice(-10)}` : `%${cleanPhone}`;
+        const dbClient = await query(clientQuery, [phonePattern]);
         if (dbClient.length > 0) {
             // Actualizar el nombre comercial del cliente existente
             const updateSql = `

@@ -592,8 +592,9 @@ export async function handleWebhookMessage(payload) {
         }
     }
     // Si el contacto es un empleado, transportista o se configuró para ignorar el bot, se omite respuesta de IA
-    const ignoreStatuses = ['Empleado', 'Transportista', 'Otros'];
-    if (ignoreStatuses.includes(clientEstatus)) {
+    const cleanStatus = (clientEstatus || '').trim().toLowerCase();
+    const ignoreStatuses = ['empleado', 'transportista', 'otros'];
+    if (ignoreStatuses.includes(cleanStatus)) {
         console.log(`🔕 Contacto etiquetado como "${clientEstatus}" (${clientName} - ${cleanNumber}). Mensaje guardado en BD, pero se omite respuesta del bot.`);
         return;
     }
