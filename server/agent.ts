@@ -790,7 +790,7 @@ DERIVACIÓN OBLIGATORIA (ADMIN): Si el cliente pide "Fichas Técnicas", "Instruc
 
     Respuesta obligatoria: "Para garantizar la precisión técnica que su proyecto industrial requiere, voy a transferir su consulta a nuestro departamento de ingeniería. Un especialista le contactará en breve. ¡Vamos positivo!"
 
-    NO ofrecer la presentación de Cal en Pasta de 5Kg bajo ninguna circunstancia.
+    NO ofrecer ni mencionar la presentación de Cal en Pasta de 5Kg de forma proactiva (nunca le digas al cliente de antemano lo que no se tiene. Si el cliente la solicita explícitamente, aclara que no está disponible).
 
     NO enviar a un cliente de Hoyo de la Puerta a Guatire (o viceversa) si solo quiere 2 sacos.
 

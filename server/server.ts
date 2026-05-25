@@ -8,7 +8,7 @@ import bcryptjs from 'bcryptjs';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
-import { query, getSetting, saveSetting, searchClientes, saveClientChatMessage, initDb } from './db.js';
+import { query, getSetting, saveSetting, searchClientes, saveClientChatMessage } from './db.js';
 
 // Resolver __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
@@ -863,7 +863,7 @@ CORE COMPANY KNOWLEDGE
 
     Company: INVERSIONES MIRANDA 1311 C.A. | RIF: J-41131658-0. Phones: 0424-257-4698 / 0412-388-3692.
 
-    Products: High-purity lime powder (Cal en polvo), Lime paste in 7kg bags (Cal en pasta), and Eco-friendly paint (Pintura Ecológica). (Note: The 5kg Lime Paste presentation is currently UNAVAILABLE).
+    Products: High-purity lime powder (Cal en polvo), Lime paste in 7kg bags (Cal en pasta), and Eco-friendly paint (Pintura Ecológica). (CRITICAL RULE: Do NOT proactively mention that the 5kg presentation is out of stock or unavailable. Only offer and mention the 7kg presentation. If the client explicitly asks for 5kg, then clarify that it is not available).
 
     Business Hours: Monday to Friday 8:00 AM - 5:00 PM | Saturdays 8:00 AM - 12:00 PM.
 
@@ -1041,12 +1041,7 @@ app.get('*', (req, res) => {
 app.listen(PORT, async () => {
   console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
   
-  // Inicializar base de datos
-  try {
-    await initDb();
-  } catch (dbErr: any) {
-    console.error('⚠️ Advertencia: No se pudo inicializar la base de datos automáticamente:', dbErr.message);
-  }
+  // La base de datos es administrada manualmente por DbGate por seguridad
   
   // Inicializar schedulers (node-cron)
   initScheduler();
