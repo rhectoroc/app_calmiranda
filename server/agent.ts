@@ -576,10 +576,11 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   let clientExists = false;
   let clientName = pushName || 'Cliente';
   let clientEstatus = '';
+  let clientEtiqueta = '';
   try {
     const phonePattern = cleanNumber.length >= 10 ? `%${cleanNumber.slice(-10)}` : `%${cleanNumber}`;
     const clientQuery = `
-      SELECT nombre, estatus FROM clientes 
+      SELECT nombre, estatus, etiqueta FROM clientes 
       WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
@@ -591,6 +592,7 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
       clientExists = true;
       clientName = dbClient[0].nombre;
       clientEstatus = dbClient[0].estatus || '';
+      clientEtiqueta = dbClient[0].etiqueta || '';
     }
   } catch (err) {
     console.error('⚠️ Error al buscar cliente en base de datos:', err);
@@ -640,10 +642,10 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   }
 
   // Si el contacto es un empleado, transportista o se configuró para ignorar el bot, se omite respuesta de IA
-  const cleanStatus = (clientEstatus || '').trim().toLowerCase();
+  const cleanStatus = (clientEtiqueta || '').trim().toLowerCase();
   const ignoreStatuses = ['empleado', 'transportista', 'otros'];
   if (ignoreStatuses.includes(cleanStatus)) {
-    console.log(`🔕 Contacto etiquetado como "${clientEstatus}" (${clientName} - ${cleanNumber}). Mensaje guardado en BD, pero se omite respuesta del bot.`);
+    console.log(`🔕 Contacto etiquetado como "${clientEtiqueta}" (${clientName} - ${cleanNumber}). Mensaje guardado en BD, pero se omite respuesta del bot.`);
     return;
   }
 

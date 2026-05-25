@@ -292,10 +292,10 @@ export const ClientesView: React.FC = () => {
               className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cal-emerald/50 transition-all appearance-none cursor-pointer leading-normal"
             >
               <option value="Todos" className="bg-[#1e2528] text-white">Todos</option>
-              <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
-              <option value="Empleado" className="bg-[#1e2528] text-white">Empleado</option>
-              <option value="Transportista" className="bg-[#1e2528] text-white">Transportista</option>
-              <option value="Otros" className="bg-[#1e2528] text-white">Otros</option>
+              <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
+              <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
+              <option value="Por captar" className="bg-[#1e2528] text-white">Por captar</option>
+              <option value="Prospecto" className="bg-[#1e2528] text-white">Prospecto</option>
             </select>
             <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
@@ -360,15 +360,17 @@ export const ClientesView: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                        cliente.estatus === 'Empleado'
-                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                          : cliente.estatus === 'Transportista'
-                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                          : cliente.estatus === 'Otros'
+                        cliente.estatus === 'Activo'
+                          ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
+                          : cliente.estatus === 'Inactivo'
                           ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                          : cliente.estatus === 'Por captar'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          : cliente.estatus === 'Prospecto'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                           : 'bg-white/5 text-gray-400 border-white/10'
                       }`}>
-                        {cliente.estatus || 'Sin Etiqueta'}
+                        {cliente.estatus || 'Sin Estatus'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -433,15 +435,17 @@ export const ClientesView: React.FC = () => {
             <div className="p-6 border-b border-white/5 flex justify-between items-start">
               <div>
                 <span className={`inline-block text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full mb-2 border ${
-                  selectedCliente.estatus === 'Empleado'
-                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                    : selectedCliente.estatus === 'Transportista'
-                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                    : selectedCliente.estatus === 'Otros'
+                  selectedCliente.estatus === 'Activo'
+                    ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
+                    : selectedCliente.estatus === 'Inactivo'
                     ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                    : selectedCliente.estatus === 'Por captar'
+                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                    : selectedCliente.estatus === 'Prospecto'
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                     : 'bg-white/5 text-gray-400 border-white/10'
                 }`}>
-                  {selectedCliente.estatus || 'Sin Etiqueta'}
+                  {selectedCliente.estatus || 'Sin Estatus'}
                 </span>
                 <h3 className="text-xl font-extrabold font-display text-white tracking-wide leading-tight">
                   {selectedCliente.nombre}
@@ -762,10 +766,10 @@ export const ClientesView: React.FC = () => {
                         onChange={handleInputChange}
                         className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 appearance-none cursor-pointer leading-normal"
                       >
-                        <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
-                        <option value="Empleado" className="bg-[#1e2528] text-white">Empleado</option>
-                        <option value="Transportista" className="bg-[#1e2528] text-white">Transportista</option>
-                        <option value="Otros" className="bg-[#1e2528] text-white">Otros</option>
+                        <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
+                        <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
+                        <option value="Por captar" className="bg-[#1e2528] text-white">Por captar</option>
+                        <option value="Prospecto" className="bg-[#1e2528] text-white">Prospecto</option>
                       </select>
                       <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     </div>

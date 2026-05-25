@@ -42,6 +42,7 @@ export interface CustomerChat {
   clientEstatus?: string;
   clientRif?: string | null;
   clientZona?: string | null;
+  clientEtiqueta?: string;
 }
 
 export interface SalesHistory {

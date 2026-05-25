@@ -195,11 +195,12 @@ export const CustomerServiceHub: React.FC = () => {
         if (c.id === chatId) {
           return { 
             ...c, 
-            clientEstatus: newEstatus,
+            clientEtiqueta: newEstatus,
             isRegistered: true,
             clientId: data.client?.id_cliente || c.clientId,
             clientRif: data.client?.rif || c.clientRif || null,
-            clientZona: data.client?.zona || c.clientZona || null
+            clientZona: data.client?.zona || c.clientZona || null,
+            clientEstatus: data.client?.estatus || c.clientEstatus || 'Prospecto'
           };
         }
         return c;
@@ -231,10 +232,11 @@ export const CustomerServiceHub: React.FC = () => {
             ...c, 
             customerName: editedName.trim(),
             isRegistered: true,
-            clientEstatus: data.client?.estatus || c.clientEstatus || '',
+            clientEstatus: data.client?.estatus || c.clientEstatus || 'Prospecto',
             clientId: data.client?.id_cliente || c.clientId,
             clientRif: data.client?.rif || c.clientRif || null,
-            clientZona: data.client?.zona || c.clientZona || null
+            clientZona: data.client?.zona || c.clientZona || null,
+            clientEtiqueta: data.client?.etiqueta || c.clientEtiqueta || ''
           };
         }
         return c;
@@ -377,12 +379,12 @@ export const CustomerServiceHub: React.FC = () => {
                         <Check size={10} /> Resuelto
                       </span>
                     )}
-                    {chat.channel === 'WhatsApp' && chat.clientEstatus && ['Empleado', 'Transportista', 'Otros'].includes(chat.clientEstatus) && (
+                    {chat.channel === 'WhatsApp' && chat.clientEtiqueta && ['Empleado', 'Transportista', 'Otros'].includes(chat.clientEtiqueta) && (
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
-                        chat.clientEstatus === 'Empleado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
-                        chat.clientEstatus === 'Transportista' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
+                        chat.clientEtiqueta === 'Empleado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                        chat.clientEtiqueta === 'Transportista' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
                         'text-red-400 bg-red-500/10 border-red-500/20'
-                      }`}>{chat.clientEstatus}</span>
+                      }`}>{chat.clientEtiqueta}</span>
                     )}
                   </div>
                 </div>
@@ -465,9 +467,9 @@ export const CustomerServiceHub: React.FC = () => {
                     {activeChat.channel === 'WhatsApp' && (
                       <div className="relative flex items-center">
                         <select
-                          value={activeChat.clientEstatus || ''}
+                          value={activeChat.clientEtiqueta || ''}
                           onChange={(e) => handleStatusChange(activeChat.id, e.target.value)}
-                          className={`border rounded-lg px-2 py-0.5 pr-6 text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEstatus)}`}
+                          className={`border rounded-lg px-2 py-0.5 pr-6 text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEtiqueta)}`}
                         >
                           <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
                           <option value="Empleado" className="bg-[#1e2528] text-blue-400">Empleado</option>
@@ -499,13 +501,14 @@ export const CustomerServiceHub: React.FC = () => {
                   </div>
                   <div className="h-6 w-px bg-white/10" />
                   <div className="flex flex-col">
-                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Estatus</span>
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Estatus Comercial</span>
                     <span className={`font-semibold ${
-                      activeChat.clientEstatus === 'Empleado' ? 'text-blue-400' :
-                      activeChat.clientEstatus === 'Transportista' ? 'text-purple-400' :
-                      activeChat.clientEstatus === 'Otros' ? 'text-red-400' : 'text-gray-400'
+                      activeChat.clientEstatus === 'Activo' ? 'text-cal-emerald-light' :
+                      activeChat.clientEstatus === 'Inactivo' ? 'text-red-400' :
+                      activeChat.clientEstatus === 'Por captar' ? 'text-blue-400' :
+                      activeChat.clientEstatus === 'Prospecto' ? 'text-amber-400' : 'text-gray-400'
                     }`}>
-                      {activeChat.clientEstatus || 'Sin Etiqueta'}
+                      {activeChat.clientEstatus || 'Prospecto'}
                     </span>
                   </div>
                 </div>

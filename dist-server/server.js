@@ -467,14 +467,16 @@ app.get('/api/chats', async (req, res) => {
             let clientEstatus = '';
             let clientRif = null;
             let clientZona = null;
+            let clientEtiqueta = '';
             if (isWeb) {
                 customerName = `Cliente Web (${sessionId.slice(4)})`;
                 clientEstatus = '';
+                clientEtiqueta = '';
             }
             else {
                 // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
                 const clientQuery = `
-          SELECT id_cliente, nombre, estatus, rif, zona FROM clientes 
+          SELECT id_cliente, nombre, estatus, rif, zona, etiqueta FROM clientes 
           WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
              OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
              OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
@@ -490,11 +492,13 @@ app.get('/api/chats', async (req, res) => {
                     clientId = dbClient[0].id_cliente;
                     clientRif = dbClient[0].rif || null;
                     clientZona = dbClient[0].zona || null;
+                    clientEtiqueta = dbClient[0].etiqueta || '';
                 }
                 else {
                     isRegistered = false;
                     clientId = null;
                     clientEstatus = '';
+                    clientEtiqueta = '';
                     const nameQuery = `
             SELECT push_name FROM chat_messages 
             WHERE session_id = $1 AND push_name IS NOT NULL 
@@ -523,7 +527,8 @@ app.get('/api/chats', async (req, res) => {
                 clientId,
                 clientEstatus,
                 clientRif,
-                clientZona
+                clientZona,
+                clientEtiqueta
             });
         }
         // Si no hay ningún chat en la base de datos, retornar lista vacía
@@ -608,7 +613,7 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
             // Actualizar el estatus
             const updateSql = `
         UPDATE clientes 
-        SET estatus = $1, fecha_actualizacion = NOW() 
+        SET etiqueta = $1, fecha_actualizacion = NOW() 
         WHERE id_cliente = $2 
         RETURNING *;
       `;
@@ -637,10 +642,10 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
             // Crear un cliente nuevo con estatus seleccionado
             const insertSql = `
         INSERT INTO clientes (
-          zona, nombre, telefono_1, estatus, vendedor, comentario, 
+          zona, nombre, telefono_1, estatus, etiqueta, vendedor, comentario, 
           dias_credito, fecha_creacion, fecha_actualizacion
         )
-        VALUES ('General', $1, $2, $3, 'Bot/Sistema', 'Creado automáticamente desde el Panel de Atención al Cliente', 0, NOW(), NOW())
+        VALUES ('General', $1, $2, 'Prospecto', $3, 'Bot/Sistema', 'Creado automáticamente desde el Panel de Atención al Cliente', 0, NOW(), NOW())
         RETURNING *;
       `;
             const insertedRows = await query(insertSql, [finalName, cleanPhone, estatus]);
@@ -686,13 +691,13 @@ app.post('/api/chats/:sessionId/rename', async (req, res) => {
             return res.json({ success: true, action: 'updated', client: updatedRows[0] });
         }
         else {
-            // Crear un cliente nuevo con estatus vacío y el nombre especificado
+            // Crear un cliente nuevo con estatus 'Prospecto' y etiqueta vacía
             const insertSql = `
         INSERT INTO clientes (
-          zona, nombre, telefono_1, estatus, vendedor, comentario, 
+          zona, nombre, telefono_1, estatus, etiqueta, vendedor, comentario, 
           dias_credito, fecha_creacion, fecha_actualizacion
         )
-        VALUES ('General', $1, $2, '', 'Bot/Sistema', 'Creado automáticamente al renombrar contacto en el chat', 0, NOW(), NOW())
+        VALUES ('General', $1, $2, 'Prospecto', '', 'Bot/Sistema', 'Creado automáticamente al renombrar contacto en el chat', 0, NOW(), NOW())
         RETURNING *;
       `;
             const insertedRows = await query(insertSql, [name.trim(), cleanPhone]);

@@ -124,8 +124,14 @@ UPDATE users SET rol = 'operador' WHERE rol = 'empleado';
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_rol_check;
 ALTER TABLE users ADD CONSTRAINT users_rol_check CHECK (rol IN ('admin', 'superadmin', 'operador'));
 
--- 11. MIGRACIÓN DE ESTATUS DE CLIENTES (AUDITORÍA DE ETIQUETAS DE ATENCIÓN AL CLIENTE)
-UPDATE clientes SET estatus = '' WHERE estatus IS NULL OR estatus IN ('Activo', 'Inactivo', 'Prospecto');
-UPDATE clientes SET estatus = 'Otros' WHERE estatus = 'Ignorar Bot';
+-- 11. MIGRACIÓN DE ESTATUS DE CLIENTES Y NUEVA COLUMNA ETIQUETA
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS etiqueta VARCHAR DEFAULT '';
+
+-- Migrar etiquetas de bot que se hayan guardado en estatus
+UPDATE clientes SET etiqueta = 'Otros' WHERE estatus = 'Ignorar Bot';
+UPDATE clientes SET etiqueta = estatus WHERE estatus IN ('Empleado', 'Transportista', 'Otros');
+
+-- Restaurar/Mantener estatus comercial de clientes (si quedaron vacíos o tienen etiquetas de bot, ponerles 'Activo')
+UPDATE clientes SET estatus = 'Activo' WHERE estatus IS NULL OR estatus = '' OR estatus IN ('Empleado', 'Transportista', 'Otros');
 
 
