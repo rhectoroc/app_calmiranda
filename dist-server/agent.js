@@ -14,9 +14,9 @@ const processedMessageIds = new Set();
 const GOOGLE_ACCOUNT_EMAIL = 'inversionesmiranda1311@gmail.com';
 // Números de los jefes / administradores
 const BOSS_NUMBERS = [
-    '584143078681@s.whatsapp.net', // Julio (Jefe)
+    '584143078681@s.whatsapp.net', // Julio Borges (Jefe)
     '584145881113@s.whatsapp.net', // Jefa
-    '584222476127@s.whatsapp.net', // Adriel's Systems
+    '584222476127@s.whatsapp.net', // Adriel's Systems (Creador de la app)
     '584143078681', // Alternativos sin sufijo
     '584145881113',
     '584222476127'

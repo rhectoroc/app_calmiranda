@@ -60,5 +60,29 @@ Este archivo resume todos los hitos y desarrollos completados el día de hoy, de
   * Ambas interfaces se sincronizan en tiempo real mediante eventos personalizados de JavaScript.
   * Si el bot se desactiva, los mensajes de los clientes se guardan silenciosamente en la base de datos y se reflejan en el hub humano en tiempo real, pero el bucle de DeepSeek no se inicia.
 
+## 8. Mejoras y Correcciones del 25 de Mayo de 2026 (Sistema de Etiquetas, Zona Horaria y Robustez de Datos)
+
+* **Separación de Estatus y Etiquetas de Silenciado (Bot):**
+  * **Objetivo**: Separar el estatus comercial de clientes (`Activo`, `Inactivo`, `Por captar`, `Prospecto`) de las etiquetas que usa el bot para silenciar conversaciones (`Empleado`, `Transportista`, `Otros`).
+  * **Implementación**: Se introdujo la columna `etiqueta` en la tabla `clientes`, se crearon consultas y migraciones seguras y se actualizaron los endpoints del backend (`/api/chats`, `/client-status`, `/rename`) para operar sobre ella, desligándolo del estatus comercial del cliente.
+* **Detención e Ignorado Robusto del Bot (Fijado de Regresión de Teléfonos):**
+  * **Objetivo**: Garantizar que el bot realmente deje de responder a los contactos con etiquetas restrictivas.
+  * **Implementación**: Se actualizaron `/client-status` y `/rename` para buscar clientes usando la normalización por regex de 10 dígitos (consistente con el bot) y se añadió tolerancia a mayúsculas/minúsculas y espacios (`trim()`, `toLowerCase()`) al evaluar la etiqueta en `agent.ts`.
+* **Configuración de Zona Horaria de Venezuela:**
+  * **Objetivo**: Corregir las marcas de tiempo desfasadas (UTC) en los mensajes y reportes generados desde el VPS de producción.
+  * **Implementación**: Configuración global de `process.env.TZ = 'America/Caracas'` al arranque de los módulos principales (`server.ts`, `scheduler.ts` y `agent.ts`).
+* **Diseño Premium Glassmorphic para Detalles de Cliente:**
+  * **Objetivo**: Aumentar la estética y claridad de los campos RIF, Zona y Estatus en el encabezado del chat.
+  * **Implementación**: Rediseño visual en `CustomerServiceHub.tsx` con fondo translúcido (`backdrop-blur-md`), mayor espaciado (`gap-6`), iconos de `User` y `MapPin`, y pastillas de colores específicos e independientes para el estatus comercial con soporte case-insensitive.
+* **Resolución de Shadowing y Ordenamiento de Duplicados en SQL:**
+  * **Objetivo**: Evitar que registros duplicados vacíos (sin RIF ni zona específica) bloqueen e invisibilicen la ficha comercial real completa de un cliente.
+  * **Implementación**: Se inyectaron cláusulas `ORDER BY` en todas las consultas de búsqueda de clientes por teléfono (`server.ts` y `agent.ts`). Las búsquedas priorizan ahora registros con RIF definido, zonas específicas válidas y los IDs más antiguos.
+* **Desactivación de initDb() Automático y Seguridad del Esquema en Despliegue:**
+  * **Objetivo**: Resguardar la base de datos de producción ante modificaciones destructivas accidentales por scripts en caliente.
+  * **Implementación**: Se eliminó la inicialización automática `initDb()` al arrancar en `server.ts` y se excluyó `schema.sql` de la imagen de producción en el `Dockerfile`. Toda modificación estructural se gestionará manualmente en DbGate.
+* **Ajuste de Prompts del Bot (Exclusión de Agotado de Cal de 5Kg):**
+  * **Objetivo**: Prevenir que el bot mencione de antemano la falta de disponibilidad de cal de 5 kg cuando el cliente no la ha solicitado.
+  * **Implementación**: Ajuste de prompts de sistema en el chatbot web y del bot de WhatsApp para ceñirse a ofrecer únicamente la presentación de 7 kg de forma activa, absteniéndose de mencionar lo que no se tiene.
+
 ---
 *¡Vamos positivo! Todos los cambios están compilados, verificados y listos para producción.*
