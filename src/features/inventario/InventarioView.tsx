@@ -144,7 +144,7 @@ export const InventarioView: React.FC = () => {
   };
 
   const updateItem = (categoria: string, producto: string, field: 'stock_inicial' | 'entradas' | 'salidas', value: string) => {
-    const numValue = parseInt(value, 10) || 0;
+    const numValue = parseFloat(value) || 0;
     setItems(prev => {
       const copy = [...prev];
       const index = copy.findIndex(i => i.sede === selectedSede && i.categoria === categoria && i.producto === producto);
@@ -169,6 +169,10 @@ export const InventarioView: React.FC = () => {
       }
       return copy;
     });
+  };
+
+  const formatVE = (num: number) => {
+    return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
   };
 
   return (
@@ -268,10 +272,11 @@ export const InventarioView: React.FC = () => {
                               <input 
                                 type="number" 
                                 min="0"
+                                step="0.01"
                                 value={item.stock_inicial || ''}
                                 onChange={(e) => updateItem(cat.nombre, prod, 'stock_inicial', e.target.value)}
-                                className="w-24 bg-gray-900/80 border border-gray-600 rounded-lg px-3 py-2 text-center text-gray-200 focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
-                                placeholder="0"
+                                className="w-24 bg-gray-900/80 border border-gray-600 rounded-lg px-2 py-2 text-center text-gray-200 focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
+                                placeholder="0,00"
                               />
                             </td>
                             
@@ -279,10 +284,11 @@ export const InventarioView: React.FC = () => {
                               <input 
                                 type="number" 
                                 min="0"
+                                step="0.01"
                                 value={item.entradas || ''}
                                 onChange={(e) => updateItem(cat.nombre, prod, 'entradas', e.target.value)}
-                                className="w-24 bg-gray-900/80 border border-emerald-900/50 rounded-lg px-3 py-2 text-center text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
-                                placeholder="0"
+                                className="w-24 bg-gray-900/80 border border-emerald-900/50 rounded-lg px-2 py-2 text-center text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                                placeholder="0,00"
                               />
                             </td>
 
@@ -290,19 +296,20 @@ export const InventarioView: React.FC = () => {
                               <input 
                                 type="number" 
                                 min="0"
+                                step="0.01"
                                 value={item.salidas || ''}
                                 onChange={(e) => updateItem(cat.nombre, prod, 'salidas', e.target.value)}
-                                className="w-24 bg-gray-900/80 border border-red-900/50 rounded-lg px-3 py-2 text-center text-red-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
-                                placeholder="0"
+                                className="w-24 bg-gray-900/80 border border-red-900/50 rounded-lg px-2 py-2 text-center text-red-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                placeholder="0,00"
                               />
                             </td>
 
                             <td className="px-6 py-4 text-center border-l border-gray-700/50 bg-gray-900/20">
                               <span className={cn(
-                                "text-xl font-bold",
+                                "text-xl font-bold tracking-wider",
                                 item.stock_actual < 0 ? "text-red-500" : "text-cal-emerald-light"
                               )}>
-                                {item.stock_actual}
+                                {formatVE(item.stock_actual)}
                               </span>
                             </td>
                           </tr>
