@@ -315,7 +315,7 @@ export const DashboardView: React.FC = () => {
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-base sm:text-sm">
                 <thead>
                   <tr className="border-b border-white/5 text-gray-500 text-xs uppercase tracking-wider font-semibold">
                     <th className="py-3 px-4">Sede / Planta</th>

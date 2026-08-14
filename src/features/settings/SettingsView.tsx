@@ -166,7 +166,7 @@ export const SettingsView: React.FC = () => {
               onChange={(e) => setBotPrompt(e.target.value)}
               placeholder="Ingresa reglas de negocio, ofertas de la semana o novedades (ej: 'No hay stock de cal en pasta de 7kg esta semana', 'Cerraremos temprano este sábado por inventario')."
               rows={12}
-              className="w-full bg-white/5 border border-white/5 focus:border-cal-emerald/55 focus:bg-white/10 rounded-2xl p-4 text-sm text-gray-200 focus:outline-none transition-all leading-relaxed"
+              className="w-full bg-white/5 border border-white/5 focus:border-cal-emerald/55 focus:bg-white/10 rounded-2xl p-4 text-base sm:text-sm text-gray-200 focus:outline-none transition-all leading-relaxed"
             />
           </div>
 
@@ -180,7 +180,7 @@ export const SettingsView: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full py-4 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cal-emerald/20 cursor-pointer"
+          className="w-full py-4 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-base sm:text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cal-emerald/20 cursor-pointer"
         >
           <Save size={16} />
           <span>Guardar Cambios</span>

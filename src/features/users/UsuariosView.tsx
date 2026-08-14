@@ -207,7 +207,7 @@ export const UsuariosView: React.FC = () => {
             placeholder="Buscar usuario por nombre o email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+            className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-base sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
           />
         </div>
         <div className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
@@ -343,7 +343,7 @@ export const UsuariosView: React.FC = () => {
                   onChange={(e) => setFormData({...formData, nombre: e.target.value})}
                   required
                   placeholder="Ej. Juan Pérez"
-                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-base sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                 />
               </div>
 
@@ -359,7 +359,7 @@ export const UsuariosView: React.FC = () => {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
                   placeholder="usuario@calmiranda.com"
-                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-base sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                 />
               </div>
 
@@ -374,7 +374,7 @@ export const UsuariosView: React.FC = () => {
                     value={formData.rol}
                     onChange={(e) => setFormData({...formData, rol: e.target.value as any})}
                     disabled={selectedUser?.email === currentUser?.username}
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cal-emerald/50 transition-all appearance-none cursor-pointer leading-normal disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-base sm:text-sm text-gray-200 focus:outline-none focus:border-cal-emerald/50 transition-all appearance-none cursor-pointer leading-normal disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="operador" className="bg-[#1e2528] text-white">Operador</option>
                     <option value="admin" className="bg-[#1e2528] text-white">Administrador</option>
@@ -400,7 +400,7 @@ export const UsuariosView: React.FC = () => {
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   required={activeModal === 'create'}
                   placeholder={activeModal === 'create' ? "Mínimo 6 caracteres" : "Nueva contraseña (opcional)"}
-                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-base sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                 />
               </div>
 

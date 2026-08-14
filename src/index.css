@@ -106,3 +106,12 @@ body {
 .pulse-glow {
   animation: pulseGlow 2s infinite;
 }
+
+/* Mejora de Scroll Horizontal en Móviles (iOS/Android) */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}

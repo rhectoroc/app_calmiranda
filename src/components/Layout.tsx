@@ -138,8 +138,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Sidebar - Desktop and Mobile Drawer */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 glass border-r border-white/5 flex flex-col justify-between p-6 transform transition-transform duration-300 ease-in-out shrink-0
-        md:translate-x-0 md:static md:h-screen
+        fixed inset-y-0 left-0 z-50 w-64 bg-gray-900/95 backdrop-blur-xl border-r border-white/10 shadow-2xl flex flex-col justify-between p-6 transform transition-transform duration-300 ease-in-out shrink-0
+        md:translate-x-0 md:static md:h-screen md:bg-transparent md:backdrop-blur-none md:shadow-none md:border-white/5 md:glass
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col gap-8">
@@ -160,7 +160,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <button 
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5"
+              className="md:hidden text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors bg-white/5"
             >
               <X size={20} />
             </button>

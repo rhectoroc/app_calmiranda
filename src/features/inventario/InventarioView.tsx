@@ -195,7 +195,7 @@ export const InventarioView: React.FC = () => {
             <select
               value={selectedSede}
               onChange={(e) => setSelectedSede(e.target.value)}
-              className="w-full sm:w-auto px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-sm font-medium text-gray-200 outline-none focus:ring-2 focus:ring-cal-emerald/50"
+              className="w-full sm:w-auto px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-base sm:text-sm font-medium text-gray-200 outline-none focus:ring-2 focus:ring-cal-emerald/50"
             >
               {SEDES.map(sede => (
                 <option key={sede} value={sede}>{sede}</option>

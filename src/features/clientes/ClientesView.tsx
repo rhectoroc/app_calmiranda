@@ -276,7 +276,7 @@ export const ClientesView: React.FC = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+            className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-base sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
           />
         </div>
 
@@ -289,7 +289,7 @@ export const ClientesView: React.FC = () => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-cal-emerald/50 transition-all appearance-none cursor-pointer leading-normal"
+              className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-base sm:text-sm text-gray-200 focus:outline-none focus:border-cal-emerald/50 transition-all appearance-none cursor-pointer leading-normal"
             >
               <option value="Todos" className="bg-[#1e2528] text-white">Todos</option>
               <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
@@ -716,7 +716,7 @@ export const ClientesView: React.FC = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="Ej: Inversiones Borges C.A."
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -728,7 +728,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.rif || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: J-30491823-9"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -741,7 +741,7 @@ export const ClientesView: React.FC = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="Ej: Guarenas / Guatire"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -753,7 +753,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.vendedor || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: Julio Borges"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -764,7 +764,7 @@ export const ClientesView: React.FC = () => {
                         name="estatus"
                         value={formData.estatus || ''}
                         onChange={handleInputChange}
-                        className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 appearance-none cursor-pointer leading-normal"
+                        className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 appearance-none cursor-pointer leading-normal"
                       >
                         <option value="Activo" className="bg-[#1e2528] text-white">Activo</option>
                         <option value="Inactivo" className="bg-[#1e2528] text-white">Inactivo</option>
@@ -787,7 +787,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.contacto_1 || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: Juan Pérez"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                   <div>
@@ -798,7 +798,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.telefono_1 || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: 04141234567"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                   <div>
@@ -809,7 +809,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.movil || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: 584141234567"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                   <div>
@@ -820,7 +820,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.email || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: cliente@correo.com"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -836,7 +836,7 @@ export const ClientesView: React.FC = () => {
                       onChange={handleInputChange}
                       rows={3}
                       placeholder="Dirección comercial exacta..."
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all resize-none leading-relaxed"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl p-3.5 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all resize-none leading-relaxed"
                     />
                   </div>
 
@@ -848,7 +848,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.ubicacion || ''}
                       onChange={handleInputChange}
                       placeholder="https://goo.gl/maps/..."
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -864,7 +864,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.contacto_2 || ''}
                       onChange={handleInputChange}
                       placeholder="Contacto secundario"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                   <div>
@@ -875,7 +875,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.telefono_2 || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: 04121234567"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                   <div>
@@ -886,7 +886,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.telefono_3 || ''}
                       onChange={handleInputChange}
                       placeholder="Otro número telefónico"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                 </div>
@@ -905,7 +905,7 @@ export const ClientesView: React.FC = () => {
                         value={formData.ultimo_precio !== undefined ? formData.ultimo_precio : ''}
                         onChange={handleInputChange}
                         placeholder="Ej: 4.50"
-                        className="w-full pl-8 pr-4 bg-white/5 border border-white/5 rounded-2xl py-3 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                        className="w-full pl-8 pr-4 bg-white/5 border border-white/5 rounded-2xl py-3 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                       />
                     </div>
                   </div>
@@ -918,7 +918,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.dias_credito !== undefined ? formData.dias_credito : 0}
                       onChange={handleInputChange}
                       placeholder="Ej: 7"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -930,7 +930,7 @@ export const ClientesView: React.FC = () => {
                       value={formData.tiempo_promedio_pedido || ''}
                       onChange={handleInputChange}
                       placeholder="Ej: Semanal, Quincenal, Mensual"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
                 </div>
@@ -945,7 +945,7 @@ export const ClientesView: React.FC = () => {
                       name="ultima_llamada"
                       value={formatDateForInput(formData.ultima_llamada)}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -956,7 +956,7 @@ export const ClientesView: React.FC = () => {
                       name="proxima_llamada"
                       value={formatDateForInput(formData.proxima_llamada)}
                       onChange={handleInputChange}
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 px-4 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                     />
                   </div>
 
@@ -968,7 +968,7 @@ export const ClientesView: React.FC = () => {
                       onChange={handleInputChange}
                       rows={4}
                       placeholder="Detalles sobre acuerdos previos, ofertas especiales realizadas..."
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all resize-none leading-relaxed"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl p-3.5 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all resize-none leading-relaxed"
                     />
                   </div>
 
@@ -980,7 +980,7 @@ export const ClientesView: React.FC = () => {
                       onChange={handleInputChange}
                       rows={3}
                       placeholder="Notas del vendedor, observaciones operativas..."
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl p-3.5 text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all resize-none leading-relaxed"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl p-3.5 text-base sm:text-base sm:text-sm text-white focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all resize-none leading-relaxed"
                     />
                   </div>
                 </div>
