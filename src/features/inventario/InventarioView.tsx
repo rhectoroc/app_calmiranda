@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Save, RefreshCw, Archive, Layers, CalendarCheck } from 'lucide-react';
+import { useAuth } from '../../context/authContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -17,6 +18,7 @@ interface InventoryItem {
   salidas: number;
   stock_actual: number;
   updated_at?: string;
+  updated_by?: string;
 }
 
 const CATEGORIAS = [
@@ -58,6 +60,7 @@ const CATEGORIAS = [
 const SEDES = ['Hoyo de la Puerta', 'Guatire'];
 
 export const InventarioView: React.FC = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [selectedSede, setSelectedSede] = useState<string>('Hoyo de la Puerta');
   const [loading, setLoading] = useState(false);
@@ -86,7 +89,7 @@ export const InventarioView: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const itemsToSave = items.filter(item => item.sede === selectedSede);
+      const itemsToSave = items.filter(item => item.sede === selectedSede).map(item => ({ ...item, updated_by: user?.name }));
       const response = await fetch('/api/inventario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,7 +112,7 @@ export const InventarioView: React.FC = () => {
     setClosing(true);
     try {
       // Primero guardamos los cambios actuales
-      const itemsToSave = items.filter(item => item.sede === selectedSede);
+      const itemsToSave = items.filter(item => item.sede === selectedSede).map(item => ({ ...item, updated_by: user?.name }));
       await fetch('/api/inventario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,7 +123,7 @@ export const InventarioView: React.FC = () => {
       const response = await fetch('/api/inventario/cerrar-dia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sede: selectedSede })
+        body: JSON.stringify({ sede: selectedSede, updated_by: user?.name })
       });
       if (response.ok) {
         await fetchInventory();
@@ -254,8 +257,9 @@ export const InventarioView: React.FC = () => {
                             <td className="px-6 py-4 text-sm font-medium text-gray-200">
                               {prod}
                               {item.updated_at && (
-                                <div className="text-[10px] text-gray-500 font-normal mt-1">
-                                  Act: {new Date(item.updated_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                <div className="text-[10px] text-gray-500 font-normal mt-1 leading-tight">
+                                  Act: {new Date(item.updated_at).toLocaleTimeString('es-VE', {timeZone: 'America/Caracas', hour: '2-digit', minute:'2-digit'})}
+                                  {item.updated_by && <span className="block text-emerald-500/80 mt-0.5">por {item.updated_by}</span>}
                                 </div>
                               )}
                             </td>

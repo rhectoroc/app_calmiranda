@@ -451,15 +451,16 @@ app.post('/api/inventario', async (req, res) => {
         const items = req.body.items;
         for (const item of items) {
             await query(`
-        INSERT INTO inventario (sede, categoria, producto, stock_inicial, entradas, salidas, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        INSERT INTO inventario (sede, categoria, producto, stock_inicial, entradas, salidas, updated_by, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
         ON CONFLICT (sede, producto) DO UPDATE
         SET categoria = EXCLUDED.categoria,
             stock_inicial = EXCLUDED.stock_inicial,
             entradas = EXCLUDED.entradas,
             salidas = EXCLUDED.salidas,
+            updated_by = EXCLUDED.updated_by,
             updated_at = NOW();
-      `, [item.sede, item.categoria, item.producto, item.stock_inicial || 0, item.entradas || 0, item.salidas || 0]);
+      `, [item.sede, item.categoria, item.producto, item.stock_inicial || 0, item.entradas || 0, item.salidas || 0, item.updated_by || null]);
         }
         res.json({ success: true });
     }
@@ -469,15 +470,16 @@ app.post('/api/inventario', async (req, res) => {
 });
 app.post('/api/inventario/cerrar-dia', async (req, res) => {
     try {
-        const { sede } = req.body;
+        const { sede, updated_by } = req.body;
         await query(`
       UPDATE inventario 
       SET stock_inicial = stock_inicial + entradas - salidas,
           entradas = 0,
           salidas = 0,
+          updated_by = $2,
           updated_at = NOW()
       WHERE sede = $1;
-    `, [sede]);
+    `, [sede, updated_by || null]);
         res.json({ success: true });
     }
     catch (error) {
