@@ -488,6 +488,56 @@ app.delete('/api/clientes/:id', async (req, res) => {
 });
 
 // ----------------------------------------------------
+// ENDPOINTS PARA INVENTARIO
+// ----------------------------------------------------
+app.get('/api/inventario', async (req, res) => {
+  try {
+    const data = await query('SELECT * FROM inventario ORDER BY sede, categoria, id');
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/inventario', async (req, res) => {
+  try {
+    const items = req.body.items;
+    for (const item of items) {
+      await query(`
+        INSERT INTO inventario (sede, categoria, producto, stock_inicial, entradas, salidas, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        ON CONFLICT (sede, producto) DO UPDATE
+        SET categoria = EXCLUDED.categoria,
+            stock_inicial = EXCLUDED.stock_inicial,
+            entradas = EXCLUDED.entradas,
+            salidas = EXCLUDED.salidas,
+            updated_at = NOW();
+      `, [item.sede, item.categoria, item.producto, item.stock_inicial || 0, item.entradas || 0, item.salidas || 0]);
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/inventario/cerrar-dia', async (req, res) => {
+  try {
+    const { sede } = req.body;
+    await query(`
+      UPDATE inventario 
+      SET stock_inicial = stock_inicial + entradas - salidas,
+          entradas = 0,
+          salidas = 0,
+          updated_at = NOW()
+      WHERE sede = $1;
+    `, [sede]);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ----------------------------------------------------
 // ENDPOINTS PARA CHATS EN TIEMPO REAL (INTEGRACIÓN FRONTEND)
 // ----------------------------------------------------
 
