@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Save, RefreshCw, Archive, Droplet, Layers, CalendarCheck } from 'lucide-react';
+import { Package, Save, RefreshCw, Archive, Layers, CalendarCheck } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
