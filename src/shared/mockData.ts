@@ -281,29 +281,27 @@ export const generateBusinessAssistantResponse = (
   }
 
   // Caso 2: Consulta de producción de plantas/sedes
-  if (q.includes('produccion') || q.includes('planta') || q.includes('sede') || q.includes('guatire') || q.includes('caracas') || q.includes('horno')) {
+  if (q.includes('produccion') || q.includes('planta') || q.includes('sede') || q.includes('guatire') || q.includes('caracas')) {
     if (q.includes('guatire')) {
       const plant = plants.find(pl => pl.id === 'plant-guatire')!;
       return {
-        text: `La **${plant.name}** opera actualmente al **${plant.efficiency}% de eficiencia**. La temperatura actual del horno de calcinación es de **${plant.ovenTemperature}°C**. La producción de hoy es de **${plant.dailyProduction} toneladas** sobre una capacidad instalada de ${plant.capacity} toneladas/día.`,
+        text: `La **${plant.name}** opera actualmente al **${plant.efficiency}% de eficiencia**. La producción de hoy es de **${plant.dailyProduction} toneladas** sobre una capacidad instalada de ${plant.capacity} toneladas/día.`,
         dataTable: [
-          { Métrica: 'Producción Diaria', Valor: `${plant.dailyProduction} Tn` },
-          { Métrica: 'Capacidad Máxima', Valor: `${plant.capacity} Tn` },
-          { Métrica: 'Temperatura de Horno', Valor: `${plant.ovenTemperature} °C` },
-          { Métrica: 'Personal en Planta', Valor: `${plant.activeWorkers} operarios` },
-          { Métrica: 'Eficiencia', Valor: `${plant.efficiency}%` }
+          { Métrica: 'Producción Actual', Valor: `${plant.dailyProduction} Tn` },
+          { Métrica: 'Capacidad Total', Valor: `${plant.capacity} Tn` },
+          { Métrica: 'Eficiencia', Valor: `${plant.efficiency}%` },
+          { Métrica: 'Operarios', Valor: `${plant.activeWorkers}` }
         ]
       };
     }
     if (q.includes('caracas') || q.includes('hoyo de la puerta')) {
       const plant = plants.find(pl => pl.id === 'plant-caracas')!;
       return {
-        text: `La planta **${plant.name}** registra una producción de **${plant.dailyProduction} toneladas** el día de hoy, con un horno estable a **${plant.ovenTemperature}°C** y una eficiencia del **${plant.efficiency}%**.`,
+        text: `La planta **${plant.name}** registra una producción de **${plant.dailyProduction} toneladas** el día de hoy y una eficiencia del **${plant.efficiency}%**.`,
         dataTable: [
-          { Métrica: 'Producción Diaria', Valor: `${plant.dailyProduction} Tn` },
-          { Métrica: 'Capacidad Máxima', Valor: `${plant.capacity} Tn` },
-          { Métrica: 'Temperatura de Horno', Valor: `${plant.ovenTemperature} °C` },
-          { Métrica: 'Personal en Planta', Valor: `${plant.activeWorkers} operarios` },
+          { Métrica: 'Sede', Valor: plant.name },
+          { Métrica: 'Producción', Valor: `${plant.dailyProduction} Tn / ${plant.capacity} Tn` },
+          { Métrica: 'Operarios Activos', Valor: `${plant.activeWorkers}` },
           { Métrica: 'Eficiencia', Valor: `${plant.efficiency}%` }
         ]
       };
@@ -316,8 +314,7 @@ export const generateBusinessAssistantResponse = (
         Planta: pl.name,
         'Prod. Actual': `${pl.dailyProduction} Tn/día`,
         Capacidad: `${pl.capacity} Tn/día`,
-        Eficiencia: `${pl.efficiency}%`,
-        Horno: `${pl.ovenTemperature} °C`
+        Eficiencia: `${pl.efficiency}%`
       }))
     };
   }
@@ -350,7 +347,7 @@ export const generateBusinessAssistantResponse = (
   return {
     text: `Hola, soy el Asistente Empresarial de CalMiranda. He analizado tu consulta, pero por el momento solo puedo procesar solicitudes sobre:
 *   **Inventario y Stock** (ej. *"Ver inventario general"*, *"Stock de cal en pasta 7kg"*)
-*   **Producción de Plantas** (ej. *"Producción de la planta Guatire"*, *"Eficiencia de los hornos"*)
+*   **Producción de Plantas** (ej. *"Producción de la planta Guatire"*, *"Eficiencia de las plantas"*)
 *   **Ventas e Ingresos** (ej. *"Mostrar reporte de ventas"*, *"Ingresos del mes"*)
 *   **Información de Franquicias** (ej. *"Requisitos para franquicias"*)
 

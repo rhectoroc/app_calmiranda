@@ -85,7 +85,7 @@ export const DashboardView: React.FC = () => {
     { time: '13:05', icon: <div className="w-2 h-2 rounded-full bg-cal-emerald-light" />, text: <><strong className="text-cal-emerald-light">IA Diamantín:</strong> Procesada orden de stock de Pipotes Vacíos</> },
     { time: '12:46', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Producción Cal Pasta 7kg finalizada en Guatire' },
     { time: '11:30', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Sistema: Sincronización con base de datos de CalMiranda exitosa' },
-    { time: '08:15', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Sede Caracas: Horno A temperatura estable 955°C' },
+    { time: '08:15', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Sede Caracas: Turno de producción matutino iniciado' },
   ];
 
   return (
@@ -200,24 +200,26 @@ export const DashboardView: React.FC = () => {
           <h3 className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
             CONSUMO DE INSUMOS DE EMBALAJE (SEMANAL)
           </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-[10px] md:text-xs min-w-[300px]">
+          <div className="w-full overflow-hidden">
+            <table className="w-full text-left text-[8px] sm:text-[10px] md:text-xs">
               <thead>
                 <tr className="border-b border-white/5 text-gray-500 uppercase tracking-wider">
-                  <th className="py-2 md:py-3 font-semibold">Item</th>
-                  <th className="py-2 md:py-3 font-semibold text-center">Consumido</th>
-                  <th className="py-2 md:py-3 font-semibold text-center">Disponible</th>
-                  <th className="py-2 md:py-3 font-semibold text-right">Estado</th>
+                  <th className="py-2 md:py-3 pr-1 font-semibold">Item</th>
+                  <th className="py-2 md:py-3 px-1 font-semibold text-center">Consumido</th>
+                  <th className="py-2 md:py-3 px-1 font-semibold text-center">Disponible</th>
+                  <th className="py-2 md:py-3 pl-1 font-semibold text-right">Estado</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {embalajes.map((item, idx) => (
                   <tr key={idx} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3 font-medium text-gray-300">{item.name}</td>
-                    <td className="py-3 text-center text-gray-400">{item.consumido}</td>
-                    <td className="py-3 text-center font-semibold text-white">{item.disponible}</td>
-                    <td className="py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-2 md:py-3 pr-1 font-medium text-gray-300 leading-tight">
+                      {item.name.replace(' (Vacías)', '').replace(' (Vacíos)', '')}
+                    </td>
+                    <td className="py-2 md:py-3 px-1 text-center text-gray-400">{item.consumido}</td>
+                    <td className="py-2 md:py-3 px-1 text-center font-semibold text-white">{item.disponible}</td>
+                    <td className="py-2 md:py-3 pl-1 text-right">
+                      <div className="flex items-center justify-end gap-1">
                         {item.alert ? (
                           <>
                             <AlertCircle size={14} className="text-cal-gold-light" />
@@ -286,54 +288,47 @@ export const DashboardView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 px-1 mt-4 md:mt-0">
         
         {/* Panel Izquierdo: Plantas */}
-        <div className="bg-white/[0.03] rounded-2xl p-4 md:p-6 border border-white/5 flex flex-col gap-4 overflow-x-auto">
+        <div className="bg-white/[0.03] rounded-2xl p-3 md:p-6 border border-white/5 flex flex-col gap-4">
           <h3 className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider shrink-0">
             ESTADO OPERATIVO DE PLANTAS
           </h3>
-          <table className="w-full text-left text-[10px] md:text-[11px] min-w-[400px] md:min-w-[500px]">
-            <thead>
-              <tr className="border-b border-white/5 text-gray-500 uppercase tracking-wider">
-                <th className="py-2 md:py-3 font-semibold">SEDE / PLANTA</th>
-                <th className="py-2 md:py-3 font-semibold text-center">PRODUCCIÓN<br/>(Tm)</th>
-                <th className="py-2 md:py-3 font-semibold text-center">CAPACIDAD<br/>(Tm)</th>
-                <th className="py-2 md:py-3 font-semibold text-center">TEMPERATURA</th>
-                <th className="py-2 md:py-3 font-semibold text-center">EFICIENCIA</th>
-                <th className="py-2 md:py-3 font-semibold text-center">OPERARIOS<br/>ACTIVOS</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              <tr className="hover:bg-white/5 transition-colors">
-                <td className="py-3 font-medium text-gray-200">Sede Principal Guatire</td>
-                <td className="py-3 text-center text-white font-semibold">18.5 Tm</td>
-                <td className="py-3 text-center text-gray-400">25 Tm</td>
-                <td className="py-3 text-center">
-                  <span className="block text-white font-bold">980°C</span>
-                  <span className="block text-[8px] text-cal-emerald-light">Horno Estable</span>
-                </td>
-                <td className="py-3 text-center">
-                  <div className="w-10 md:w-12 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto">
-                    <div className="h-full bg-cal-emerald rounded-full w-[85%]" />
-                  </div>
-                </td>
-                <td className="py-3 text-center text-gray-300 font-semibold text-sm">14</td>
-              </tr>
-              <tr className="hover:bg-white/5 transition-colors">
-                <td className="py-3 font-medium text-gray-200">Sede Caracas (Hoyo de la Puerta)</td>
-                <td className="py-3 text-center text-white font-semibold">8.2 Tm</td>
-                <td className="py-3 text-center text-gray-400">12 Tm</td>
-                <td className="py-3 text-center">
-                  <span className="block text-white font-bold">955°C</span>
-                  <span className="block text-[8px] text-cal-emerald-light">Horno Estable</span>
-                </td>
-                <td className="py-3 text-center">
-                  <div className="w-10 md:w-12 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto">
-                    <div className="h-full bg-cal-emerald rounded-full w-[90%]" />
-                  </div>
-                </td>
-                <td className="py-3 text-center text-gray-300 font-semibold text-sm">6</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="w-full overflow-hidden">
+            <table className="w-full text-left text-[8px] sm:text-[9px] md:text-[11px]">
+              <thead>
+                <tr className="border-b border-white/5 text-gray-500 uppercase tracking-wider">
+                  <th className="py-2 md:py-3 pr-1 font-semibold">SEDE</th>
+                  <th className="py-2 md:py-3 px-1 font-semibold text-center">PROD.</th>
+                  <th className="py-2 md:py-3 px-1 font-semibold text-center">CAP.</th>
+                  <th className="py-2 md:py-3 px-1 font-semibold text-center">EFIC.</th>
+                  <th className="py-2 md:py-3 pl-1 font-semibold text-center">OP.</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                <tr className="hover:bg-white/5 transition-colors">
+                  <td className="py-2 md:py-3 pr-1 font-medium text-gray-200">Guatire</td>
+                  <td className="py-2 md:py-3 px-1 text-center text-white font-semibold">18.5<span className="hidden sm:inline"> Tm</span></td>
+                  <td className="py-2 md:py-3 px-1 text-center text-gray-400">25<span className="hidden sm:inline"> Tm</span></td>
+                  <td className="py-2 md:py-3 px-1 text-center">
+                    <div className="w-6 sm:w-10 md:w-12 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto">
+                      <div className="h-full bg-cal-emerald rounded-full w-[85%]" />
+                    </div>
+                  </td>
+                  <td className="py-2 md:py-3 pl-1 text-center text-gray-300 font-semibold text-xs md:text-sm">14</td>
+                </tr>
+                <tr className="hover:bg-white/5 transition-colors">
+                  <td className="py-2 md:py-3 pr-1 font-medium text-gray-200">Caracas</td>
+                  <td className="py-2 md:py-3 px-1 text-center text-white font-semibold">8.2<span className="hidden sm:inline"> Tm</span></td>
+                  <td className="py-2 md:py-3 px-1 text-center text-gray-400">12<span className="hidden sm:inline"> Tm</span></td>
+                  <td className="py-2 md:py-3 px-1 text-center">
+                    <div className="w-6 sm:w-10 md:w-12 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto">
+                      <div className="h-full bg-cal-emerald rounded-full w-[90%]" />
+                    </div>
+                  </td>
+                  <td className="py-2 md:py-3 pl-1 text-center text-gray-300 font-semibold text-xs md:text-sm">6</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Panel Derecho: Feed IA y Actividad */}
