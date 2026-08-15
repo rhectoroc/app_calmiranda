@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/authContext';
 import { 
-  initialInventory, 
-  initialPlants 
+  initialInventory
 } from '../../shared/mockData';
 import { 
   Settings,
@@ -24,9 +22,6 @@ interface InventoryItem {
 }
 
 export const DashboardView: React.FC = () => {
-  const { user } = useAuth();
-  
-  const [plants] = useState(initialPlants);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   
   useEffect(() => {
