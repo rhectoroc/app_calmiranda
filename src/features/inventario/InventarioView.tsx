@@ -243,14 +243,14 @@ export const InventarioView: React.FC = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[700px]">
+                  <table className="w-full text-left border-collapse min-w-full md:min-w-[700px]">
                     <thead>
-                      <tr className="bg-gray-900/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
-                        <th className="px-3 md:px-6 py-3 md:py-4 font-semibold w-1/4">Producto</th>
-                        <th className="px-2 md:px-6 py-3 md:py-4 font-semibold text-center border-l border-gray-700/50">Stock Inicial</th>
-                        <th className="px-2 md:px-6 py-3 md:py-4 font-semibold text-center text-emerald-400/80">Entradas (+)</th>
-                        <th className="px-2 md:px-6 py-3 md:py-4 font-semibold text-center text-red-400/80">Salidas (-)</th>
-                        <th className="px-3 md:px-6 py-3 md:py-4 font-semibold text-center text-white border-l border-gray-700/50">Stock Final (=)</th>
+                      <tr className="bg-gray-900/50 text-gray-400 text-[8px] md:text-xs uppercase tracking-wider">
+                        <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[28%] md:w-1/4 leading-tight">Producto</th>
+                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center border-l border-gray-700/50 leading-tight">Inicial</th>
+                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-emerald-400/80 leading-tight">Entra</th>
+                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-red-400/80 leading-tight">Sale</th>
+                        <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center text-white border-l border-gray-700/50 leading-tight">Final</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700/50">
@@ -258,55 +258,55 @@ export const InventarioView: React.FC = () => {
                         const item = getItem(cat.nombre, prod);
                         return (
                           <tr key={prod} className="hover:bg-gray-700/20 transition-colors">
-                            <td className="px-6 py-4 text-sm font-medium text-gray-200">
+                            <td className="px-1.5 md:px-6 py-2 md:py-4 text-[10px] md:text-sm font-medium text-gray-200 leading-tight">
                               {prod}
                               {item.updated_at && (
-                                <div className="text-[10px] text-gray-500 font-normal mt-1 leading-tight">
+                                <div className="text-[8px] md:text-[10px] text-gray-500 font-normal mt-0.5 md:mt-1 leading-tight">
                                   Act: {new Date(item.updated_at).toLocaleTimeString('es-VE', {timeZone: 'America/Caracas', hour: '2-digit', minute:'2-digit'})}
-                                  {item.updated_by && <span className="block text-emerald-500/80 mt-0.5">por {item.updated_by}</span>}
+                                  {item.updated_by && <span className="block text-emerald-500/80 mt-0">por {item.updated_by}</span>}
                                 </div>
                               )}
                             </td>
                             
-                            <td className="px-4 py-3 text-center border-l border-gray-700/50">
+                            <td className="px-0.5 md:px-4 py-2 md:py-3 text-center border-l border-gray-700/50">
                                 <input 
                                   type="number" 
                                   min="0"
                                   step="0.01"
                                   value={item.stock_inicial || ''}
                                   onChange={(e) => updateItem(cat.nombre, prod, 'stock_inicial', e.target.value)}
-                                  className="w-16 sm:w-20 md:w-24 bg-gray-900/80 border border-gray-600 rounded-lg px-1 md:px-2 py-1.5 md:py-2 text-center text-gray-200 text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
+                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-gray-600 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-gray-200 text-[10px] md:text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
                                   placeholder="0"
                                 />
                             </td>
                             
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-0.5 md:px-4 py-2 md:py-3 text-center">
                                 <input 
                                   type="number" 
                                   min="0"
                                   step="0.01"
                                   value={item.entradas || ''}
                                   onChange={(e) => updateItem(cat.nombre, prod, 'entradas', e.target.value)}
-                                  className="w-16 sm:w-20 md:w-24 bg-gray-900/80 border border-emerald-900/50 rounded-lg px-1 md:px-2 py-1.5 md:py-2 text-center text-emerald-400 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-emerald-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-emerald-400 text-[10px] md:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
                                   placeholder="0"
                                 />
                             </td>
 
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-0.5 md:px-4 py-2 md:py-3 text-center">
                                 <input 
                                   type="number" 
                                   min="0"
                                   step="0.01"
                                   value={item.salidas || ''}
                                   onChange={(e) => updateItem(cat.nombre, prod, 'salidas', e.target.value)}
-                                  className="w-16 sm:w-20 md:w-24 bg-gray-900/80 border border-red-900/50 rounded-lg px-1 md:px-2 py-1.5 md:py-2 text-center text-red-400 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-red-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-red-400 text-[10px] md:text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
                                   placeholder="0"
                                 />
                             </td>
 
-                            <td className="px-6 py-4 text-center border-l border-gray-700/50 bg-gray-900/20">
+                            <td className="px-1 md:px-6 py-2 md:py-4 text-center border-l border-gray-700/50 bg-gray-900/20">
                               <span className={cn(
-                                "text-xl font-bold tracking-wider",
+                                "text-sm md:text-xl font-bold tracking-wider",
                                 item.stock_actual < 0 ? "text-red-500" : "text-cal-emerald-light"
                               )}>
                                 {formatVE(item.stock_actual)}
