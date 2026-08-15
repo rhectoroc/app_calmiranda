@@ -27,6 +27,8 @@
   background-color: var(--color-cal-dark);
   color: #f3f4f6;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 body {
