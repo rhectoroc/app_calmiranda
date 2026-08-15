@@ -322,7 +322,7 @@ export const CustomerServiceHub: React.FC = () => {
         </div>
 
         {/* Chats List */}
-        <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5">
+        <div className="flex-1 overflow-y-auto p-0 flex flex-col">
           {isLoadingChats && chats.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="w-6 h-6 border-2 border-cal-emerald border-t-transparent rounded-full animate-spin" />
@@ -337,10 +337,10 @@ export const CustomerServiceHub: React.FC = () => {
               <button
                 key={chat.id}
                 onClick={() => setSelectedChatId(chat.id)}
-                className={`w-full text-left p-3.5 rounded-2xl transition-all duration-300 flex flex-col gap-2 border cursor-pointer ${
+                className={`w-full text-left px-4 py-3.5 transition-all duration-300 flex flex-col gap-2 border-b cursor-pointer ${
                   chat.id === selectedChatId
-                    ? 'bg-cal-emerald/10 border-cal-emerald/30'
-                    : 'bg-transparent border-transparent hover:bg-white/5'
+                    ? 'bg-cal-emerald/10 border-b-cal-emerald/30 border-l-4 border-l-cal-emerald'
+                    : 'bg-transparent border-b-white/5 hover:bg-white/5 border-l-4 border-l-transparent'
                 }`}
               >
                 <div className="flex justify-between items-start">
@@ -576,7 +576,7 @@ export const CustomerServiceHub: React.FC = () => {
             )}
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 flex flex-col gap-3">
               {isLoadingMessages && messages.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="w-6 h-6 border-2 border-cal-emerald border-t-transparent rounded-full animate-spin" />
@@ -602,9 +602,9 @@ export const CustomerServiceHub: React.FC = () => {
                   return (
                     <div 
                       key={msg.id} 
-                      className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                      className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-[75%] flex flex-col gap-1`}>
+                      <div className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-1`}>
                         {/* Sender Badge */}
                         {!isMe && (
                           <span className="text-[10px] text-gray-500 font-semibold px-1 flex items-center gap-1">
@@ -619,7 +619,7 @@ export const CustomerServiceHub: React.FC = () => {
                         )}
                         
                         {/* Bubble */}
-                        <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md ${
+                        <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-md break-words ${
                           isMe 
                             ? 'bg-cal-emerald text-white rounded-tr-none' 
                             : isBot 
