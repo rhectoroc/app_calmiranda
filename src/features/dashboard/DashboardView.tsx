@@ -32,14 +32,14 @@ export const DashboardView: React.FC = () => {
   }, []);
 
   // 1. Cálculos de KPIs Reales
-  const totalProduccion = inventoryItems.reduce((acc, curr) => acc + (curr.entradas || 0), 0) || 26.7; 
-  const totalSalidas = inventoryItems.reduce((acc, curr) => acc + (curr.salidas || 0), 0) || 412;
-  const totalInventario = inventoryItems.reduce((acc, curr) => acc + (curr.stock_actual || 0), 0);
+  const totalProduccion = inventoryItems.reduce((acc, curr) => acc + (Number(curr.entradas) || 0), 0) || 26.7; 
+  const totalSalidas = inventoryItems.reduce((acc, curr) => acc + (Number(curr.salidas) || 0), 0) || 412;
+  const totalInventario = inventoryItems.reduce((acc, curr) => acc + (Number(curr.stock_actual) || 0), 0);
   const valorInventarioEstimado = totalInventario * 4.5 || 84500; // Estimación simple de precio
 
   const aggregatedStock: Record<string, number> = {};
   inventoryItems.forEach(item => {
-    aggregatedStock[item.producto] = (aggregatedStock[item.producto] || 0) + (item.stock_actual || 0);
+    aggregatedStock[item.producto] = (aggregatedStock[item.producto] || 0) + (Number(item.stock_actual) || 0);
   });
 
   const lowStockProducts = Object.entries(aggregatedStock).map(([name, stock]) => {
@@ -54,10 +54,10 @@ export const DashboardView: React.FC = () => {
   const alertasCriticasCount = lowStockProducts.length > 0 ? lowStockProducts.length : 3;
 
   // 2. Datos para el Gráfico de Barras de Producción
-  const prod270 = inventoryItems.filter(i => i.producto.includes('270kg')).reduce((acc, curr) => acc + curr.entradas, 0) || 120;
-  const prod7 = inventoryItems.filter(i => i.producto.includes('7kg') && !i.producto.includes('Vacías')).reduce((acc, curr) => acc + curr.entradas, 0) || 990;
-  const prod5 = inventoryItems.filter(i => i.producto.includes('5kg') && !i.producto.includes('Vacías')).reduce((acc, curr) => acc + curr.entradas, 0) || 541;
-  const prodPinturas = inventoryItems.filter(i => i.producto.includes('Pinturas')).reduce((acc, curr) => acc + curr.entradas, 0) || 50;
+  const prod270 = inventoryItems.filter(i => i.producto.includes('270kg')).reduce((acc, curr) => acc + (Number(curr.entradas) || 0), 0) || 120;
+  const prod7 = inventoryItems.filter(i => i.producto.includes('7kg') && !i.producto.includes('Vacías')).reduce((acc, curr) => acc + (Number(curr.entradas) || 0), 0) || 990;
+  const prod5 = inventoryItems.filter(i => i.producto.includes('5kg') && !i.producto.includes('Vacías')).reduce((acc, curr) => acc + (Number(curr.entradas) || 0), 0) || 541;
+  const prodPinturas = inventoryItems.filter(i => i.producto.includes('Pinturas')).reduce((acc, curr) => acc + (Number(curr.entradas) || 0), 0) || 50;
 
   const barChartData = [
     { label: 'Pipotes Cal Pasta 270kg', value: prod270, color: '#3b82f6' },
@@ -117,11 +117,6 @@ export const DashboardView: React.FC = () => {
               Consolidado de todas las plantas
             </span>
           </div>
-          {/* Sparkline Decorativo */}
-          <svg className="absolute bottom-4 right-4 w-16 md:w-24 h-6 md:h-8 opacity-70" viewBox="0 0 100 30" preserveAspectRatio="none">
-            <path d="M0,25 L20,20 L40,28 L60,10 L80,15 L100,5" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="100" cy="5" r="2" fill="#10b981" />
-          </svg>
         </div>
 
         {/* KPI 2: DESPACHOS TOTALES */}
