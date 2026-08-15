@@ -411,10 +411,10 @@ export const CustomerServiceHub: React.FC = () => {
         ) : (
           <>
             {/* Header */}
-            <div className="p-3 md:p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
-              <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-3 md:p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0 min-w-0 w-full">
+              <div className="flex items-center gap-2 md:gap-3 min-w-0 w-full">
                 <button 
-                  className="md:hidden p-1.5 -ml-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                  className="md:hidden p-1.5 -ml-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10 shrink-0"
                   onClick={() => setSelectedChatId(null)}
                   title="Volver a la lista"
                 >
@@ -423,19 +423,19 @@ export const CustomerServiceHub: React.FC = () => {
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-gray-300 border border-white/10 shrink-0">
                   {activeChat.customerName ? activeChat.customerName.charAt(0) : '+'}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   {isEditingName ? (
                     <form onSubmit={handleRename} className="flex items-center gap-2 mb-1">
                       <input
                         type="text"
                         value={editedName}
                         onChange={(e) => setEditedName(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white focus:outline-none focus:border-cal-emerald"
+                        className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white focus:outline-none focus:border-cal-emerald min-w-0 w-full"
                         autoFocus
                       />
                       <button
                         type="submit"
-                        className="p-1 text-cal-emerald-light hover:text-cal-emerald cursor-pointer"
+                        className="p-1 text-cal-emerald-light hover:text-cal-emerald cursor-pointer shrink-0"
                         title="Guardar"
                       >
                         <Check size={14} />
@@ -443,15 +443,15 @@ export const CustomerServiceHub: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsEditingName(false)}
-                        className="p-1 text-gray-400 hover:text-white cursor-pointer"
+                        className="p-1 text-gray-400 hover:text-white cursor-pointer shrink-0"
                         title="Cancelar"
                       >
                         <X size={14} />
                       </button>
                     </form>
                   ) : (
-                    <div className="flex items-center gap-2 group mb-0.5">
-                      <h4 className="font-semibold text-sm text-white leading-tight">
+                    <div className="flex items-center gap-2 group mb-0.5 min-w-0">
+                      <h4 className="font-semibold text-sm text-white leading-tight truncate">
                         {activeChat.customerName}
                       </h4>
                       {!activeChat.id.startsWith('web_') && (
@@ -460,7 +460,7 @@ export const CustomerServiceHub: React.FC = () => {
                             setEditedName(activeChat.customerName);
                             setIsEditingName(true);
                           }}
-                          className="p-1 text-gray-400 hover:text-cal-emerald-light transition-all cursor-pointer opacity-70 hover:opacity-100"
+                          className="p-1 text-gray-400 hover:text-cal-emerald-light transition-all cursor-pointer opacity-70 hover:opacity-100 shrink-0"
                           title="Editar nombre"
                         >
                           <Edit2 size={12} />
@@ -468,24 +468,24 @@ export const CustomerServiceHub: React.FC = () => {
                       )}
                     </div>
                   )}
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 md:gap-2 mt-0.5 flex-wrap">
+                    <span className="text-[10px] text-gray-500 flex items-center gap-1 shrink-0">
                       <Phone size={10} />
                       {activeChat.phoneNumber}
                     </span>
                     {activeChat.channel === 'WhatsApp' && (
-                      <div className="relative flex items-center">
+                      <div className="relative flex items-center shrink-0">
                         <select
                           value={activeChat.clientEtiqueta || ''}
                           onChange={(e) => handleStatusChange(activeChat.id, e.target.value)}
-                          className={`border rounded-lg px-2 py-0.5 pr-6 text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEtiqueta)}`}
+                          className={`border rounded-lg px-1.5 py-0.5 pr-5 text-[8px] md:text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEtiqueta)}`}
                         >
                           <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
                           <option value="Empleado" className="bg-[#1e2528] text-blue-400">Empleado</option>
                           <option value="Transportista" className="bg-[#1e2528] text-purple-400">Transportista</option>
                           <option value="Otros" className="bg-[#1e2528] text-red-400">Otros</option>
                         </select>
-                        <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       </div>
                     )}
                   </div>
@@ -642,29 +642,29 @@ export const CustomerServiceHub: React.FC = () => {
             </div>
 
             {/* Input box */}
-            <div className="p-4 border-t border-white/5 bg-white/[0.01] shrink-0">
-              <form onSubmit={handleSendMessage} className="flex gap-2">
+            <div className="p-2.5 md:p-4 border-t border-white/5 bg-white/[0.01] shrink-0 w-full box-border">
+              <form onSubmit={handleSendMessage} className="flex gap-2 w-full">
                 <input
                   type="text"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder={
                     activeChat.status === 'agent_active' 
-                      ? 'Redacta tu mensaje para enviar al cliente...' 
-                      : 'Intervén el chat primero para redactar y enviar'
+                      ? 'Mensaje...' 
+                      : 'Intervén el chat primero'
                   }
                   disabled={activeChat.status !== 'agent_active' || isSending}
-                  className="flex-1 bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 min-w-0 bg-white/5 border border-white/5 rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm text-white focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                 />
                 <button
                   type="submit"
                   disabled={activeChat.status !== 'agent_active' || !replyText.trim() || isSending}
-                  className="w-12 h-12 flex-shrink-0 bg-cal-emerald text-white rounded-2xl flex items-center justify-center transition-colors hover:bg-cal-emerald-light disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-cal-emerald text-white rounded-xl md:rounded-2xl flex items-center justify-center transition-colors hover:bg-cal-emerald-light disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isSending ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 md:w-5 md:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <Send size={18} className="translate-x-px" />
+                    <Send size={16} className="md:size-[18px] translate-x-px" />
                   )}
                 </button>
               </form>
