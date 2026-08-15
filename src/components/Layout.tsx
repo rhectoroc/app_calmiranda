@@ -138,11 +138,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Sidebar - Desktop and Mobile Drawer */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-gray-900/95 backdrop-blur-xl border-r border-white/10 shadow-2xl flex flex-col justify-between p-6 transform transition-transform duration-300 ease-in-out shrink-0
+        fixed inset-y-0 left-0 z-50 w-64 bg-gray-900/95 backdrop-blur-xl border-r border-white/10 shadow-2xl flex flex-col justify-between p-4 md:p-6 transform transition-transform duration-300 ease-in-out shrink-0 overflow-y-auto
         md:translate-x-0 md:static md:h-screen md:bg-transparent md:backdrop-blur-none md:shadow-none md:border-white/5 md:glass
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4 md:gap-8">
           {/* Logo Section */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           {/* Connection Status Panel */}
-          <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+          <div className="bg-white/5 border border-white/5 rounded-xl md:rounded-2xl p-3 md:p-4 flex flex-col gap-2 md:gap-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500 font-medium">Evolution API</span>
               <span className="flex items-center gap-1.5 text-cal-emerald-light font-semibold uppercase tracking-wide">
@@ -200,14 +200,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex flex-col gap-1.5">
+          <nav className="flex flex-col gap-1 md:gap-1.5">
             {allowedNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) => `
-                  flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-300
+                  flex items-center gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm font-medium transition-all duration-300
                   ${isActive 
                     ? 'bg-gradient-to-r from-cal-emerald/90 to-cal-emerald/75 text-white shadow-md shadow-cal-emerald/15 font-semibold' 
                     : 'text-gray-400 hover:text-white hover:bg-white/5'}
@@ -221,7 +221,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* User Card & Logout */}
-        <div className="flex flex-col gap-4 border-t border-white/5 pt-6">
+        <div className="flex flex-col gap-3 md:gap-4 border-t border-white/5 pt-4 md:pt-6 mt-2 md:mt-0">
           {user && (
             <div className="flex items-center gap-3 p-1">
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-gray-200 border border-white/10 shrink-0">
@@ -247,7 +247,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 text-gray-400 hover:text-red-400 text-sm font-semibold rounded-2xl py-3 transition-all duration-300 cursor-pointer"
+            className="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/20 text-gray-400 hover:text-red-400 text-sm font-semibold rounded-xl md:rounded-2xl py-2.5 md:py-3 transition-all duration-300 cursor-pointer"
           >
             <LogOut size={16} />
             <span>Cerrar Sesión</span>
