@@ -116,7 +116,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <div className={`min-h-screen bg-cal-dark text-white flex flex-col md:flex-row relative ${isChatHub ? 'h-screen md:h-screen overflow-hidden' : ''}`}>
+    <div className={`min-h-screen bg-cal-dark text-white flex flex-col md:flex-row relative pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] ${isChatHub ? 'h-screen md:h-screen overflow-hidden' : ''}`}>
       
       {/* Mobile Header */}
       <header className="md:hidden glass border-b border-white/5 px-6 py-4 flex justify-between items-center z-30 shrink-0">
