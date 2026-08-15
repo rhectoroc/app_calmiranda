@@ -72,8 +72,8 @@ export const DashboardView: React.FC = () => {
     <div className="flex flex-col gap-6 md:gap-8 animate-fade-in">
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
-          Panel de Control Operativo
+        <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
+          Resumen Operativo
         </h1>
         <p className="text-gray-400 text-sm">
           Monitoreo de producción, existencias y actividad de asistentes en tiempo real.
@@ -84,7 +84,7 @@ export const DashboardView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         
         {/* KPI 1: Producción de Hoy */}
-        <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
             <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
               Producción de Hoy
@@ -94,7 +94,7 @@ export const DashboardView: React.FC = () => {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-bold font-display text-white mb-1">
+            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
               {totalProductionToday.toFixed(1)} Tn
             </h3>
             <span className="text-cal-emerald-light text-xs font-medium flex items-center gap-1">
@@ -105,7 +105,7 @@ export const DashboardView: React.FC = () => {
         </div>
 
         {/* KPI 2: Eficiencia de Sedes */}
-        <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
             <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
               Eficiencia Hornos
@@ -115,7 +115,7 @@ export const DashboardView: React.FC = () => {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-bold font-display text-white mb-1">
+            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
               {avgEfficiency}%
             </h3>
             <span className="text-gray-400 text-xs font-medium flex items-center gap-1">
@@ -126,7 +126,7 @@ export const DashboardView: React.FC = () => {
         </div>
 
         {/* KPI 3: Stock de Productos */}
-        <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
             <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
               Inventario Total
@@ -136,7 +136,7 @@ export const DashboardView: React.FC = () => {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-bold font-display text-white mb-1">
+            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
               {totalStockItems.toLocaleString()}
             </h3>
             <span className="text-gray-400 text-xs font-medium">
@@ -146,7 +146,7 @@ export const DashboardView: React.FC = () => {
         </div>
 
         {/* KPI 4: Alertas de Stock */}
-        <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
           <div className="flex justify-between items-start mb-4">
             <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
               Alertas Críticas
@@ -160,7 +160,7 @@ export const DashboardView: React.FC = () => {
             </span>
           </div>
           <div>
-            <h3 className="text-3xl font-bold font-display text-white mb-1">
+            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
               {lowStockProducts.length}
             </h3>
             <span className={`text-xs font-medium ${
@@ -181,7 +181,7 @@ export const DashboardView: React.FC = () => {
         <div className="lg:col-span-2 flex flex-col gap-6">
           
           {/* Production and Sales Chart Card */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-6">
+          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-6">
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-bold font-display text-white leading-tight">
@@ -304,7 +304,7 @@ export const DashboardView: React.FC = () => {
           </div>
 
           {/* Plant Operations Table */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-4">
+          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-4">
             <div>
               <h3 className="text-lg font-bold font-display text-white leading-tight">
                 Estado Operativo de Plantas
@@ -315,32 +315,32 @@ export const DashboardView: React.FC = () => {
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-base sm:text-sm">
+              <table className="w-full text-left text-[11px] sm:text-sm">
                 <thead>
-                  <tr className="border-b border-white/5 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                    <th className="py-3 px-4">Sede / Planta</th>
-                    <th className="py-3 px-4">Producción</th>
-                    <th className="py-3 px-4">Temperatura</th>
-                    <th className="py-3 px-4">Eficiencia</th>
-                    <th className="py-3 px-4">Operarios</th>
+                  <tr className="border-b border-white/5 text-gray-500 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">
+                    <th className="py-2 px-2 md:py-3 md:px-4">Sede / Planta</th>
+                    <th className="py-2 px-2 md:py-3 md:px-4">Producción</th>
+                    <th className="py-2 px-2 md:py-3 md:px-4">Temperatura</th>
+                    <th className="py-2 px-2 md:py-3 md:px-4">Eficiencia</th>
+                    <th className="py-2 px-2 md:py-3 md:px-4">Operarios</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {plants.map((plant) => (
                     <tr key={plant.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-3 px-4 font-semibold text-white">{plant.name}</td>
-                      <td className="py-3 px-4">
-                        <span className="font-semibold text-gray-200">{plant.dailyProduction} Tn</span>
-                        <span className="text-xs text-gray-500 block">Capacidad: {plant.capacity} Tn</span>
+                      <td className="py-2 px-2 md:py-3 md:px-4 font-semibold text-white">{plant.name}</td>
+                      <td className="py-2 px-2 md:py-3 md:px-4">
+                        <span className="font-semibold text-gray-200 block">{plant.dailyProduction} Tn</span>
+                        <span className="text-[9px] md:text-xs text-gray-500 block">Capacidad: {plant.capacity} Tn</span>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="font-semibold text-cal-gold-light">{plant.ovenTemperature}°C</span>
-                        <span className="text-[10px] text-emerald-500 font-medium block">Horno Estable</span>
+                      <td className="py-2 px-2 md:py-3 md:px-4">
+                        <span className="font-semibold text-cal-gold-light block">{plant.ovenTemperature}°C</span>
+                        <span className="text-[9px] md:text-[10px] text-emerald-500 font-medium block">Horno Estable</span>
                       </td>
-                      <td className="py-3 px-4 font-medium text-gray-300">
+                      <td className="py-2 px-2 md:py-3 md:px-4 font-medium text-gray-300">
                         <div className="flex items-center gap-2">
-                          <span className="w-12 block">{plant.efficiency}%</span>
-                          <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <span className="w-8 md:w-12 block text-right md:text-left">{plant.efficiency}%</span>
+                          <div className="w-12 md:w-16 h-1.5 bg-white/10 rounded-full overflow-hidden hidden sm:block">
                             <div 
                               className="h-full bg-cal-emerald rounded-full" 
                               style={{ width: `${plant.efficiency}%` }} 
@@ -348,7 +348,7 @@ export const DashboardView: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-gray-400">{plant.activeWorkers} activos</td>
+                      <td className="py-2 px-2 md:py-3 md:px-4 text-gray-400">{plant.activeWorkers} activos</td>
                     </tr>
                   ))}
                 </tbody>
@@ -361,7 +361,7 @@ export const DashboardView: React.FC = () => {
         <div className="flex flex-col gap-6">
           
           {/* Low Stock Alerts Card */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-4">
+          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-4">
             <h3 className="text-lg font-bold font-display text-white leading-tight">
               Requerimientos de Almacén
             </h3>
@@ -391,7 +391,7 @@ export const DashboardView: React.FC = () => {
           </div>
 
           {/* AI Event Log Card */}
-          <div className="glass rounded-3xl p-6 border border-white/5 flex flex-col gap-4 flex-1">
+          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-4 flex-1">
             <h3 className="text-lg font-bold font-display text-white leading-tight">
               Actividad del Agente IA
             </h3>

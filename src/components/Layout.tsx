@@ -77,7 +77,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     {
       to: '/dashboard',
-      label: 'Dashboard',
+      label: 'Resumen',
       icon: <LayoutDashboard size={20} />,
       roles: ['superadmin', 'admin', 'operador']
     },

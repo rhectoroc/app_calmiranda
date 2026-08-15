@@ -220,12 +220,12 @@ export const UsuariosView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/5 text-gray-400 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Usuario / Nombre</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Rol</th>
-                <th className="px-6 py-4">Fecha Registro</th>
-                <th className="px-6 py-4 text-right">Acciones</th>
+              <tr className="border-b border-white/5 text-gray-400 text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                <th className="px-2 py-3 md:px-6 md:py-4">Usuario</th>
+                <th className="px-2 py-3 md:px-6 md:py-4">Email</th>
+                <th className="px-2 py-3 md:px-6 md:py-4">Rol</th>
+                <th className="px-2 py-3 md:px-6 md:py-4 hidden sm:table-cell">Registro</th>
+                <th className="px-2 py-3 md:px-6 md:py-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-sm">
@@ -248,10 +248,10 @@ export const UsuariosView: React.FC = () => {
                 filteredUsers.map((u) => {
                   const isSelf = u.email === currentUser?.username;
                   return (
-                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center font-bold text-gray-300">
+                    <tr key={u.id} className="hover:bg-white/[0.02] transition-colors group text-[11px] md:text-sm">
+                      <td className="px-2 py-3 md:px-6 md:py-4">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center font-bold text-gray-300">
                             {u.nombre.charAt(0)}
                           </div>
                           <div>
@@ -259,17 +259,17 @@ export const UsuariosView: React.FC = () => {
                               {u.nombre}
                             </span>
                             {isSelf && (
-                              <span className="text-[10px] text-cal-emerald-light font-bold">
+                              <span className="text-[9px] md:text-[10px] text-cal-emerald-light font-bold">
                                 (Tu cuenta actual)
                               </span>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-300 font-mono text-xs">{u.email}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-2 py-3 md:px-6 md:py-4 text-gray-300 font-mono text-[10px] md:text-xs">{u.email}</td>
+                      <td className="px-2 py-3 md:px-6 md:py-4">
                         <span className={`
-                          inline-block text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border
+                          inline-block text-[8px] md:text-[9px] font-extrabold uppercase px-1.5 py-0.5 md:px-2 md:py-0.5 rounded-full border
                           ${u.rol === 'superadmin'
                             ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                             : u.rol === 'admin'
@@ -279,27 +279,27 @@ export const UsuariosView: React.FC = () => {
                           {u.rol === 'superadmin' ? 'Super Admin' : u.rol === 'admin' ? 'Administrador' : 'Operador'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-400 text-xs">{formatDate(u.created_at)}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-2 py-3 md:px-6 md:py-4 text-gray-400 text-[10px] md:text-xs hidden sm:table-cell">{formatDate(u.created_at)}</td>
+                      <td className="px-2 py-3 md:px-6 md:py-4 text-right">
+                        <div className="flex items-center justify-end gap-1 md:gap-2">
                           <button
                             onClick={() => handleOpenEdit(u)}
-                            className="p-2 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 md:p-2 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
                             title="Editar usuario"
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={14} md:size={16} />
                           </button>
                           <button
                             onClick={() => handleOpenDelete(u)}
                             disabled={isSelf}
-                            className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                            className={`p-1.5 md:p-2 rounded-lg transition-colors cursor-pointer ${
                               isSelf 
                                 ? 'text-gray-600 cursor-not-allowed opacity-30' 
                                 : 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
                             }`}
                             title={isSelf ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario'}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} md:size={16} />
                           </button>
                         </div>
                       </td>

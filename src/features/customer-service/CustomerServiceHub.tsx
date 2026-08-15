@@ -12,7 +12,8 @@ import {
   ChevronDown,
   Edit2,
   X,
-  MapPin
+  MapPin,
+  ArrowLeft
 } from 'lucide-react';
 
 const getStatusSelectClass = (estatus?: string) => {
@@ -283,7 +284,7 @@ export const CustomerServiceHub: React.FC = () => {
     <div className="flex-1 flex flex-col md:flex-row glass rounded-3xl border border-white/5 overflow-hidden h-full animate-fade-in shrink-0">
       
       {/* Sidebar de Chats */}
-      <div className="w-full md:w-80 border-r border-white/5 flex flex-col h-1/2 md:h-full shrink-0">
+      <div className={`w-full md:w-80 border-r border-white/5 flex-col h-full shrink-0 ${selectedChatId ? 'hidden md:flex' : 'flex'}`}>
         
         {/* Search */}
         <div className="p-4 border-b border-white/5 shrink-0 flex flex-col gap-3">
@@ -396,7 +397,7 @@ export const CustomerServiceHub: React.FC = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col h-1/2 md:h-full relative bg-black/10 min-w-0">
+      <div className={`flex-1 flex-col h-full relative bg-black/10 min-w-0 ${!selectedChatId ? 'hidden md:flex' : 'flex'}`}>
         {!activeChat ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-black/10">
             <div className="p-4 bg-cal-emerald/10 rounded-full border border-cal-emerald/20 text-cal-emerald-light mb-4 animate-pulse">
@@ -410,9 +411,16 @@ export const CustomerServiceHub: React.FC = () => {
         ) : (
           <>
             {/* Header */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-gray-300 border border-white/10 shrink-0">
+            <div className="p-3 md:p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02] shrink-0">
+              <div className="flex items-center gap-2 md:gap-3">
+                <button 
+                  className="md:hidden p-1.5 -ml-1.5 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                  onClick={() => setSelectedChatId(null)}
+                  title="Volver a la lista"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-gray-300 border border-white/10 shrink-0">
                   {activeChat.customerName ? activeChat.customerName.charAt(0) : '+'}
                 </div>
                 <div>
@@ -542,17 +550,18 @@ export const CustomerServiceHub: React.FC = () => {
                 {activeChat.status !== 'agent_active' && activeChat.status !== 'resolved' && (
                   <button
                     onClick={() => handleTakeOver(activeChat.id)}
-                    className="px-4 py-2 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-xs rounded-xl transition-all duration-300 shadow-md shadow-cal-emerald/10 cursor-pointer"
+                    className="px-2 md:px-4 py-1.5 md:py-2 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-[10px] md:text-xs rounded-xl transition-all duration-300 shadow-md shadow-cal-emerald/10 cursor-pointer"
                   >
-                    Intervenir Conversación
+                    <span className="md:hidden">Intervenir</span>
+                    <span className="hidden md:inline">Intervenir Conversación</span>
                   </button>
                 )}
                 {activeChat.status === 'agent_active' && (
                   <button
                     onClick={() => handleRelease(activeChat.id)}
-                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs rounded-xl transition-all duration-300 cursor-pointer"
+                    className="px-2 md:px-4 py-1.5 md:py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-[10px] md:text-xs rounded-xl transition-all duration-300 cursor-pointer"
                   >
-                    Reactivar IA (Bot)
+                    Reactivar IA
                   </button>
                 )}
               </div>

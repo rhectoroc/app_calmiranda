@@ -317,13 +317,13 @@ export const ClientesView: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02] text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  <th className="px-6 py-4.5">Cliente / RIF</th>
-                  <th className="px-6 py-4.5">Zona / Ubicación</th>
-                  <th className="px-6 py-4.5">Contacto Principal</th>
-                  <th className="px-6 py-4.5">Teléfono / Móvil</th>
-                  <th className="px-6 py-4.5 text-center">Estatus</th>
-                  <th className="px-6 py-4.5 text-center">Acciones</th>
+                <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="px-2 py-3 md:px-6 md:py-4.5">Cliente/RIF</th>
+                  <th className="px-2 py-3 md:px-6 md:py-4.5">Zona</th>
+                  <th className="px-2 py-3 md:px-6 md:py-4.5 hidden sm:table-cell">Contacto</th>
+                  <th className="px-2 py-3 md:px-6 md:py-4.5">Teléfono</th>
+                  <th className="px-2 py-3 md:px-6 md:py-4.5 text-center">Estatus</th>
+                  <th className="px-2 py-3 md:px-6 md:py-4.5 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -331,35 +331,35 @@ export const ClientesView: React.FC = () => {
                   <tr 
                     key={cliente.id_cliente}
                     onClick={() => handleOpenDetails(cliente)}
-                    className="hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors duration-200 cursor-pointer text-sm"
+                    className="hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors duration-200 cursor-pointer text-[11px] md:text-sm"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-2 py-3 md:px-6 md:py-4">
                       <div className="flex flex-col">
                         <span className="font-semibold text-white tracking-wide">{cliente.nombre}</span>
-                        <span className="text-xs text-gray-400 mt-0.5">{cliente.rif || 'RIF no registrado'}</span>
+                        <span className="text-[10px] md:text-xs text-gray-400 mt-0.5">{cliente.rif || 'RIF no registrado'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-2 py-3 md:px-6 md:py-4">
                       <div className="flex flex-col">
                         <span className="text-gray-200">{cliente.zona}</span>
-                        <span className="text-xs text-gray-500 truncate max-w-[200px] mt-0.5" title={cliente.direccion}>
+                        <span className="text-[10px] md:text-xs text-gray-500 truncate max-w-[120px] md:max-w-[200px] mt-0.5" title={cliente.direccion}>
                           {cliente.direccion || 'Sin dirección'}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-200">
+                    <td className="px-2 py-3 md:px-6 md:py-4 text-gray-200 hidden sm:table-cell">
                       {cliente.contacto_1 || <span className="text-gray-500 italic">No asignado</span>}
                     </td>
-                    <td className="px-6 py-4 text-gray-300">
+                    <td className="px-2 py-3 md:px-6 md:py-4 text-gray-300">
                       <div className="flex flex-col">
                         <span>{cliente.telefono_1 || cliente.movil || 'Sin teléfono'}</span>
                         {cliente.telefono_1 && cliente.movil && (
-                          <span className="text-[11px] text-gray-500 mt-0.5">{cliente.movil}</span>
+                          <span className="text-[10px] md:text-[11px] text-gray-500 mt-0.5">{cliente.movil}</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                    <td className="px-2 py-3 md:px-6 md:py-4 text-center">
+                      <span className={`inline-block text-[9px] md:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 md:px-2.5 md:py-0.5 rounded-full border ${
                         cliente.estatus === 'Activo'
                           ? 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
                           : cliente.estatus === 'Inactivo'
@@ -373,19 +373,19 @@ export const ClientesView: React.FC = () => {
                         {cliente.estatus || 'Sin Estatus'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-2 py-3 md:px-6 md:py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-1 md:gap-2">
                         <button
                           onClick={() => handleOpenEdit(cliente)}
                           title="Editar Cliente"
-                          className="p-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer"
+                          className="p-1.5 md:p-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl border border-white/5 hover:border-white/10 transition-all cursor-pointer"
                         >
                           <Edit2 size={14} />
                         </button>
                         <button
                           onClick={(e) => handleOpenDelete(cliente, e)}
                           title="Eliminar Cliente"
-                          className="p-2 bg-white/5 hover:bg-red-500/15 text-gray-400 hover:text-red-400 rounded-xl border border-white/5 hover:border-red-500/20 transition-all cursor-pointer"
+                          className="p-1.5 md:p-2 bg-white/5 hover:bg-red-500/15 text-gray-400 hover:text-red-400 rounded-xl border border-white/5 hover:border-red-500/20 transition-all cursor-pointer"
                         >
                           <Trash2 size={14} />
                         </button>
