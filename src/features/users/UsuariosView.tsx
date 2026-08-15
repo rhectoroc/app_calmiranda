@@ -287,7 +287,7 @@ export const UsuariosView: React.FC = () => {
                             className="p-1.5 md:p-2 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
                             title="Editar usuario"
                           >
-                            <Edit2 size={14} md:size={16} />
+                            <Edit2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                           </button>
                           <button
                             onClick={() => handleOpenDelete(u)}
@@ -299,7 +299,7 @@ export const UsuariosView: React.FC = () => {
                             }`}
                             title={isSelf ? 'No puedes eliminarte a ti mismo' : 'Eliminar usuario'}
                           >
-                            <Trash2 size={14} md:size={16} />
+                            <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                           </button>
                         </div>
                       </td>
