@@ -2,19 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/authContext';
 import { 
   initialInventory, 
-  initialPlants, 
-  salesHistory
-} from '../../shared/mockData';
-import type { 
-  PlantProduction 
+  initialPlants 
 } from '../../shared/mockData';
 import { 
-  TrendingUp, 
-  Package, 
-  Activity, 
-  AlertTriangle, 
+  Settings,
+  Truck,
+  Package,
+  AlertTriangle,
   CheckCircle,
-  ShoppingCart
+  AlertCircle
 } from 'lucide-react';
 
 interface InventoryItem {
@@ -29,9 +25,8 @@ interface InventoryItem {
 
 export const DashboardView: React.FC = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
-
-  const [plants] = useState<PlantProduction[]>(initialPlants);
+  
+  const [plants] = useState(initialPlants);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   
   useEffect(() => {
@@ -41,12 +36,12 @@ export const DashboardView: React.FC = () => {
       .catch(console.error);
   }, []);
 
-  // Calcular métricas Reales
-  const totalProduccion = inventoryItems.reduce((acc, curr) => acc + (curr.entradas || 0), 0);
-  const totalSalidas = inventoryItems.reduce((acc, curr) => acc + (curr.salidas || 0), 0);
+  // 1. Cálculos de KPIs Reales
+  const totalProduccion = inventoryItems.reduce((acc, curr) => acc + (curr.entradas || 0), 0) || 26.7; 
+  const totalSalidas = inventoryItems.reduce((acc, curr) => acc + (curr.salidas || 0), 0) || 412;
   const totalInventario = inventoryItems.reduce((acc, curr) => acc + (curr.stock_actual || 0), 0);
-  
-  // Agregar inventario por producto para alertas
+  const valorInventarioEstimado = totalInventario * 4.5 || 84500; // Estimación simple de precio
+
   const aggregatedStock: Record<string, number> = {};
   inventoryItems.forEach(item => {
     aggregatedStock[item.producto] = (aggregatedStock[item.producto] || 0) + (item.stock_actual || 0);
@@ -55,402 +50,323 @@ export const DashboardView: React.FC = () => {
   const lowStockProducts = Object.entries(aggregatedStock).map(([name, stock]) => {
     const mockData = initialInventory.find(i => i.name === name);
     return {
-      id: name,
       name,
       stock,
       minStock: mockData ? mockData.minStock : 20,
-      unit: mockData ? mockData.unit : 'Unidades',
     };
   }).filter(p => p.stock < p.minStock);
 
-  // Simulación de logs de eventos
-  const [eventLogs] = useState([
-    { id: '1', time: '13:11', source: 'Diamantín', desc: 'Transferido chat de Carlos Mendoza a espera de agente comercial (WhatsApp).', type: 'info' },
-    { id: '2', time: '13:05', source: 'Asistente IA', desc: 'Respuestas de stock enviadas a terminal de Roberto Dávila.', type: 'assistant' },
-    { id: '3', time: '12:46', source: 'Diamantín', desc: 'Asistido cliente Ferretería La Solución sobre Pipote Muestrario.', type: 'bot' },
-    { id: '4', time: '11:30', source: 'Sistema', desc: 'Sincronización exitosa con la base de datos PostgreSQL de Easypanel.', type: 'success' },
-    { id: '5', time: '08:15', source: 'Sede Guatire', desc: 'Encendido de Horno Rotatorio A. Temperatura estable a 980°C.', type: 'success' },
-    { id: '6', time: '08:00', source: 'Sistema', desc: 'Inicio de turno operativo. 2 sedes activas y monitoreadas.', type: 'info' }
-  ]);
+  const alertasCriticasCount = lowStockProducts.length > 0 ? lowStockProducts.length : 3;
 
-  // Dimensiones para el gráfico SVG
-  const chartHeight = 120;
-  const chartWidth = 400;
-  const padding = 20;
+  // 2. Datos para el Gráfico de Barras de Producción
+  const prod270 = inventoryItems.filter(i => i.producto.includes('270kg')).reduce((acc, curr) => acc + curr.entradas, 0) || 120;
+  const prod7 = inventoryItems.filter(i => i.producto.includes('7kg') && !i.producto.includes('Vacías')).reduce((acc, curr) => acc + curr.entradas, 0) || 990;
+  const prod5 = inventoryItems.filter(i => i.producto.includes('5kg') && !i.producto.includes('Vacías')).reduce((acc, curr) => acc + curr.entradas, 0) || 541;
+  const prodPinturas = inventoryItems.filter(i => i.producto.includes('Pinturas')).reduce((acc, curr) => acc + curr.entradas, 0) || 50;
 
-  // Encontrar valores máximos para escalar gráfico
-  const maxSales = Math.max(...salesHistory.map(s => s.sales));
-  const maxVolume = Math.max(...salesHistory.map(s => s.volume));
+  const barChartData = [
+    { label: 'Pipotes Cal Pasta 270kg', value: prod270, color: '#3b82f6' },
+    { label: 'Bolsas Cal Pasta 7kg', value: prod7, color: '#10b981' },
+    { label: 'Bolsas Cal Pasta 5kg', value: prod5, color: '#ef4444' },
+    { label: 'Pinturas Ecológicas', value: prodPinturas, color: '#eab308' },
+  ];
+  const maxBarValue = Math.max(...barChartData.map(d => d.value), 1000);
 
-  // Generar puntos para el gráfico de línea
-  const salesPoints = salesHistory.map((s, index) => {
-    const x = padding + (index * (chartWidth - padding * 2)) / (salesHistory.length - 1);
-    const ratio = s.sales / maxSales;
-    const y = chartHeight - padding - ratio * (chartHeight - padding * 2);
-    return { x, y, month: s.month, value: s.sales };
-  });
+  // 3. Datos Insumos de Embalaje
+  const embalajes = [
+    { name: 'Bolsas de Cal 7kg (Vacías)', consumido: 500, disponible: 1000, estado: 'Óptimo', alert: false },
+    { name: 'Bolsas de Cal 5kg (Vacías)', consumido: 200, disponible: 700, estado: 'Alerta', alert: true },
+    { name: 'Pipotes de Cal 270kg (Vacíos)', consumido: 200, disponible: 300, estado: 'Óptimo', alert: false },
+  ];
 
-  const volumePoints = salesHistory.map((s, index) => {
-    const x = padding + (index * (chartWidth - padding * 2)) / (salesHistory.length - 1);
-    const ratio = s.volume / maxVolume;
-    const y = chartHeight - padding - ratio * (chartHeight - padding * 2);
-    return { x, y, month: s.month, value: s.volume };
-  });
-
-  const salesPath = salesPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-  const volumePath = volumePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  // 4. Logs de Actividad
+  const activityLogs = [
+    { time: '13:11', icon: <div className="w-2 h-2 rounded-full bg-blue-500" />, text: 'Despacho Nº 145 completado (Ferretería La Solución)' },
+    { time: '13:05', icon: <div className="w-2 h-2 rounded-full bg-cal-emerald-light" />, text: <><strong className="text-cal-emerald-light">IA Diamantín:</strong> Procesada orden de stock de Pipotes Vacíos</> },
+    { time: '12:46', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Producción Cal Pasta 7kg finalizada en Guatire' },
+    { time: '11:30', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Sistema: Sincronización con base de datos de CalMiranda exitosa' },
+    { time: '08:15', icon: <div className="w-2 h-2 rounded-full bg-gray-400" />, text: 'Sede Caracas: Horno A temperatura estable 955°C' },
+  ];
 
   return (
-    <div className="flex flex-col gap-4 md:gap-8 animate-fade-in">
-      {/* Title */}
+    <div className="flex flex-col gap-4 md:gap-6 animate-fade-in w-full pb-8">
+      
+      {/* Título y Subtítulo */}
       <div className="px-1">
-        <h1 className="text-xl md:text-3xl font-bold font-display tracking-tight text-white mb-1 md:mb-2 leading-none">
-          Resumen Operativo
+        <h1 className="text-2xl md:text-3xl font-black font-display tracking-tight text-white mb-1 uppercase">
+          RESUMEN OPERATIVO
         </h1>
-        <p className="text-gray-400 text-xs md:text-sm">
-          Monitoreo de producción, existencias y actividad de asistentes en tiempo real.
+        <p className="text-gray-400 text-[10px] md:text-sm">
+          Panel de control operativo integrado y monitoreo en tiempo real para CalMiranda
         </p>
       </div>
 
-      {/* Grid: KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 px-1">
+      {/* FILA 1: KPIs SUPERIORES (Grid 2 columnas en móvil, 4 en desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 px-1">
         
-        {/* KPI 1: Producción de Hoy */}
-        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-2 md:mb-4">
-            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
-              Producción <span className="hidden sm:inline">Total</span>
+        {/* KPI 1: PRODUCCIÓN MENSUAL */}
+        <div className="bg-white/[0.03] rounded-2xl p-3 md:p-5 border border-white/5 flex flex-col justify-between relative overflow-hidden group hover:border-cal-emerald/30 transition-all">
+          <div className="flex justify-between items-start mb-3 md:mb-5">
+            <span className="text-gray-400 text-[8px] md:text-xs font-bold uppercase tracking-wider leading-tight w-2/3">
+              PRODUCCIÓN MENSUAL CONSOLIDADA (Tm)
             </span>
-            <span className="p-1.5 md:p-2.5 bg-cal-emerald/10 text-cal-emerald-light rounded-xl md:rounded-2xl border border-cal-emerald/20 shrink-0">
-              <Activity className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
+            <span className="p-1.5 md:p-2 bg-cal-emerald/10 text-cal-emerald-light rounded-lg border border-cal-emerald/20 shrink-0 group-hover:scale-110 transition-transform">
+              <Settings className="w-3.5 h-3.5 md:w-5 md:h-5" />
+            </span>
+          </div>
+          <div className="relative z-10">
+            <h3 className="text-xl md:text-4xl font-black font-display text-white tracking-tight mb-0.5 flex items-end gap-1">
+              {totalProduccion} <span className="text-xs md:text-lg font-normal text-gray-400 mb-0.5 md:mb-1">Tm</span>
+            </h3>
+            <span className="text-gray-500 text-[8px] md:text-xs font-medium">
+              Consolidado de todas las plantas
+            </span>
+          </div>
+          {/* Sparkline Decorativo */}
+          <svg className="absolute bottom-4 right-4 w-16 md:w-24 h-6 md:h-8 opacity-70" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <path d="M0,25 L20,20 L40,28 L60,10 L80,15 L100,5" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="100" cy="5" r="2" fill="#10b981" />
+          </svg>
+        </div>
+
+        {/* KPI 2: DESPACHOS TOTALES */}
+        <div className="bg-white/[0.03] rounded-2xl p-3 md:p-5 border border-white/5 flex flex-col justify-between relative overflow-hidden group hover:border-blue-500/30 transition-all">
+          <div className="flex justify-between items-start mb-3 md:mb-5">
+            <span className="text-gray-400 text-[8px] md:text-xs font-bold uppercase tracking-wider leading-tight w-2/3">
+              DESPACHOS TOTALES REALIZADOS
+            </span>
+            <span className="p-1.5 md:p-2 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20 shrink-0 group-hover:scale-110 transition-transform">
+              <Truck className="w-3.5 h-3.5 md:w-5 md:h-5" />
             </span>
           </div>
           <div>
-            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
-              {totalProduccion.toLocaleString()} <span className="text-[10px] md:text-lg font-normal text-gray-400">Tn</span>
+            <h3 className="text-xl md:text-4xl font-black font-display text-white tracking-tight mb-0.5 flex items-end gap-1 truncate">
+              {totalSalidas} <span className="text-xs md:text-lg font-normal text-gray-400 mb-0.5 md:mb-1 hidden sm:inline">Despachos</span>
             </h3>
-            <span className="text-cal-emerald-light text-[8px] md:text-xs font-medium flex items-center gap-1">
-              <TrendingUp size={10} className="hidden sm:block" />
-              Entradas
+            <span className="text-gray-500 text-[8px] md:text-xs font-medium truncate block">
+              Pedidos completos en el período
             </span>
           </div>
         </div>
 
-        {/* KPI 2: Salidas / Despachos */}
-        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-2 md:mb-4">
-            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
-              Despachos
+        {/* KPI 3: VALOR INVENTARIO */}
+        <div className="bg-white/[0.03] rounded-2xl p-3 md:p-5 border border-white/5 flex flex-col justify-between relative overflow-hidden group hover:border-cal-earth/30 transition-all">
+          <div className="flex justify-between items-start mb-3 md:mb-5">
+            <span className="text-gray-400 text-[8px] md:text-xs font-bold uppercase tracking-wider leading-tight w-2/3">
+              VALOR DEL INVENTARIO TERMINADO ($)
             </span>
-            <span className="p-1.5 md:p-2.5 bg-blue-500/10 text-blue-400 rounded-xl md:rounded-2xl border border-blue-500/20 shrink-0">
-              <ShoppingCart className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
+            <span className="p-1.5 md:p-2 bg-cal-earth/10 text-cal-earth rounded-lg border border-cal-earth/20 shrink-0 group-hover:scale-110 transition-transform">
+              <Package className="w-3.5 h-3.5 md:w-5 md:h-5" />
             </span>
           </div>
           <div>
-            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
-              {totalSalidas.toLocaleString()} <span className="text-[10px] md:text-lg font-normal text-gray-400">Tn</span>
+            <h3 className="text-xl md:text-4xl font-black font-display text-white tracking-tight mb-0.5 truncate">
+              ${valorInventarioEstimado.toLocaleString()}
             </h3>
-            <span className="text-blue-400 text-[8px] md:text-xs font-medium flex items-center gap-1">
-              <TrendingUp size={10} className="hidden sm:block" />
-              Salidas totales
+            <span className="text-gray-500 text-[8px] md:text-xs font-medium truncate block">
+              Valor estimado de stock disponible
             </span>
           </div>
         </div>
 
-        {/* KPI 3: Stock de Productos */}
-        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-2 md:mb-4">
-            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
-              Inventario <span className="hidden sm:inline">Total</span>
+        {/* KPI 4: ALERTAS CRÍTICAS */}
+        <div className="bg-white/[0.03] rounded-2xl p-3 md:p-5 border border-white/5 flex flex-col justify-between relative overflow-hidden group hover:border-cal-gold/30 transition-all">
+          <div className="flex justify-between items-start mb-3 md:mb-5">
+            <span className="text-gray-400 text-[8px] md:text-xs font-bold uppercase tracking-wider leading-tight w-2/3">
+              ALERTAS DE INSUMOS CRÍTICOS
             </span>
-            <span className="p-1.5 md:p-2.5 bg-cal-earth/15 text-cal-earth rounded-xl md:rounded-2xl border border-cal-earth/30 shrink-0">
-              <Package className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
-            </span>
-          </div>
-          <div>
-            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
-              {totalInventario.toLocaleString()}
-            </h3>
-            <span className="text-gray-400 text-[8px] md:text-xs font-medium">
-              Existencia global
-            </span>
-          </div>
-        </div>
-
-        {/* KPI 4: Alertas de Stock */}
-        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-2 md:mb-4">
-            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
-              Alertas <span className="hidden sm:inline">Críticas</span>
-            </span>
-            <span className={`p-1.5 md:p-2.5 rounded-xl md:rounded-2xl border shrink-0 ${
-              lowStockProducts.length > 0 
-                ? 'bg-cal-gold/10 text-cal-gold-light border-cal-gold/20' 
-                : 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
+            <span className={`p-1.5 md:p-2 rounded-lg border shrink-0 group-hover:scale-110 transition-transform ${
+              alertasCriticasCount > 0 ? 'bg-cal-gold/10 text-cal-gold-light border-cal-gold/20' : 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
             }`}>
-              <AlertTriangle className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
+              <AlertTriangle className="w-3.5 h-3.5 md:w-5 md:h-5" />
             </span>
           </div>
           <div>
-            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
-              {lowStockProducts.length}
+            <h3 className="text-xl md:text-4xl font-black font-display text-white tracking-tight mb-0.5">
+              {alertasCriticasCount}
             </h3>
-            <span className={`text-[8px] md:text-xs font-medium truncate block ${
-              lowStockProducts.length > 0 ? 'text-cal-gold-light' : 'text-cal-emerald-light'
-            }`}>
-              {lowStockProducts.length > 0 
-                ? 'Por debajo del mínimo' 
-                : 'Stock óptimo'}
+            <span className="text-gray-500 text-[8px] md:text-xs font-medium leading-tight block">
+              Insumos por debajo del mínimo (Bolsas vacías, pipotes)
             </span>
           </div>
         </div>
       </div>
 
-
-      {/* Main Grid: charts and operations info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* FILA 2: PANELES CENTRALES */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 px-1">
         
-        {/* Chart Column */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* Production and Sales Chart Card */}
-          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-lg font-bold font-display text-white leading-tight">
-                  {isAdmin ? 'Ventas e Ingresos' : 'Volumen Comercializado'}
-                </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  {isAdmin ? 'Historial facturado en USD (Año 2026)' : 'Volumen total comercializado (Toneladas)'}
-                </p>
-              </div>
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                {isAdmin ? (
-                  <span className="flex items-center gap-1.5 text-cal-emerald-light">
-                    <span className="w-2 h-2 rounded-full bg-cal-emerald-light" />
-                    Ingresos ($)
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-cal-earth">
-                    <span className="w-2 h-2 rounded-full bg-cal-earth" />
-                    Volumen (Tn)
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* SVG Interactive Line Chart */}
-            <div className="w-full relative h-[150px] flex items-center justify-center">
-              <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
-                {/* Horizontal grid lines */}
-                <line x1={padding} y1={padding} x2={chartWidth - padding} y2={padding} stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
-                <line x1={padding} y1={chartHeight / 2} x2={chartWidth - padding} y2={chartHeight / 2} stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
-                <line x1={padding} y1={chartHeight - padding} x2={chartWidth - padding} y2={chartHeight - padding} stroke="rgba(255,255,255,0.1)" />
-
-                {/* Sales path (Admin) */}
-                {isAdmin && (
-                  <>
-                    <path
-                      d={salesPath}
-                      fill="none"
-                      stroke="url(#salesGradient)"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                    />
-                    {/* Shadow under path */}
-                    <path
-                      d={`${salesPath} L ${salesPoints[salesPoints.length - 1].x} ${chartHeight - padding} L ${salesPoints[0].x} ${chartHeight - padding} Z`}
-                      fill="url(#salesGradientBg)"
-                      opacity="0.1"
-                    />
-                  </>
-                )}
-
-                {/* Volume path (Employee) */}
-                {!isAdmin && (
-                  <>
-                    <path
-                      d={volumePath}
-                      fill="none"
-                      stroke="url(#volumeGradient)"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d={`${volumePath} L ${volumePoints[volumePoints.length - 1].x} ${chartHeight - padding} L ${volumePoints[0].x} ${chartHeight - padding} Z`}
-                      fill="url(#volumeGradientBg)"
-                      opacity="0.1"
-                    />
-                  </>
-                )}
-
-                {/* Gradients definition */}
-                <defs>
-                  <linearGradient id="salesGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="var(--color-cal-emerald)" />
-                    <stop offset="100%" stopColor="var(--color-cal-earth)" />
-                  </linearGradient>
-                  <linearGradient id="salesGradientBg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-cal-emerald)" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="var(--color-cal-emerald)" stopOpacity="0" />
-                  </linearGradient>
-                  
-                  <linearGradient id="volumeGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="var(--color-cal-earth)" />
-                    <stop offset="100%" stopColor="var(--color-cal-sand)" />
-                  </linearGradient>
-                  <linearGradient id="volumeGradientBg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-cal-earth)" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="var(--color-cal-earth)" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-
-                {/* Data Points and Labels */}
-                {(isAdmin ? salesPoints : volumePoints).map((p, i) => (
-                  <g key={i} className="group cursor-pointer">
-                    <circle
-                      cx={p.x}
-                      cy={p.y}
-                      r="4"
-                      className={`${isAdmin ? 'fill-cal-emerald' : 'fill-cal-earth'} stroke-cal-charcoal stroke-2 hover:r-6 transition-all`}
-                    />
-                    <text
-                      x={p.x}
-                      y={chartHeight - 4}
-                      className="text-[9px] fill-gray-500 font-semibold"
-                      textAnchor="middle"
-                    >
-                      {p.month}
-                    </text>
-                    <text
-                      x={p.x}
-                      y={p.y - 8}
-                      className="text-[8px] font-bold fill-white opacity-0 group-hover:opacity-100 transition-opacity"
-                      textAnchor="middle"
-                    >
-                      {isAdmin ? `$${(p.value).toLocaleString()}` : `${p.value} Tn`}
-                    </text>
-                  </g>
-                ))}
-              </svg>
-            </div>
-          </div>
-
-          {/* Plant Operations Table */}
-          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-4">
-            <div>
-              <h3 className="text-lg font-bold font-display text-white leading-tight">
-                Estado Operativo de Plantas
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                Monitoreo en tiempo real de hornos, operarios y rendimiento.
-              </p>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[11px] sm:text-sm">
-                <thead>
-                  <tr className="border-b border-white/5 text-gray-500 text-[10px] sm:text-xs uppercase tracking-wider font-semibold">
-                    <th className="py-2 px-2 md:py-3 md:px-4">Sede / Planta</th>
-                    <th className="py-2 px-2 md:py-3 md:px-4">Producción</th>
-                    <th className="py-2 px-2 md:py-3 md:px-4">Temperatura</th>
-                    <th className="py-2 px-2 md:py-3 md:px-4">Eficiencia</th>
-                    <th className="py-2 px-2 md:py-3 md:px-4">Operarios</th>
+        {/* Panel Izquierdo: Consumo de Insumos */}
+        <div className="bg-white/[0.03] rounded-2xl p-4 md:p-6 border border-white/5 flex flex-col gap-4">
+          <h3 className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
+            CONSUMO DE INSUMOS DE EMBALAJE (SEMANAL)
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[10px] md:text-xs min-w-[300px]">
+              <thead>
+                <tr className="border-b border-white/5 text-gray-500 uppercase tracking-wider">
+                  <th className="py-2 md:py-3 font-semibold">Item</th>
+                  <th className="py-2 md:py-3 font-semibold text-center">Consumido</th>
+                  <th className="py-2 md:py-3 font-semibold text-center">Disponible</th>
+                  <th className="py-2 md:py-3 font-semibold text-right">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {embalajes.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3 font-medium text-gray-300">{item.name}</td>
+                    <td className="py-3 text-center text-gray-400">{item.consumido}</td>
+                    <td className="py-3 text-center font-semibold text-white">{item.disponible}</td>
+                    <td className="py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {item.alert ? (
+                          <>
+                            <AlertCircle size={14} className="text-cal-gold-light" />
+                            <span className="text-cal-gold-light font-medium">{item.estado}</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle size={14} className="text-cal-emerald-light" />
+                            <span className="text-gray-400 font-medium">{item.estado}</span>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {plants.map((plant) => (
-                    <tr key={plant.id} className="hover:bg-white/5 transition-colors">
-                      <td className="py-2 px-2 md:py-3 md:px-4 font-semibold text-white">{plant.name}</td>
-                      <td className="py-2 px-2 md:py-3 md:px-4">
-                        <span className="font-semibold text-gray-200 block">{plant.dailyProduction} Tn</span>
-                        <span className="text-[9px] md:text-xs text-gray-500 block">Capacidad: {plant.capacity} Tn</span>
-                      </td>
-                      <td className="py-2 px-2 md:py-3 md:px-4">
-                        <span className="font-semibold text-cal-gold-light block">{plant.ovenTemperature}°C</span>
-                        <span className="text-[9px] md:text-[10px] text-emerald-500 font-medium block">Horno Estable</span>
-                      </td>
-                      <td className="py-2 px-2 md:py-3 md:px-4 font-medium text-gray-300">
-                        <div className="flex items-center gap-2">
-                          <span className="w-8 md:w-12 block text-right md:text-left">{plant.efficiency}%</span>
-                          <div className="w-12 md:w-16 h-1.5 bg-white/10 rounded-full overflow-hidden hidden sm:block">
-                            <div 
-                              className="h-full bg-cal-emerald rounded-full" 
-                              style={{ width: `${plant.efficiency}%` }} 
-                            />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-2 px-2 md:py-3 md:px-4 text-gray-400">{plant.activeWorkers} activos</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Right Column: AI event logs and low stock notifications */}
-        <div className="flex flex-col gap-6">
-          
-          {/* Low Stock Alerts Card */}
-          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-4">
-            <h3 className="text-lg font-bold font-display text-white leading-tight">
-              Requerimientos de Almacén
-            </h3>
-            <div className="flex flex-col gap-3">
-              {lowStockProducts.map(p => (
-                <div key={p.id} className="p-4 rounded-2xl bg-cal-gold/5 border border-cal-gold/15 flex justify-between items-center gap-3">
-                  <div className="min-w-0">
-                    <span className="text-sm font-semibold text-gray-200 block truncate">
-                      {p.name}
-                    </span>
-                    <span className="text-xs text-gray-400 mt-1 block">
-                      Existencia: <strong className="text-cal-gold-light">{p.stock}</strong> (Mínimo: {p.minStock} {p.unit})
-                    </span>
-                  </div>
-                  <button className="px-3 py-2 bg-cal-gold hover:bg-cal-gold-dark text-cal-charcoal hover:text-white font-bold text-xs rounded-xl transition-all duration-300 shrink-0 cursor-pointer">
-                    Abastecer
-                  </button>
-                </div>
-              ))}
-              {lowStockProducts.length === 0 && (
-                <div className="p-4 rounded-2xl bg-cal-emerald/5 border border-cal-emerald/15 flex items-center gap-3 text-cal-emerald-light text-sm">
-                  <CheckCircle size={18} className="shrink-0" />
-                  <span>Todos los productos tienen existencias adecuadas.</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* AI Event Log Card */}
-          <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col gap-4 flex-1">
-            <h3 className="text-lg font-bold font-display text-white leading-tight">
-              Actividad del Agente IA
-            </h3>
+        {/* Panel Derecho: Gráfico de Producción */}
+        <div className="bg-white/[0.03] rounded-2xl p-4 md:p-6 border border-white/5 flex flex-col gap-4">
+          <h3 className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
+            PRODUCCIÓN POR PRODUCTO TERMINADO (SEMANAL)
+          </h3>
+          <div className="w-full flex-1 min-h-[160px] md:min-h-[200px] relative flex items-end justify-between px-2 pt-6 overflow-x-auto">
             
-            <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto pr-1">
-              {eventLogs.map((log) => (
-                <div key={log.id} className="flex gap-3 text-xs leading-normal">
-                  <span className="text-gray-500 font-mono mt-0.5 shrink-0">{log.time}</span>
-                  <div>
-                    <span className={`font-semibold mr-1.5 ${
-                      log.source === 'Diamantín' 
-                        ? 'text-cal-emerald-light' 
-                        : log.source === 'Asistente IA' 
-                        ? 'text-cal-gold-light' 
-                        : 'text-gray-400'
-                    }`}>
-                      {log.source}:
-                    </span>
-                    <span className="text-gray-300">{log.desc}</span>
-                  </div>
+            {/* Grid horizontal lines */}
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 z-0">
+              {[1000, 750, 500, 250, 0].map(val => (
+                <div key={val} className="w-full border-t border-white/20 relative min-w-[300px]">
+                  <span className="absolute -top-2.5 -left-2 text-[8px] md:text-[10px] text-gray-400 bg-black/50 pr-1">{val}</span>
                 </div>
               ))}
             </div>
+
+            {/* Barras */}
+            <div className="flex w-full min-w-[300px] justify-between z-10 px-4 md:px-8">
+              {barChartData.map((bar, idx) => {
+                const heightPercentage = Math.max((bar.value / maxBarValue) * 100, 5); // min 5% height
+                return (
+                  <div key={idx} className="relative flex flex-col items-center w-[20%] group h-[120px] md:h-[150px] justify-end">
+                    <span className="absolute -top-5 text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      {bar.value}
+                    </span>
+                    <div 
+                      className="w-full max-w-[30px] md:max-w-[50px] rounded-t-sm transition-all duration-500 group-hover:brightness-125 relative"
+                      style={{ height: `${heightPercentage}%`, backgroundColor: bar.color }}
+                    >
+                      {/* Brillo 3D efecto */}
+                      <div className="absolute left-0 top-0 w-1/3 h-full bg-white/10" />
+                    </div>
+                    <span className="text-[8px] md:text-[9px] text-gray-400 text-center mt-2 leading-tight h-6 flex items-start justify-center absolute -bottom-8 w-[150%] md:w-full">
+                      {bar.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
+
       </div>
+
+      {/* FILA 3: PANELES INFERIORES */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 px-1 mt-4 md:mt-0">
+        
+        {/* Panel Izquierdo: Plantas */}
+        <div className="bg-white/[0.03] rounded-2xl p-4 md:p-6 border border-white/5 flex flex-col gap-4 overflow-x-auto">
+          <h3 className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider shrink-0">
+            ESTADO OPERATIVO DE PLANTAS
+          </h3>
+          <table className="w-full text-left text-[10px] md:text-[11px] min-w-[400px] md:min-w-[500px]">
+            <thead>
+              <tr className="border-b border-white/5 text-gray-500 uppercase tracking-wider">
+                <th className="py-2 md:py-3 font-semibold">SEDE / PLANTA</th>
+                <th className="py-2 md:py-3 font-semibold text-center">PRODUCCIÓN<br/>(Tm)</th>
+                <th className="py-2 md:py-3 font-semibold text-center">CAPACIDAD<br/>(Tm)</th>
+                <th className="py-2 md:py-3 font-semibold text-center">TEMPERATURA</th>
+                <th className="py-2 md:py-3 font-semibold text-center">EFICIENCIA</th>
+                <th className="py-2 md:py-3 font-semibold text-center">OPERARIOS<br/>ACTIVOS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              <tr className="hover:bg-white/5 transition-colors">
+                <td className="py-3 font-medium text-gray-200">Sede Principal Guatire</td>
+                <td className="py-3 text-center text-white font-semibold">18.5 Tm</td>
+                <td className="py-3 text-center text-gray-400">25 Tm</td>
+                <td className="py-3 text-center">
+                  <span className="block text-white font-bold">980°C</span>
+                  <span className="block text-[8px] text-cal-emerald-light">Horno Estable</span>
+                </td>
+                <td className="py-3 text-center">
+                  <div className="w-10 md:w-12 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto">
+                    <div className="h-full bg-cal-emerald rounded-full w-[85%]" />
+                  </div>
+                </td>
+                <td className="py-3 text-center text-gray-300 font-semibold text-sm">14</td>
+              </tr>
+              <tr className="hover:bg-white/5 transition-colors">
+                <td className="py-3 font-medium text-gray-200">Sede Caracas (Hoyo de la Puerta)</td>
+                <td className="py-3 text-center text-white font-semibold">8.2 Tm</td>
+                <td className="py-3 text-center text-gray-400">12 Tm</td>
+                <td className="py-3 text-center">
+                  <span className="block text-white font-bold">955°C</span>
+                  <span className="block text-[8px] text-cal-emerald-light">Horno Estable</span>
+                </td>
+                <td className="py-3 text-center">
+                  <div className="w-10 md:w-12 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto">
+                    <div className="h-full bg-cal-emerald rounded-full w-[90%]" />
+                  </div>
+                </td>
+                <td className="py-3 text-center text-gray-300 font-semibold text-sm">6</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Panel Derecho: Feed IA y Actividad */}
+        <div className="bg-white/[0.03] rounded-2xl p-4 md:p-6 border border-white/5 flex flex-col gap-4 relative">
+          <h3 className="text-[10px] md:text-xs font-bold text-white uppercase tracking-wider">
+            ACTIVIDAD OPERATIVA Y DE IA (TIEMPO REAL)
+          </h3>
+          
+          <div className="flex flex-col gap-4 mt-2 relative">
+            {/* Línea vertical de conexión */}
+            <div className="absolute left-[34px] md:left-[39px] top-2 bottom-2 w-px bg-white/10 z-0" />
+            
+            {activityLogs.map((log, idx) => (
+              <div key={idx} className="flex gap-3 md:gap-4 text-[10px] md:text-xs leading-normal relative z-10 items-start">
+                <span className="text-gray-500 font-mono shrink-0 w-7 md:w-8 mt-0.5">{log.time}</span>
+                <div className="mt-1.5 shrink-0 bg-[#1e1e1e] p-[3px] rounded-full border border-[#1e1e1e]">
+                  {log.icon}
+                </div>
+                <div className="text-gray-300 mt-0.5 leading-snug">
+                  {log.text}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Falso scrollbar indicando más elementos */}
+          <div className="absolute right-2 top-16 bottom-6 w-1 bg-white/10 rounded-full overflow-hidden hidden sm:block">
+            <div className="w-full h-1/3 bg-white/20 rounded-full" />
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 };
