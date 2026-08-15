@@ -176,17 +176,17 @@ export const InventarioView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 p-8 text-gray-100 overflow-y-auto">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="flex-1 text-gray-100 overflow-y-auto">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-800/40 p-6 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-800/40 p-4 md:p-6 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-cal-emerald/10 rounded-2xl border border-cal-emerald/20 shadow-lg shadow-cal-emerald/5">
               <Package className="w-8 h-8 text-cal-emerald" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Kardex de Inventario</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-1">Kardex de Inventario</h1>
               <p className="text-sm text-gray-400">Control de entradas, salidas y existencias por sede</p>
             </div>
           </div>
@@ -245,12 +245,12 @@ export const InventarioView: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead>
-                      <tr className="bg-gray-900/50 text-gray-400 text-xs uppercase tracking-wider">
-                        <th className="px-6 py-4 font-semibold w-1/4">Producto</th>
-                        <th className="px-6 py-4 font-semibold text-center border-l border-gray-700/50">Stock Inicial</th>
-                        <th className="px-6 py-4 font-semibold text-center text-emerald-400/80">Entradas (+)</th>
-                        <th className="px-6 py-4 font-semibold text-center text-red-400/80">Salidas (-)</th>
-                        <th className="px-6 py-4 font-semibold text-center text-white border-l border-gray-700/50">Stock Final (=)</th>
+                      <tr className="bg-gray-900/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+                        <th className="px-3 md:px-6 py-3 md:py-4 font-semibold w-1/4">Producto</th>
+                        <th className="px-2 md:px-6 py-3 md:py-4 font-semibold text-center border-l border-gray-700/50">Stock Inicial</th>
+                        <th className="px-2 md:px-6 py-3 md:py-4 font-semibold text-center text-emerald-400/80">Entradas (+)</th>
+                        <th className="px-2 md:px-6 py-3 md:py-4 font-semibold text-center text-red-400/80">Salidas (-)</th>
+                        <th className="px-3 md:px-6 py-3 md:py-4 font-semibold text-center text-white border-l border-gray-700/50">Stock Final (=)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700/50">
@@ -269,39 +269,39 @@ export const InventarioView: React.FC = () => {
                             </td>
                             
                             <td className="px-4 py-3 text-center border-l border-gray-700/50">
-                              <input 
-                                type="number" 
-                                min="0"
-                                step="0.01"
-                                value={item.stock_inicial || ''}
-                                onChange={(e) => updateItem(cat.nombre, prod, 'stock_inicial', e.target.value)}
-                                className="w-24 bg-gray-900/80 border border-gray-600 rounded-lg px-2 py-2 text-center text-gray-200 focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
-                                placeholder="0,00"
-                              />
+                                <input 
+                                  type="number" 
+                                  min="0"
+                                  step="0.01"
+                                  value={item.stock_inicial || ''}
+                                  onChange={(e) => updateItem(cat.nombre, prod, 'stock_inicial', e.target.value)}
+                                  className="w-16 sm:w-20 md:w-24 bg-gray-900/80 border border-gray-600 rounded-lg px-1 md:px-2 py-1.5 md:py-2 text-center text-gray-200 text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
+                                  placeholder="0"
+                                />
                             </td>
                             
                             <td className="px-4 py-3 text-center">
-                              <input 
-                                type="number" 
-                                min="0"
-                                step="0.01"
-                                value={item.entradas || ''}
-                                onChange={(e) => updateItem(cat.nombre, prod, 'entradas', e.target.value)}
-                                className="w-24 bg-gray-900/80 border border-emerald-900/50 rounded-lg px-2 py-2 text-center text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
-                                placeholder="0,00"
-                              />
+                                <input 
+                                  type="number" 
+                                  min="0"
+                                  step="0.01"
+                                  value={item.entradas || ''}
+                                  onChange={(e) => updateItem(cat.nombre, prod, 'entradas', e.target.value)}
+                                  className="w-16 sm:w-20 md:w-24 bg-gray-900/80 border border-emerald-900/50 rounded-lg px-1 md:px-2 py-1.5 md:py-2 text-center text-emerald-400 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                                  placeholder="0"
+                                />
                             </td>
 
                             <td className="px-4 py-3 text-center">
-                              <input 
-                                type="number" 
-                                min="0"
-                                step="0.01"
-                                value={item.salidas || ''}
-                                onChange={(e) => updateItem(cat.nombre, prod, 'salidas', e.target.value)}
-                                className="w-24 bg-gray-900/80 border border-red-900/50 rounded-lg px-2 py-2 text-center text-red-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
-                                placeholder="0,00"
-                              />
+                                <input 
+                                  type="number" 
+                                  min="0"
+                                  step="0.01"
+                                  value={item.salidas || ''}
+                                  onChange={(e) => updateItem(cat.nombre, prod, 'salidas', e.target.value)}
+                                  className="w-16 sm:w-20 md:w-24 bg-gray-900/80 border border-red-900/50 rounded-lg px-1 md:px-2 py-1.5 md:py-2 text-center text-red-400 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                  placeholder="0"
+                                />
                             </td>
 
                             <td className="px-6 py-4 text-center border-l border-gray-700/50 bg-gray-900/20">
