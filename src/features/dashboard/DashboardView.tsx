@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/authContext';
 import { 
   initialInventory, 
@@ -6,7 +6,6 @@ import {
   salesHistory
 } from '../../shared/mockData';
 import type { 
-  ProductStock, 
   PlantProduction 
 } from '../../shared/mockData';
 import { 
@@ -15,21 +14,54 @@ import {
   Activity, 
   AlertTriangle, 
   CheckCircle,
-  Clock
+  ShoppingCart
 } from 'lucide-react';
+
+interface InventoryItem {
+  sede: string;
+  categoria: string;
+  producto: string;
+  stock_inicial: number;
+  entradas: number;
+  salidas: number;
+  stock_actual: number;
+}
 
 export const DashboardView: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
-  const [inventory] = useState<ProductStock[]>(initialInventory);
   const [plants] = useState<PlantProduction[]>(initialPlants);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  
+  useEffect(() => {
+    fetch('/api/inventario')
+      .then(res => res.json())
+      .then(data => setInventoryItems(data))
+      .catch(console.error);
+  }, []);
 
-  // Calcular métricas
-  const totalStockItems = inventory.reduce((acc, curr) => acc + curr.stock, 0);
-  const lowStockProducts = inventory.filter(p => p.stock < p.minStock);
-  const totalProductionToday = plants.reduce((acc, curr) => acc + curr.dailyProduction, 0);
-  const avgEfficiency = Math.round(plants.reduce((acc, curr) => acc + curr.efficiency, 0) / plants.length);
+  // Calcular métricas Reales
+  const totalProduccion = inventoryItems.reduce((acc, curr) => acc + (curr.entradas || 0), 0);
+  const totalSalidas = inventoryItems.reduce((acc, curr) => acc + (curr.salidas || 0), 0);
+  const totalInventario = inventoryItems.reduce((acc, curr) => acc + (curr.stock_actual || 0), 0);
+  
+  // Agregar inventario por producto para alertas
+  const aggregatedStock: Record<string, number> = {};
+  inventoryItems.forEach(item => {
+    aggregatedStock[item.producto] = (aggregatedStock[item.producto] || 0) + (item.stock_actual || 0);
+  });
+
+  const lowStockProducts = Object.entries(aggregatedStock).map(([name, stock]) => {
+    const mockData = initialInventory.find(i => i.name === name);
+    return {
+      id: name,
+      name,
+      stock,
+      minStock: mockData ? mockData.minStock : 20,
+      unit: mockData ? mockData.unit : 'Unidades',
+    };
+  }).filter(p => p.stock < p.minStock);
 
   // Simulación de logs de eventos
   const [eventLogs] = useState([
@@ -69,110 +101,111 @@ export const DashboardView: React.FC = () => {
   const volumePath = volumePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 animate-fade-in">
+    <div className="flex flex-col gap-4 md:gap-8 animate-fade-in">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
+      <div className="px-1">
+        <h1 className="text-xl md:text-3xl font-bold font-display tracking-tight text-white mb-1 md:mb-2 leading-none">
           Resumen Operativo
         </h1>
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-400 text-xs md:text-sm">
           Monitoreo de producción, existencias y actividad de asistentes en tiempo real.
         </p>
       </div>
 
       {/* Grid: KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 px-1">
         
         {/* KPI 1: Producción de Hoy */}
-        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-              Producción de Hoy
+        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+          <div className="flex justify-between items-start mb-2 md:mb-4">
+            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
+              Producción <span className="hidden sm:inline">Total</span>
             </span>
-            <span className="p-2.5 bg-cal-emerald/10 text-cal-emerald-light rounded-2xl border border-cal-emerald/20">
-              <Activity size={18} />
+            <span className="p-1.5 md:p-2.5 bg-cal-emerald/10 text-cal-emerald-light rounded-xl md:rounded-2xl border border-cal-emerald/20 shrink-0">
+              <Activity className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
             </span>
           </div>
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
-              {totalProductionToday.toFixed(1)} Tn
+            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
+              {totalProduccion.toLocaleString()} <span className="text-[10px] md:text-lg font-normal text-gray-400">Tn</span>
             </h3>
-            <span className="text-cal-emerald-light text-xs font-medium flex items-center gap-1">
-              <TrendingUp size={12} />
-              +4.2% vs promedio semanal
+            <span className="text-cal-emerald-light text-[8px] md:text-xs font-medium flex items-center gap-1">
+              <TrendingUp size={10} className="hidden sm:block" />
+              Entradas
             </span>
           </div>
         </div>
 
-        {/* KPI 2: Eficiencia de Sedes */}
-        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-              Eficiencia Hornos
+        {/* KPI 2: Salidas / Despachos */}
+        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+          <div className="flex justify-between items-start mb-2 md:mb-4">
+            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
+              Despachos
             </span>
-            <span className="p-2.5 bg-cal-sand/15 text-cal-sand rounded-2xl border border-cal-sand/30">
-              <CheckCircle size={18} />
+            <span className="p-1.5 md:p-2.5 bg-blue-500/10 text-blue-400 rounded-xl md:rounded-2xl border border-blue-500/20 shrink-0">
+              <ShoppingCart className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
             </span>
           </div>
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
-              {avgEfficiency}%
+            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
+              {totalSalidas.toLocaleString()} <span className="text-[10px] md:text-lg font-normal text-gray-400">Tn</span>
             </h3>
-            <span className="text-gray-400 text-xs font-medium flex items-center gap-1">
-              <Clock size={12} />
-              Temperatura promedio: 967°C
+            <span className="text-blue-400 text-[8px] md:text-xs font-medium flex items-center gap-1">
+              <TrendingUp size={10} className="hidden sm:block" />
+              Salidas totales
             </span>
           </div>
         </div>
 
         {/* KPI 3: Stock de Productos */}
-        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-              Inventario Total
+        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+          <div className="flex justify-between items-start mb-2 md:mb-4">
+            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
+              Inventario <span className="hidden sm:inline">Total</span>
             </span>
-            <span className="p-2.5 bg-cal-earth/15 text-cal-earth rounded-2xl border border-cal-earth/30">
-              <Package size={18} />
+            <span className="p-1.5 md:p-2.5 bg-cal-earth/15 text-cal-earth rounded-xl md:rounded-2xl border border-cal-earth/30 shrink-0">
+              <Package className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
             </span>
           </div>
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
-              {totalStockItems.toLocaleString()}
+            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
+              {totalInventario.toLocaleString()}
             </h3>
-            <span className="text-gray-400 text-xs font-medium">
-              Distribuidos en 6 formatos
+            <span className="text-gray-400 text-[8px] md:text-xs font-medium">
+              Existencia global
             </span>
           </div>
         </div>
 
         {/* KPI 4: Alertas de Stock */}
-        <div className="glass rounded-3xl p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-              Alertas Críticas
+        <div className="glass rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-6 border border-white/5 flex flex-col justify-between hover:border-cal-emerald/30 transition-all duration-300">
+          <div className="flex justify-between items-start mb-2 md:mb-4">
+            <span className="text-gray-400 text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wider leading-tight">
+              Alertas <span className="hidden sm:inline">Críticas</span>
             </span>
-            <span className={`p-2.5 rounded-2xl border ${
+            <span className={`p-1.5 md:p-2.5 rounded-xl md:rounded-2xl border shrink-0 ${
               lowStockProducts.length > 0 
                 ? 'bg-cal-gold/10 text-cal-gold-light border-cal-gold/20' 
                 : 'bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20'
             }`}>
-              <AlertTriangle size={18} />
+              <AlertTriangle className="w-3.5 h-3.5 md:w-[18px] md:h-[18px]" />
             </span>
           </div>
           <div>
-            <h3 className="text-2xl md:text-3xl font-bold font-display text-white mb-1">
+            <h3 className="text-lg sm:text-2xl md:text-3xl font-bold font-display text-white mb-0.5 md:mb-1 truncate">
               {lowStockProducts.length}
             </h3>
-            <span className={`text-xs font-medium ${
+            <span className={`text-[8px] md:text-xs font-medium truncate block ${
               lowStockProducts.length > 0 ? 'text-cal-gold-light' : 'text-cal-emerald-light'
             }`}>
               {lowStockProducts.length > 0 
-                ? 'Productos por debajo del stock mínimo' 
-                : 'Niveles de stock óptimos'}
+                ? 'Por debajo del mínimo' 
+                : 'Stock óptimo'}
             </span>
           </div>
         </div>
       </div>
+
 
       {/* Main Grid: charts and operations info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
