@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Plus, Edit2, Trash2, Search, X, Check, Package, AlertCircle } from 'lucide-react';
-import { useAuth } from '../../context/authContext';
+import { Tag, Plus, Edit2, Trash2, Search, X, Check, Package } from 'lucide-react';
 
 // Redefine cn just in case
 import { clsx } from 'clsx';
@@ -24,7 +23,6 @@ export interface Producto {
 }
 
 export const ProductosView: React.FC = () => {
-  const { user } = useAuth();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
