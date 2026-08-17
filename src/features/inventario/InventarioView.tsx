@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Save, RefreshCw, Archive, Layers, CalendarCheck } from 'lucide-react';
+import { Package, Save, RefreshCw, Archive, Layers, CalendarCheck, Tag } from 'lucide-react';
 import { useAuth } from '../../context/authContext';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export function cn(...inputs: (string | undefined | null | false)[]) {
+function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
@@ -14,73 +14,83 @@ interface InventoryItem {
   categoria: string;
   producto: string;
   stock_inicial: number;
-  entradas: number;
+  produccion: number;
   salidas: number;
   stock_actual: number;
   updated_at?: string;
   updated_by?: string;
 }
 
-const CATEGORIAS = [
-  {
-    nombre: 'Producto Terminado',
-    icon: <Package className="w-5 h-5 text-cal-emerald-light" />,
-    productos: [
-      'Pipotes Cal en Pasta 270kg',
-      'Bolsas de Cal en Pasta 7kg',
-      'Bolsas de Cal en Pasta 5kg',
-      'Pinturas Ecológicas'
-    ]
-  },
-  {
-    nombre: 'Canto Rodado',
-    icon: <Layers className="w-5 h-5 text-cal-emerald-light" />,
-    productos: [
-      'Gris #1 (6kg)',
-      'Gris #1 (20kg)',
-      'Rojo #3',
-      'Piedra'
-    ]
-  },
-  {
-    nombre: 'Insumos y Muestrarios',
-    icon: <Archive className="w-5 h-5 text-cal-emerald-light" />,
-    productos: [
-      'Pipotes Vacíos',
-      'Pipotes Muestrarios Grandes',
-      'Pipotes Muestrarios Pequeños',
-      'Bolsas de 7kg (Vacías)',
-      'Bolsas Sello Original',
-      'Bolsas Rotas de 7kg',
-      'Bolsas Rotas de 5kg'
-    ]
-  }
-];
+const CATEGORIAS_ICONS: Record<string, React.ReactNode> = {
+  'Producto Terminado': <Package className="w-5 h-5 text-cal-emerald-light" />,
+  'Agregados': <Layers className="w-5 h-5 text-cal-emerald-light" />,
+  'Insumos y Muestrarios': <Archive className="w-5 h-5 text-cal-emerald-light" />,
+  'default': <Tag className="w-5 h-5 text-cal-emerald-light" />
+};
 
 const SEDES = ['Hoyo de la Puerta', 'Guatire'];
 
 export const InventarioView: React.FC = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [productosData, setProductosData] = useState<{ nombre: string, categoria: string, productos: {nombre: string, tipo_medida: string}[], icon: React.ReactNode }[]>([]);
   const [selectedSede, setSelectedSede] = useState<string>('Hoyo de la Puerta');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
 
-  useEffect(() => {
-    fetchInventory();
-  }, [selectedSede]);
+  // Fecha en formato local de Venezuela
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Caracas' }).split('T')[0];
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const isHistorical = selectedDate !== todayStr;
 
-  const fetchInventory = async () => {
+  useEffect(() => {
+    fetchInventoryAndProductos();
+  }, [selectedSede, selectedDate]);
+
+  const fetchInventoryAndProductos = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/inventario');
-      if (response.ok) {
-        const data = await response.json();
-        setItems(data);
+      const endpoint = isHistorical ? `/api/inventario/historial?fecha=${selectedDate}` : '/api/inventario';
+      const [invRes, prodRes] = await Promise.all([
+        fetch(endpoint),
+        fetch('/api/productos')
+      ]);
+      
+      if (invRes.ok && prodRes.ok) {
+        const invData = await invRes.json();
+        const prodData = await prodRes.json();
+        
+        const mappedInv = invData.map((item: any) => ({
+          ...item,
+          stock_inicial: parseFloat(item.stock_inicial) || 0,
+          produccion: parseFloat(item.produccion) || 0,
+          salidas: parseFloat(item.salidas) || 0,
+          stock_actual: isHistorical ? (parseFloat(item.stock_final) || 0) : ((parseFloat(item.stock_inicial) || 0) + (parseFloat(item.produccion) || 0) - (parseFloat(item.salidas) || 0))
+        }));
+
+        setItems(mappedInv);
+        
+        // Group active products by category
+        const grouped: Record<string, {nombre: string, tipo_medida: string}[]> = {};
+        prodData.forEach((p: any) => {
+          if (p.estado === 'Activo') {
+            if (!grouped[p.categoria]) grouped[p.categoria] = [];
+            grouped[p.categoria].push({ nombre: p.nombre, tipo_medida: p.tipo_medida || 'Unidad' });
+          }
+        });
+        
+        const categoriesArray = Object.keys(grouped).map(cat => ({
+          nombre: cat,
+          categoria: cat,
+          icon: CATEGORIAS_ICONS[cat] || CATEGORIAS_ICONS['default'],
+          productos: grouped[cat]
+        }));
+        
+        setProductosData(categoriesArray);
       }
     } catch (error) {
-      console.error('Error fetching inventory:', error);
+      console.error('Error fetching inventory and products:', error);
     } finally {
       setLoading(false);
     }
@@ -96,7 +106,7 @@ export const InventarioView: React.FC = () => {
         body: JSON.stringify({ items: itemsToSave })
       });
       if (response.ok) {
-        await fetchInventory();
+        await fetchInventoryAndProductos();
       }
     } catch (error) {
       console.error('Error saving inventory:', error);
@@ -126,7 +136,7 @@ export const InventarioView: React.FC = () => {
         body: JSON.stringify({ sede: selectedSede, updated_by: user?.name })
       });
       if (response.ok) {
-        await fetchInventory();
+        await fetchInventoryAndProductos();
         alert('Cierre de día exitoso. El Kardex se ha reiniciado para el nuevo día.');
       }
     } catch (error) {
@@ -140,11 +150,16 @@ export const InventarioView: React.FC = () => {
   const getItem = (categoria: string, producto: string): InventoryItem => {
     const existing = items.find(i => i.sede === selectedSede && i.categoria === categoria && i.producto === producto);
     if (existing) return existing;
-    return { sede: selectedSede, categoria, producto, stock_inicial: 0, entradas: 0, salidas: 0, stock_actual: 0 };
+    return { sede: selectedSede, categoria, producto, stock_inicial: 0, produccion: 0, salidas: 0, stock_actual: 0 };
   };
 
-  const updateItem = (categoria: string, producto: string, field: 'stock_inicial' | 'entradas' | 'salidas', value: string) => {
-    const numValue = parseFloat(value) || 0;
+  const updateItem = (categoria: string, producto: string, field: 'stock_inicial' | 'produccion' | 'salidas', value: string, isUnidad: boolean) => {
+    if (isHistorical) return; // Read-only in historical mode
+    
+    let numValue = parseFloat(value);
+    if (isNaN(numValue)) numValue = 0;
+    if (isUnidad) numValue = Math.floor(numValue);
+
     setItems(prev => {
       const copy = [...prev];
       const index = copy.findIndex(i => i.sede === selectedSede && i.categoria === categoria && i.producto === producto);
@@ -152,19 +167,19 @@ export const InventarioView: React.FC = () => {
       if (index >= 0) {
         const item = copy[index];
         const updatedItem = { ...item, [field]: numValue };
-        updatedItem.stock_actual = updatedItem.stock_inicial + updatedItem.entradas - updatedItem.salidas;
+        updatedItem.stock_actual = updatedItem.stock_inicial + updatedItem.produccion - updatedItem.salidas;
         copy[index] = updatedItem;
       } else {
-        const newItem = {
+        const newItem: InventoryItem = {
           sede: selectedSede,
           categoria,
           producto,
           stock_inicial: field === 'stock_inicial' ? numValue : 0,
-          entradas: field === 'entradas' ? numValue : 0,
+          produccion: field === 'produccion' ? numValue : 0,
           salidas: field === 'salidas' ? numValue : 0,
           stock_actual: 0
         };
-        newItem.stock_actual = newItem.stock_inicial + newItem.entradas - newItem.salidas;
+        newItem.stock_actual = newItem.stock_inicial + newItem.produccion - newItem.salidas;
         copy.push(newItem);
       }
       return copy;
@@ -192,6 +207,13 @@ export const InventarioView: React.FC = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-3">
+            <input 
+              type="date"
+              max={todayStr}
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              className="w-full sm:w-auto px-4 py-2.5 bg-gray-900 border border-cal-emerald/30 rounded-xl text-base sm:text-sm font-medium text-cal-emerald-light outline-none focus:ring-2 focus:ring-cal-emerald/50"
+            />
             <select
               value={selectedSede}
               onChange={(e) => setSelectedSede(e.target.value)}
@@ -202,7 +224,8 @@ export const InventarioView: React.FC = () => {
               ))}
             </select>
 
-            <div className="flex w-full sm:w-auto gap-2">
+            {!isHistorical && (
+              <div className="flex w-full sm:w-auto gap-2">
               <button
                 onClick={handleCerrarDia}
                 disabled={closing || saving || loading}
@@ -222,6 +245,7 @@ export const InventarioView: React.FC = () => {
                 Guardar
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -232,7 +256,7 @@ export const InventarioView: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {CATEGORIAS.map((cat) => (
+            {productosData.map((cat) => (
               <div key={cat.nombre} className="bg-gray-800/60 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden shadow-xl">
                 
                 <div className="px-6 py-4 border-b border-gray-700/50 bg-gray-900/30 flex items-center gap-3">
@@ -248,18 +272,22 @@ export const InventarioView: React.FC = () => {
                       <tr className="bg-gray-900/50 text-gray-400 text-[8px] md:text-xs uppercase tracking-wider">
                         <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[28%] md:w-1/4 leading-tight">Producto</th>
                         <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center border-l border-gray-700/50 leading-tight">Inicial</th>
-                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-emerald-400/80 leading-tight">Entra</th>
+                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-emerald-400/80 leading-tight">Producción</th>
                         <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-red-400/80 leading-tight">Sale</th>
                         <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center text-white border-l border-gray-700/50 leading-tight">Final</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700/50">
                       {cat.productos.map((prod) => {
-                        const item = getItem(cat.nombre, prod);
+                        const item = getItem(cat.nombre, prod.nombre);
+                        const isUnidad = prod.tipo_medida === 'Unidad';
                         return (
-                          <tr key={prod} className="hover:bg-gray-700/20 transition-colors">
+                          <tr key={prod.nombre} className={cn("transition-colors", isHistorical ? "" : "hover:bg-gray-700/20")}>
                             <td className="px-1.5 md:px-6 py-2 md:py-4 text-[10px] md:text-sm font-medium text-gray-200 leading-tight">
-                              {prod}
+                              <span className="flex items-center gap-2">
+                                {prod.nombre}
+                                <span className="text-[8px] md:text-[9px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">{prod.tipo_medida}</span>
+                              </span>
                               {item.updated_at && (
                                 <div className="text-[8px] md:text-[10px] text-gray-500 font-normal mt-0.5 md:mt-1 leading-tight">
                                   Act: {new Date(item.updated_at).toLocaleTimeString('es-VE', {timeZone: 'America/Caracas', hour: '2-digit', minute:'2-digit'})}
@@ -272,10 +300,11 @@ export const InventarioView: React.FC = () => {
                                 <input 
                                   type="number" 
                                   min="0"
-                                  step="0.01"
-                                  value={item.stock_inicial || ''}
-                                  onChange={(e) => updateItem(cat.nombre, prod, 'stock_inicial', e.target.value)}
-                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-gray-600 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-gray-200 text-[10px] md:text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all"
+                                  step={isUnidad ? "1" : "0.01"}
+                                  disabled={isHistorical}
+                                  value={item.stock_inicial === 0 ? '' : item.stock_inicial}
+                                  onChange={(e) => updateItem(cat.nombre, prod.nombre, 'stock_inicial', e.target.value, isUnidad)}
+                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-gray-600 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-gray-200 text-[10px] md:text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all disabled:opacity-50 disabled:border-transparent"
                                   placeholder="0"
                                 />
                             </td>
@@ -284,10 +313,11 @@ export const InventarioView: React.FC = () => {
                                 <input 
                                   type="number" 
                                   min="0"
-                                  step="0.01"
-                                  value={item.entradas || ''}
-                                  onChange={(e) => updateItem(cat.nombre, prod, 'entradas', e.target.value)}
-                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-emerald-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-emerald-400 text-[10px] md:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                                  step={isUnidad ? "1" : "0.01"}
+                                  disabled={isHistorical}
+                                  value={item.produccion === 0 ? '' : item.produccion}
+                                  onChange={(e) => updateItem(cat.nombre, prod.nombre, 'produccion', e.target.value, isUnidad)}
+                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-emerald-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-emerald-400 text-[10px] md:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all disabled:opacity-50 disabled:border-transparent"
                                   placeholder="0"
                                 />
                             </td>
@@ -296,10 +326,11 @@ export const InventarioView: React.FC = () => {
                                 <input 
                                   type="number" 
                                   min="0"
-                                  step="0.01"
-                                  value={item.salidas || ''}
-                                  onChange={(e) => updateItem(cat.nombre, prod, 'salidas', e.target.value)}
-                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-red-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-red-400 text-[10px] md:text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all"
+                                  step={isUnidad ? "1" : "0.01"}
+                                  disabled={isHistorical}
+                                  value={item.salidas === 0 ? '' : item.salidas}
+                                  onChange={(e) => updateItem(cat.nombre, prod.nombre, 'salidas', e.target.value, isUnidad)}
+                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-red-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-red-400 text-[10px] md:text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all disabled:opacity-50 disabled:border-transparent"
                                   placeholder="0"
                                 />
                             </td>

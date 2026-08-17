@@ -135,3 +135,76 @@ UPDATE clientes SET etiqueta = estatus WHERE estatus IN ('Empleado', 'Transporti
 UPDATE clientes SET estatus = 'Activo' WHERE estatus IS NULL OR estatus = '' OR estatus IN ('Empleado', 'Transportista', 'Otros');
 
 
+
+-- ===========================================================================
+-- TABLA: inventario_historial
+-- Almacena la foto del inventario al momento de ejecutar un "Cierre de Día"
+-- ===========================================================================
+CREATE TABLE IF NOT EXISTS inventario_historial (
+    id SERIAL PRIMARY KEY,
+    fecha DATE NOT NULL,
+    sede VARCHAR(100) NOT NULL,
+    categoria VARCHAR(100) NOT NULL,
+    producto VARCHAR(255) NOT NULL,
+    stock_inicial NUMERIC(10,2) DEFAULT 0,
+    produccion NUMERIC(10,2) DEFAULT 0,
+    salidas NUMERIC(10,2) DEFAULT 0,
+    stock_final NUMERIC(10,2) DEFAULT 0,
+    closed_by VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===========================================================================
+-- TABLA: productos
+-- Almacena la lista de productos para el catálogo y el módulo de inventario.
+-- ===========================================================================
+CREATE TABLE IF NOT EXISTS productos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    categoria VARCHAR(100) NOT NULL,
+    sku VARCHAR(50),
+    tipo_medida VARCHAR(50),
+    peso NUMERIC DEFAULT 0,
+    presentacion VARCHAR(50),
+    precio NUMERIC DEFAULT 0,
+    estado VARCHAR(20) DEFAULT 'Activo',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===========================================================================
+-- TABLA: inventario
+-- Almacena el stock actual por sede
+-- ===========================================================================
+CREATE TABLE IF NOT EXISTS inventario (
+    id SERIAL PRIMARY KEY,
+    sede VARCHAR(100) NOT NULL,
+    categoria VARCHAR(100) NOT NULL,
+    producto VARCHAR(255) NOT NULL,
+    stock_inicial NUMERIC(10,2) DEFAULT 0,
+    produccion NUMERIC(10,2) DEFAULT 0,
+    salidas NUMERIC(10,2) DEFAULT 0,
+    updated_by VARCHAR(100),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(sede, producto)
+);
+
+-- Seed Initial Products (to maintain Inventario history)
+INSERT INTO productos (nombre, categoria, sku, peso, presentacion, estado)
+VALUES 
+  ('Pipotes Cal en Pasta 270kg', 'Producto Terminado', 'PCP-270', 270, 'Pipote', 'Activo'),
+  ('Bolsas de Cal en Pasta 7kg', 'Producto Terminado', 'BCP-007', 7, 'Bolsa', 'Activo'),
+  ('Bolsas de Cal en Pasta 5kg', 'Producto Terminado', 'BCP-005', 5, 'Bolsa', 'Activo'),
+  ('Pinturas Ecológicas', 'Producto Terminado', 'PNT-ECO', 0, 'Galón/Cuñete', 'Activo'),
+  ('Gris #1 (6kg)', 'Canto Rodado', 'CR-G1-06', 6, 'Bolsa', 'Activo'),
+  ('Gris #1 (20kg)', 'Canto Rodado', 'CR-G1-20', 20, 'Saco', 'Activo'),
+  ('Rojo #3', 'Canto Rodado', 'CR-R3', 0, 'Granel/Saco', 'Activo'),
+  ('Piedra', 'Canto Rodado', 'CR-PIE', 0, 'Granel', 'Activo'),
+  ('Pipotes Vacíos', 'Insumos y Muestrarios', 'INS-PIPV', 0, 'Unidad', 'Activo'),
+  ('Pipotes Muestrarios Grandes', 'Insumos y Muestrarios', 'INS-PMG', 0, 'Unidad', 'Activo'),
+  ('Pipotes Muestrarios Pequeños', 'Insumos y Muestrarios', 'INS-PMP', 0, 'Unidad', 'Activo'),
+  ('Bolsas de 7kg (Vacías)', 'Insumos y Muestrarios', 'INS-B7V', 0, 'Unidad', 'Activo'),
+  ('Bolsas Sello Original', 'Insumos y Muestrarios', 'INS-BSO', 0, 'Unidad', 'Activo'),
+  ('Bolsas Rotas de 7kg', 'Insumos y Muestrarios', 'INS-BR7', 0, 'Unidad', 'Activo'),
+  ('Bolsas Rotas de 5kg', 'Insumos y Muestrarios', 'INS-BR5', 0, 'Unidad', 'Activo')
+ON CONFLICT (nombre) DO NOTHING;

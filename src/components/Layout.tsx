@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   UserCog,
-  Package
+  Package,
+  Tag
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -91,6 +92,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       to: '/clientes',
       label: 'Clientes',
       icon: <Users size={20} />,
+      roles: ['superadmin', 'admin', 'operador']
+    },
+    {
+      to: '/productos',
+      label: 'Productos',
+      icon: <Tag size={20} />,
       roles: ['superadmin', 'admin', 'operador']
     },
     {

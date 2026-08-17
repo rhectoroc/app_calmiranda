@@ -435,6 +435,87 @@ app.delete('/api/clientes/:id', async (req, res) => {
     }
 });
 // ----------------------------------------------------
+// ENDPOINTS PARA PRODUCTOS (CRUD)
+// ----------------------------------------------------
+app.get('/api/productos', async (req, res) => {
+    try {
+        const data = await query('SELECT * FROM productos ORDER BY categoria, nombre');
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.post('/api/productos', async (req, res) => {
+    try {
+        const { nombre, categoria, sku, peso, presentacion, tipo_medida, precio, estado } = req.body;
+        const result = await query(`
+      INSERT INTO productos (nombre, categoria, sku, peso, presentacion, tipo_medida, precio, estado)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [nombre, categoria, sku || null, peso || 0, presentacion || null, tipo_medida || 'Unidad', precio || 0, estado || 'Activo']);
+        res.json(result[0]);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.put('/api/productos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, categoria, sku, peso, presentacion, tipo_medida, precio, estado } = req.body;
+        const result = await query(`
+      UPDATE productos 
+      SET nombre = $1, categoria = $2, sku = $3, peso = $4, presentacion = $5, tipo_medida = $6, precio = $7, estado = $8, updated_at = NOW()
+      WHERE id = $9
+      RETURNING *
+    `, [nombre, categoria, sku || null, peso || 0, presentacion || null, tipo_medida || 'Unidad', precio || 0, estado || 'Activo', id]);
+        res.json(result[0] || { success: false });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.delete('/api/productos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await query(`DELETE FROM productos WHERE id = $1`, [id]);
+        res.json({ success: true });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.put('/api/productos/categorias/rename', async (req, res) => {
+    try {
+        const { oldCategoria, newCategoria } = req.body;
+        if (!oldCategoria || !newCategoria) {
+            return res.status(400).json({ error: 'oldCategoria y newCategoria son requeridos' });
+        }
+        const result = await query(`
+      UPDATE productos 
+      SET categoria = $1, updated_at = NOW()
+      WHERE categoria = $2
+      RETURNING *
+    `, [newCategoria, oldCategoria]);
+        res.json({ success: true, updatedCount: result.length });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// Endpoint temporal para migrar esquema de productos si es necesario
+app.post('/api/productos/init', async (req, res) => {
+    try {
+        const { initDb } = await import('./db.js');
+        await initDb();
+        res.json({ success: true, message: 'DB inicializada' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// ----------------------------------------------------
 // ENDPOINTS PARA INVENTARIO
 // ----------------------------------------------------
 app.get('/api/inventario', async (req, res) => {
@@ -451,16 +532,16 @@ app.post('/api/inventario', async (req, res) => {
         const items = req.body.items;
         for (const item of items) {
             await query(`
-        INSERT INTO inventario (sede, categoria, producto, stock_inicial, entradas, salidas, updated_by, updated_at)
+        INSERT INTO inventario (sede, categoria, producto, stock_inicial, produccion, salidas, updated_by, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
         ON CONFLICT (sede, producto) DO UPDATE
         SET categoria = EXCLUDED.categoria,
             stock_inicial = EXCLUDED.stock_inicial,
-            entradas = EXCLUDED.entradas,
+            produccion = EXCLUDED.produccion,
             salidas = EXCLUDED.salidas,
             updated_by = EXCLUDED.updated_by,
             updated_at = NOW();
-      `, [item.sede, item.categoria, item.producto, item.stock_inicial || 0, item.entradas || 0, item.salidas || 0, item.updated_by || null]);
+      `, [item.sede, item.categoria, item.producto, item.stock_inicial || 0, item.produccion || 0, item.salidas || 0, item.updated_by || null]);
         }
         res.json({ success: true });
     }
@@ -471,16 +552,36 @@ app.post('/api/inventario', async (req, res) => {
 app.post('/api/inventario/cerrar-dia', async (req, res) => {
     try {
         const { sede, updated_by } = req.body;
+        // Insertar la foto actual del día en el historial antes de resetear
+        await query(`
+      INSERT INTO inventario_historial (fecha, sede, categoria, producto, stock_inicial, produccion, salidas, stock_final, closed_by)
+      SELECT CURRENT_DATE, sede, categoria, producto, stock_inicial, produccion, salidas, (stock_inicial + produccion - salidas), $2
+      FROM inventario
+      WHERE sede = $1;
+    `, [sede, updated_by || null]);
+        // Resetear contadores en la tabla operativa
         await query(`
       UPDATE inventario 
-      SET stock_inicial = stock_inicial + entradas - salidas,
-          entradas = 0,
+      SET stock_inicial = stock_inicial + produccion - salidas,
+          produccion = 0,
           salidas = 0,
           updated_by = $2,
           updated_at = NOW()
       WHERE sede = $1;
     `, [sede, updated_by || null]);
         res.json({ success: true });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get('/api/inventario/historial', async (req, res) => {
+    try {
+        const { fecha } = req.query;
+        if (!fecha)
+            return res.status(400).json({ error: 'Fecha es requerida' });
+        const data = await query('SELECT * FROM inventario_historial WHERE fecha = $1 ORDER BY sede, categoria, id', [fecha]);
+        res.json(data);
     }
     catch (error) {
         res.status(500).json({ error: error.message });

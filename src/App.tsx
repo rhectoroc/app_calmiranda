@@ -9,6 +9,7 @@ import { ClientesView } from './features/clientes/ClientesView';
 import { SettingsView } from './features/settings/SettingsView';
 import { UsuariosView } from './features/users/UsuariosView';
 import { InventarioView } from './features/inventario/InventarioView';
+import { ProductosView } from './features/productos/ProductosView';
 
 // Componente para proteger rutas según autenticación general
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -64,6 +65,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <ClientesView />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/productos" 
+            element={
+              <ProtectedRoute>
+                <ProductosView />
               </ProtectedRoute>
             } 
           />
