@@ -267,14 +267,14 @@ export const InventarioView: React.FC = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-full md:min-w-[700px]">
+                  <table className="w-full text-left border-collapse min-w-full md:min-w-[700px] table-fixed md:table-auto">
                     <thead>
                       <tr className="bg-gray-900/50 text-gray-400 text-[8px] md:text-xs uppercase tracking-wider">
-                        <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[28%] md:w-1/4 leading-tight">Producto</th>
-                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center border-l border-gray-700/50 leading-tight">Inicial</th>
-                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-emerald-400/80 leading-tight">Producción</th>
-                        <th className="px-0.5 md:px-6 py-2 md:py-4 font-semibold text-center text-red-400/80 leading-tight">Sale</th>
-                        <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center text-white border-l border-gray-700/50 leading-tight">Final</th>
+                        <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[32%] md:w-1/4 leading-tight">Producto</th>
+                        <th className="px-0 md:px-6 py-2 md:py-4 font-semibold text-center border-l border-gray-700/50 leading-tight w-[17%]">Inicial</th>
+                        <th className="px-0 md:px-6 py-2 md:py-4 font-semibold text-center text-emerald-400/80 leading-tight w-[17%]">Prod.</th>
+                        <th className="px-0 md:px-6 py-2 md:py-4 font-semibold text-center text-red-400/80 leading-tight w-[17%]">Sale</th>
+                        <th className="px-0 md:px-6 py-2 md:py-4 font-semibold text-center text-white border-l border-gray-700/50 leading-tight w-[17%]">Final</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700/50">
@@ -304,7 +304,7 @@ export const InventarioView: React.FC = () => {
                                   disabled={isHistorical}
                                   value={item.stock_inicial === 0 ? '' : item.stock_inicial}
                                   onChange={(e) => updateItem(cat.nombre, prod.nombre, 'stock_inicial', e.target.value, isUnidad)}
-                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-gray-600 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-gray-200 text-[10px] md:text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all disabled:opacity-50 disabled:border-transparent"
+                                  className="w-full max-w-[48px] sm:max-w-[64px] md:max-w-[96px] bg-gray-900/80 border border-gray-600 rounded md:rounded-lg px-0 md:px-2 py-1 md:py-2 text-center text-gray-200 text-[10px] md:text-sm focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald transition-all disabled:opacity-50 disabled:border-transparent mx-auto block"
                                   placeholder="0"
                                 />
                             </td>
@@ -317,7 +317,7 @@ export const InventarioView: React.FC = () => {
                                   disabled={isHistorical}
                                   value={item.produccion === 0 ? '' : item.produccion}
                                   onChange={(e) => updateItem(cat.nombre, prod.nombre, 'produccion', e.target.value, isUnidad)}
-                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-emerald-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-emerald-400 text-[10px] md:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all disabled:opacity-50 disabled:border-transparent"
+                                  className="w-full max-w-[48px] sm:max-w-[64px] md:max-w-[96px] bg-gray-900/80 border border-emerald-900/50 rounded md:rounded-lg px-0 md:px-2 py-1 md:py-2 text-center text-emerald-400 text-[10px] md:text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all disabled:opacity-50 disabled:border-transparent mx-auto block"
                                   placeholder="0"
                                 />
                             </td>
@@ -330,7 +330,7 @@ export const InventarioView: React.FC = () => {
                                   disabled={isHistorical}
                                   value={item.salidas === 0 ? '' : item.salidas}
                                   onChange={(e) => updateItem(cat.nombre, prod.nombre, 'salidas', e.target.value, isUnidad)}
-                                  className="w-12 sm:w-16 md:w-24 bg-gray-900/80 border border-red-900/50 rounded md:rounded-lg px-0.5 md:px-2 py-1 md:py-2 text-center text-red-400 text-[10px] md:text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all disabled:opacity-50 disabled:border-transparent"
+                                  className="w-full max-w-[48px] sm:max-w-[64px] md:max-w-[96px] bg-gray-900/80 border border-red-900/50 rounded md:rounded-lg px-0 md:px-2 py-1 md:py-2 text-center text-red-400 text-[10px] md:text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all disabled:opacity-50 disabled:border-transparent mx-auto block"
                                   placeholder="0"
                                 />
                             </td>

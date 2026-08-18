@@ -210,15 +210,15 @@ export const ProductosView: React.FC = () => {
         {/* Productos Table */}
         <div className="bg-gray-800/60 backdrop-blur-md border border-gray-700/50 rounded-2xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-full">
               <thead>
-                <tr className="bg-gray-900/50 text-gray-400 text-xs uppercase tracking-wider">
-                  <th className="px-6 py-4 font-semibold">Producto</th>
-                  <th className="px-6 py-4 font-semibold">SKU / Presentación</th>
-                  <th className="px-6 py-4 font-semibold">Categoría</th>
-                  <th className="px-6 py-4 font-semibold text-center">Peso</th>
-                  <th className="px-6 py-4 font-semibold text-center">Estado</th>
-                  <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                <tr className="bg-gray-900/50 text-gray-400 text-[8px] sm:text-[9px] md:text-xs uppercase tracking-wider">
+                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[25%]">Producto</th>
+                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[20%]">SKU / Pres.</th>
+                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[15%]">Categoría</th>
+                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center hidden sm:table-cell">Peso</th>
+                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center w-[15%]">Estado</th>
+                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-right w-[15%]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700/50">
@@ -237,55 +237,59 @@ export const ProductosView: React.FC = () => {
                 ) : (
                   filteredProductos.map((prod) => (
                     <tr key={prod.id} className="hover:bg-gray-700/20 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-gray-900/50 rounded-lg border border-gray-700/50">
-                            <Package className="w-4 h-4 text-cal-emerald-light" />
+                      <td className="px-1 md:px-6 py-2 md:py-4">
+                        <div className="flex items-center gap-1 md:gap-3">
+                          <div className="hidden sm:flex p-1.5 md:p-2 bg-gray-900/50 rounded-lg border border-gray-700/50">
+                            <Package className="w-3 h-3 md:w-4 md:h-4 text-cal-emerald-light" />
                           </div>
-                          <span className="font-medium text-gray-200">{prod.nombre}</span>
+                          <span className="font-medium text-[9px] sm:text-sm text-gray-200 truncate break-words max-w-[80px] sm:max-w-none">{prod.nombre}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-1 md:px-6 py-2 md:py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-300">{prod.sku || 'N/A'}</span>
-                          <span className="text-xs text-gray-500">{prod.presentacion || '-'}</span>
+                          <span className="text-[8px] sm:text-sm font-medium text-gray-300 truncate max-w-[70px] sm:max-w-none">{prod.sku || 'N/A'}</span>
+                          <span className="text-[8px] sm:text-xs text-gray-500 truncate max-w-[70px] sm:max-w-none">{prod.presentacion || 'Granel'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-300">
-                        {prod.categoria}
+                      <td className="px-1 md:px-6 py-2 md:py-4">
+                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] sm:text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 break-words max-w-[50px] sm:max-w-none leading-tight">
+                          {prod.categoria}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-center text-sm font-medium text-gray-300">
-                        {prod.peso ? `${prod.peso} kg` : '-'}
+                      <td className="px-1 md:px-6 py-2 md:py-4 text-center hidden sm:table-cell">
+                        <span className="text-[9px] sm:text-sm text-gray-300">
+                          {prod.peso ? `${prod.peso} kg` : '-'}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-1 md:px-6 py-2 md:py-4 text-center">
                         <span className={classNames(
-                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                          "inline-flex items-center gap-0.5 px-1 py-0.5 md:gap-1.5 md:px-2 md:py-0.5 rounded md:rounded-full text-[8px] sm:text-xs font-medium border",
                           prod.estado === 'Activo' 
                             ? "bg-cal-emerald/10 text-cal-emerald-light border-cal-emerald/20" 
                             : "bg-red-500/10 text-red-400 border-red-500/20"
                         )}>
                           <span className={classNames(
-                            "w-1.5 h-1.5 rounded-full",
+                            "w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full hidden sm:inline-block",
                             prod.estado === 'Activo' ? "bg-cal-emerald-light" : "bg-red-400"
                           )} />
                           {prod.estado}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-1 md:px-6 py-2 md:py-4 text-right">
+                        <div className="flex justify-end gap-1 md:gap-2">
                           <button
                             onClick={() => handleOpenModal(prod)}
-                            className="p-2 text-gray-400 hover:text-cal-emerald hover:bg-cal-emerald/10 rounded-lg transition-colors"
-                            title="Editar Producto"
+                            className="p-1 md:p-2 text-gray-400 hover:text-cal-emerald hover:bg-cal-emerald/10 rounded-md md:rounded-lg transition-colors"
+                            title="Editar"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3 h-3 md:w-4 md:h-4" />
                           </button>
                           <button
                             onClick={() => prod.id && handleDelete(prod.id)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Eliminar Producto"
+                            className="p-1 md:p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-md md:rounded-lg transition-colors"
+                            title="Eliminar"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                           </button>
                         </div>
                       </td>
