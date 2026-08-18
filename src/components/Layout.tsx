@@ -139,9 +139,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile Header */}
       <header className="md:hidden glass border-b border-white/5 px-6 py-4 flex justify-between items-center z-30 shrink-0">
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-cal-emerald to-cal-earth flex items-center justify-center font-display font-bold text-white text-lg shadow-sm">
-            C
-          </span>
+          <div className="w-8 h-8 rounded-lg shadow-sm overflow-hidden flex items-center justify-center bg-black/20 shrink-0">
+            <img src="/logo.webp" alt="CalMiranda" className="w-full h-full object-cover" />
+          </div>
           <span className="font-display font-bold text-lg tracking-wider text-gradient">
             CalMiranda
           </span>
@@ -164,15 +164,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Logo Section */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-cal-emerald to-cal-earth flex items-center justify-center font-display font-extrabold text-white text-xl shadow-md shadow-cal-emerald/15">
-                C
-              </span>
+              <div className="w-10 h-10 rounded-xl shadow-md shadow-cal-emerald/15 overflow-hidden flex items-center justify-center bg-black/20 shrink-0">
+                <img src="/logo.webp" alt="CalMiranda" className="w-full h-full object-cover" />
+              </div>
               <div>
                 <span className="font-display font-extrabold text-lg tracking-wide block leading-tight text-gradient">
                   CalMiranda
-                </span>
-                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
-                  Procesos & IA
                 </span>
               </div>
             </div>

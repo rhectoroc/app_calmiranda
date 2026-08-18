@@ -63,12 +63,9 @@ export const LoginView: React.FC = () => {
         
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex p-4 bg-cal-emerald/10 rounded-2xl border border-cal-emerald/30 text-cal-emerald mb-4 shadow-inner">
-            <ShieldCheck size={36} className="animate-pulse" />
+          <div className="inline-flex rounded-2xl mb-4 overflow-hidden w-24 h-24 shadow-2xl shadow-cal-emerald/20 border border-white/10 shrink-0">
+            <img src="/logo.webp" alt="CalMiranda Logo" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-3.5xl font-extrabold font-display tracking-tight text-gradient mb-2">
-            CalMiranda
-          </h1>
           <p className="text-gray-400 text-sm">
             Gestión Operativa y Asistentes de IA
           </p>
