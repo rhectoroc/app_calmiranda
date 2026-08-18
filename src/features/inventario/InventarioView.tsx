@@ -284,10 +284,12 @@ export const InventarioView: React.FC = () => {
                         return (
                           <tr key={prod.nombre} className={cn("transition-colors", isHistorical ? "" : "hover:bg-gray-700/20")}>
                             <td className="px-1.5 md:px-6 py-2 md:py-4 text-[10px] md:text-sm font-medium text-gray-200 leading-tight">
-                              <span className="flex items-center gap-2">
-                                {prod.nombre}
-                                <span className="text-[8px] md:text-[9px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">{prod.tipo_medida}</span>
-                              </span>
+                              <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                                <span className="break-words leading-tight">{prod.nombre}</span>
+                                <span className="inline-block text-[7px] md:text-[9px] bg-gray-800 text-gray-400 px-1 py-0.5 rounded border border-gray-700 w-fit">
+                                  {prod.tipo_medida}
+                                </span>
+                              </div>
                               {item.updated_at && (
                                 <div className="text-[8px] md:text-[10px] text-gray-500 font-normal mt-0.5 md:mt-1 leading-tight">
                                   Act: {new Date(item.updated_at).toLocaleTimeString('es-VE', {timeZone: 'America/Caracas', hour: '2-digit', minute:'2-digit'})}
