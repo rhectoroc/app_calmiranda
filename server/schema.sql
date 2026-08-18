@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR NOT NULL,
     nombre VARCHAR NOT NULL,
     rol VARCHAR NOT NULL CHECK (rol IN ('admin', 'superadmin', 'operador')) DEFAULT 'operador',
+    permisos JSONB DEFAULT '["dashboard", "customer-service", "clientes", "inventario", "productos"]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

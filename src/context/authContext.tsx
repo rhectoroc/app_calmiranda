@@ -5,6 +5,7 @@ export interface User {
   name: string;
   username: string;
   role: 'superadmin' | 'admin' | 'operador';
+  permisos: string[];
 }
 
 interface AuthContextType {
@@ -62,6 +63,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: 'Hector Ollarves',
         username: 'rhectoroc@gmail.com',
         role: 'superadmin',
+        permisos: ["dashboard", "customer-service", "clientes", "inventario", "productos"],
       };
       setUser(adminUser);
       localStorage.setItem('calmiranda_session', JSON.stringify(adminUser));

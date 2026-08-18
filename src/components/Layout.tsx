@@ -120,7 +120,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   ];
 
-  const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));
+  const allowedNavItems = navItems.filter(item => {
+    if (!user) return false;
+    // Administradores ven todo lo que sus roles permiten
+    if (user.role !== 'operador') {
+      return item.roles.includes(user.role);
+    }
+    // Para operadores, verificar sus permisos específicos
+    if (!item.roles.includes('operador')) return false;
+    
+    const viewId = item.to.replace('/', '');
+    return user.permisos?.includes(viewId);
+  });
 
   return (
     <div className={`min-h-screen bg-cal-dark text-white flex flex-col md:flex-row relative pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] ${isChatHub ? 'h-screen md:h-screen overflow-hidden' : ''}`}>

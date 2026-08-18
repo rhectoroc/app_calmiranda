@@ -96,7 +96,7 @@ app.post('/api/auth/login', async (req, res) => {
   const emailLower = username.toLowerCase().trim();
 
   try {
-    const rows = await query('SELECT id, email, password_hash, nombre, rol FROM users WHERE email = $1', [emailLower]);
+    const rows = await query('SELECT id, email, password_hash, nombre, rol, permisos FROM users WHERE email = $1', [emailLower]);
     
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
@@ -112,7 +112,8 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({
       name: dbUser.nombre,
       username: dbUser.email,
-      role: dbUser.rol
+      role: dbUser.rol,
+      permisos: dbUser.permisos || ["dashboard", "customer-service", "clientes", "inventario", "productos"]
     });
   } catch (error: any) {
     console.error('❌ Error en login:', error.message || error);
@@ -123,7 +124,7 @@ app.post('/api/auth/login', async (req, res) => {
 // GET /api/users
 app.get('/api/users', async (req, res) => {
   try {
-    const rows = await query('SELECT id, email, nombre, rol, created_at FROM users ORDER BY nombre ASC');
+    const rows = await query('SELECT id, email, nombre, rol, permisos, created_at FROM users ORDER BY nombre ASC');
     res.json(rows);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -132,7 +133,7 @@ app.get('/api/users', async (req, res) => {
 
 // POST /api/users
 app.post('/api/users', async (req, res) => {
-  const { nombre, email, password, rol } = req.body;
+  const { nombre, email, password, rol, permisos } = req.body;
   
   if (!nombre || !email || !password || !rol) {
     return res.status(400).json({ error: 'Todos los campos son requeridos.' });
@@ -150,9 +151,10 @@ app.post('/api/users', async (req, res) => {
     // Hashear contraseña
     const passwordHash = await bcryptjs.hash(password, 10);
 
+    const perms = rol === 'operador' && permisos ? JSON.stringify(permisos) : '["dashboard", "customer-service", "clientes", "inventario", "productos"]';
     const result = await query(
-      'INSERT INTO users (nombre, email, password_hash, rol, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id, nombre, email, rol, created_at',
-      [nombre.trim(), emailLower, passwordHash, rol]
+      'INSERT INTO users (nombre, email, password_hash, rol, permisos, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id, nombre, email, rol, permisos, created_at',
+      [nombre.trim(), emailLower, passwordHash, rol, perms]
     );
 
     res.status(201).json(result[0]);
@@ -164,7 +166,7 @@ app.post('/api/users', async (req, res) => {
 // PUT /api/users/:id
 app.put('/api/users/:id', async (req, res) => {
   const { id } = req.params;
-  const { nombre, email, password, rol } = req.body;
+  const { nombre, email, password, rol, permisos } = req.body;
   const currentEmail = req.headers['x-current-user-email'];
 
   if (!nombre || !email || !rol) {
@@ -193,18 +195,19 @@ app.put('/api/users/:id', async (req, res) => {
       return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
     }
 
+    const perms = rol === 'operador' && permisos ? JSON.stringify(permisos) : '["dashboard", "customer-service", "clientes", "inventario", "productos"]';
     let result;
     if (password && password.trim() !== '') {
       // Hashear nueva contraseña
       const passwordHash = await bcryptjs.hash(password, 10);
       result = await query(
-        'UPDATE users SET nombre = $1, email = $2, password_hash = $3, rol = $4, updated_at = NOW() WHERE id = $5 RETURNING id, nombre, email, rol, created_at',
-        [nombre.trim(), emailLower, passwordHash, rol, id]
+        'UPDATE users SET nombre = $1, email = $2, password_hash = $3, rol = $4, permisos = $5, updated_at = NOW() WHERE id = $6 RETURNING id, nombre, email, rol, permisos, created_at',
+        [nombre.trim(), emailLower, passwordHash, rol, perms, id]
       );
     } else {
       result = await query(
-        'UPDATE users SET nombre = $1, email = $2, rol = $3, updated_at = NOW() WHERE id = $4 RETURNING id, nombre, email, rol, created_at',
-        [nombre.trim(), emailLower, rol, id]
+        'UPDATE users SET nombre = $1, email = $2, rol = $3, permisos = $4, updated_at = NOW() WHERE id = $5 RETURNING id, nombre, email, rol, permisos, created_at',
+        [nombre.trim(), emailLower, rol, perms, id]
       );
     }
 

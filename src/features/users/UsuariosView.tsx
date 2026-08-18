@@ -19,6 +19,7 @@ interface UserData {
   email: string;
   nombre: string;
   rol: 'superadmin' | 'admin' | 'operador';
+  permisos: string[];
   created_at: string;
 }
 
@@ -37,8 +38,17 @@ export const UsuariosView: React.FC = () => {
     nombre: '',
     email: '',
     password: '',
-    rol: 'operador' as 'superadmin' | 'admin' | 'operador'
+    rol: 'operador' as 'superadmin' | 'admin' | 'operador',
+    permisos: ['dashboard', 'customer-service', 'clientes', 'inventario', 'productos']
   });
+
+  const PERMISOS_DISPONIBLES = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'customer-service', label: 'Atención al Cliente' },
+    { id: 'clientes', label: 'Directorio de Clientes' },
+    { id: 'inventario', label: 'Inventario' },
+    { id: 'productos', label: 'Catálogo de Productos' }
+  ];
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -66,7 +76,8 @@ export const UsuariosView: React.FC = () => {
       nombre: '',
       email: '',
       password: '',
-      rol: 'operador'
+      rol: 'operador',
+      permisos: ['dashboard', 'customer-service', 'clientes', 'inventario', 'productos']
     });
     setActiveModal('create');
   };
@@ -77,7 +88,8 @@ export const UsuariosView: React.FC = () => {
       nombre: user.nombre,
       email: user.email,
       password: '', // En blanco a menos que se desee cambiar
-      rol: user.rol
+      rol: user.rol,
+      permisos: user.permisos || ['dashboard', 'customer-service', 'clientes', 'inventario', 'productos']
     });
     setActiveModal('edit');
   };
@@ -403,6 +415,41 @@ export const UsuariosView: React.FC = () => {
                   className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 text-base sm:text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-cal-emerald/50 focus:bg-white/10 transition-all leading-normal"
                 />
               </div>
+
+              {/* Permisos (solo visible para operadores) */}
+              {formData.rol === 'operador' && (
+                <div className="flex flex-col gap-2 mt-2">
+                  <label className="text-xs text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                    Permisos de Sección
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white/5 border border-white/5 rounded-2xl p-4">
+                    {PERMISOS_DISPONIBLES.map(perm => (
+                      <label key={perm.id} className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative flex items-center">
+                          <input 
+                            type="checkbox"
+                            checked={formData.permisos.includes(perm.id)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setFormData(prev => ({
+                                ...prev,
+                                permisos: checked 
+                                  ? [...prev.permisos, perm.id]
+                                  : prev.permisos.filter(p => p !== perm.id)
+                              }));
+                            }}
+                            className="sr-only"
+                          />
+                          <div className={`w-10 h-5 bg-gray-700 rounded-full transition-colors flex items-center px-1 ${formData.permisos.includes(perm.id) ? 'bg-cal-emerald' : ''}`}>
+                            <div className={`w-3.5 h-3.5 bg-white rounded-full transition-transform ${formData.permisos.includes(perm.id) ? 'translate-x-4.5' : ''}`}></div>
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{perm.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Botones de Acción */}
               <div className="flex justify-end gap-3 mt-4 border-t border-white/5 pt-4">

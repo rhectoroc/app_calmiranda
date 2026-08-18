@@ -11,12 +11,21 @@ import { UsuariosView } from './features/users/UsuariosView';
 import { InventarioView } from './features/inventario/InventarioView';
 import { ProductosView } from './features/productos/ProductosView';
 
-// Componente para proteger rutas según autenticación general
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+// Componente para proteger rutas según autenticación general y permisos
+const ProtectedRoute: React.FC<{ children: React.ReactNode, section?: string }> = ({ children, section }) => {
+  const { isAuthenticated, user } = useAuth();
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (section && user?.role === 'operador' && !user.permisos?.includes(section)) {
+    const primerPermiso = user.permisos && user.permisos.length > 0 ? `/${user.permisos[0]}` : '/dashboard';
+    if (primerPermiso !== `/${section}`) {
+      return <Navigate to={primerPermiso} replace />;
+    } else {
+       return <div className="min-h-screen bg-cal-dark flex items-center justify-center text-white">Acceso Denegado</div>;
+    }
   }
   
   return <Layout>{children}</Layout>;
@@ -45,7 +54,7 @@ function App() {
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute section="dashboard">
                 <DashboardView />
               </ProtectedRoute>
             } 
@@ -54,7 +63,7 @@ function App() {
           <Route 
             path="/customer-service" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute section="customer-service">
                 <CustomerServiceHub />
               </ProtectedRoute>
             } 
@@ -63,7 +72,7 @@ function App() {
           <Route 
             path="/clientes" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute section="clientes">
                 <ClientesView />
               </ProtectedRoute>
             } 
@@ -72,7 +81,7 @@ function App() {
           <Route 
             path="/productos" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute section="productos">
                 <ProductosView />
               </ProtectedRoute>
             } 
@@ -81,7 +90,7 @@ function App() {
           <Route 
             path="/inventario" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute section="inventario">
                 <InventarioView />
               </ProtectedRoute>
             } 
