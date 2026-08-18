@@ -6,7 +6,27 @@ export interface User {
   username: string;
   role: 'superadmin' | 'admin' | 'operador';
   permisos: string[];
+  token?: string;
 }
+
+export const getAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  const storedUser = localStorage.getItem('calmiranda_session');
+  if (storedUser) {
+    try {
+      const user = JSON.parse(storedUser);
+      if (user.token) {
+        headers['Authorization'] = `Bearer ${user.token}`;
+      }
+      if (user.username) {
+        headers['x-current-user-email'] = user.username;
+      }
+    } catch (e) {}
+  }
+  return headers;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -64,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         username: 'rhectoroc@gmail.com',
         role: 'superadmin',
         permisos: ["dashboard", "customer-service", "clientes", "inventario", "productos"],
+        token: 'dev-fallback-token' // Token simulado para el fallback
       };
       setUser(adminUser);
       localStorage.setItem('calmiranda_session', JSON.stringify(adminUser));
@@ -77,6 +98,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     localStorage.removeItem('calmiranda_session');
   };
+
+  // Efecto para cerrar sesión por inactividad
+  useEffect(() => {
+    if (!user) return;
+
+    const INACTIVITY_LIMIT = 3 * 60 * 60 * 1000; // 3 horas en milisegundos
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        logout();
+        // Recargar hacia login para limpiar el estado y mostrar que expiró
+        window.location.href = '/login?expired=true';
+      }, INACTIVITY_LIMIT);
+    };
+
+    // Iniciar temporizador
+    resetTimer();
+
+    // Listeners de actividad en la ventana
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+    const handleActivity = () => resetTimer();
+
+    events.forEach(event => window.addEventListener(event, handleActivity, { passive: true }));
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+    };
+  }, [user]);
 
   if (loading) {
     return (

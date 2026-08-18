@@ -18,6 +18,16 @@ export const LoginView: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Revisar si viene de una sesión expirada
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === 'true') {
+      setError('Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.');
+      // Limpiar la url para que no se quede el parámetro
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {

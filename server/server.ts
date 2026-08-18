@@ -6,6 +6,9 @@ import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
 import bcryptjs from 'bcryptjs';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
@@ -24,12 +27,87 @@ const openai = new OpenAI({
   baseURL: 'https://api.deepseek.com',
 });
 
+const JWT_SECRET = process.env.JWT_SECRET || 'calmiranda-super-secret-key-2026';
+
+// Configurar Helmet (Seguridad)
+app.use(helmet());
+
 // Configurar CORS
-app.use(cors());
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://app.calmiranda.com', 'https://cal-miranda-app.1m85g5.easypanel.host'];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitir si no hay origen (postman, curl) o si está en la lista de permitidos
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+// Rate limiters
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 500, // Límite por IP
+  message: { error: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en 15 minutos.' }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutos
+  max: 5, // 5 intentos de login
+  message: { error: 'Demasiados intentos de inicio de sesión fallidos, por favor intenta de nuevo en 10 minutos.' }
+});
+
+// Aplicar límite global a las rutas de API
+app.use('/api', apiLimiter);
 
 // Middleware para parsear JSON con límite incrementado para webhooks de gran tamaño
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Middleware de Autenticación JWT
+const authenticateToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Acceso denegado. Token no proporcionado.' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token inválido o expirado.' });
+    }
+    // Añadimos el usuario decodificado a la request para usarlo en endpoints
+    (req as any).user = user;
+    next();
+  });
+};
+
+// Aplicar Middleware Global a rutas /api (excepto públicas)
+const publicPaths = [
+  '/api/auth/login',
+  '/api/auth/google',
+  '/api/auth/google/callback',
+  '/api/web-chatbot',
+  '/api/health'
+];
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    // Excluir endpoints públicos y webhooks/test tools
+    if (
+      publicPaths.includes(req.path) || 
+      req.path.startsWith('/api/test/') || 
+      req.path.startsWith('/api/setup-webhook')
+    ) {
+      return next();
+    }
+    return authenticateToken(req, res, next);
+  }
+  next();
+});
 
 // ----------------------------------------------------
 // ENDPOINTS DE AUTENTICACIÓN GOOGLE OAUTH
@@ -86,7 +164,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
 // ----------------------------------------------------
 
 // POST /api/auth/login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   
   if (!username || !password) {
@@ -109,11 +187,21 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
     }
 
+    const permisos = dbUser.permisos || ["dashboard", "customer-service", "clientes", "inventario", "productos"];
+    
+    // Generar JWT
+    const token = jwt.sign(
+      { id: dbUser.id, email: dbUser.email, rol: dbUser.rol, permisos },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
     res.json({
+      token,
       name: dbUser.nombre,
       username: dbUser.email,
       role: dbUser.rol,
-      permisos: dbUser.permisos || ["dashboard", "customer-service", "clientes", "inventario", "productos"]
+      permisos
     });
   } catch (error: any) {
     console.error('❌ Error en login:', error.message || error);

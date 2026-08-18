@@ -6,6 +6,9 @@ import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { OpenAI } from 'openai';
 import bcryptjs from 'bcryptjs';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
 import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
@@ -20,11 +23,75 @@ const openai = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || 'no-key-provided',
     baseURL: 'https://api.deepseek.com',
 });
+const JWT_SECRET = process.env.JWT_SECRET || 'calmiranda-super-secret-key-2026';
+// Configurar Helmet (Seguridad)
+app.use(helmet());
 // Configurar CORS
-app.use(cors());
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://app.calmiranda.com', 'https://cal-miranda-app.1m85g5.easypanel.host'];
+app.use(cors({
+    origin: function (origin, callback) {
+        // Permitir si no hay origen (postman, curl) o si está en la lista de permitidos
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
+// Rate limiters
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 500, // Límite por IP
+    message: { error: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en 15 minutos.' }
+});
+const loginLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutos
+    max: 5, // 5 intentos de login
+    message: { error: 'Demasiados intentos de inicio de sesión fallidos, por favor intenta de nuevo en 10 minutos.' }
+});
+// Aplicar límite global a las rutas de API
+app.use('/api', apiLimiter);
 // Middleware para parsear JSON con límite incrementado para webhooks de gran tamaño
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Middleware de Autenticación JWT
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Acceso denegado. Token no proporcionado.' });
+    }
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: 'Token inválido o expirado.' });
+        }
+        // Añadimos el usuario decodificado a la request para usarlo en endpoints
+        req.user = user;
+        next();
+    });
+};
+// Aplicar Middleware Global a rutas /api (excepto públicas)
+const publicPaths = [
+    '/api/auth/login',
+    '/api/auth/google',
+    '/api/auth/google/callback',
+    '/api/web-chatbot',
+    '/api/health'
+];
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        // Excluir endpoints públicos y webhooks/test tools
+        if (publicPaths.includes(req.path) ||
+            req.path.startsWith('/api/test/') ||
+            req.path.startsWith('/api/setup-webhook')) {
+            return next();
+        }
+        return authenticateToken(req, res, next);
+    }
+    next();
+});
 // ----------------------------------------------------
 // ENDPOINTS DE AUTENTICACIÓN GOOGLE OAUTH
 // ----------------------------------------------------
@@ -77,14 +144,14 @@ app.get('/api/auth/google/callback', async (req, res) => {
 // ENDPOINTS DE AUTENTICACIÓN Y GESTIÓN DE USUARIOS
 // ----------------------------------------------------
 // POST /api/auth/login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ error: 'Usuario (email) y contraseña son requeridos.' });
     }
     const emailLower = username.toLowerCase().trim();
     try {
-        const rows = await query('SELECT id, email, password_hash, nombre, rol FROM users WHERE email = $1', [emailLower]);
+        const rows = await query('SELECT id, email, password_hash, nombre, rol, permisos FROM users WHERE email = $1', [emailLower]);
         if (rows.length === 0) {
             return res.status(401).json({ error: 'Credenciales inválidas.' });
         }
@@ -93,10 +160,15 @@ app.post('/api/auth/login', async (req, res) => {
         if (!passwordMatch) {
             return res.status(401).json({ error: 'Credenciales inválidas.' });
         }
+        const permisos = dbUser.permisos || ["dashboard", "customer-service", "clientes", "inventario", "productos"];
+        // Generar JWT
+        const token = jwt.sign({ id: dbUser.id, email: dbUser.email, rol: dbUser.rol, permisos }, JWT_SECRET, { expiresIn: '12h' });
         res.json({
+            token,
             name: dbUser.nombre,
             username: dbUser.email,
-            role: dbUser.rol
+            role: dbUser.rol,
+            permisos
         });
     }
     catch (error) {
@@ -107,7 +179,7 @@ app.post('/api/auth/login', async (req, res) => {
 // GET /api/users
 app.get('/api/users', async (req, res) => {
     try {
-        const rows = await query('SELECT id, email, nombre, rol, created_at FROM users ORDER BY nombre ASC');
+        const rows = await query('SELECT id, email, nombre, rol, permisos, created_at FROM users ORDER BY nombre ASC');
         res.json(rows);
     }
     catch (error) {
@@ -116,7 +188,7 @@ app.get('/api/users', async (req, res) => {
 });
 // POST /api/users
 app.post('/api/users', async (req, res) => {
-    const { nombre, email, password, rol } = req.body;
+    const { nombre, email, password, rol, permisos } = req.body;
     if (!nombre || !email || !password || !rol) {
         return res.status(400).json({ error: 'Todos los campos son requeridos.' });
     }
@@ -129,7 +201,8 @@ app.post('/api/users', async (req, res) => {
         }
         // Hashear contraseña
         const passwordHash = await bcryptjs.hash(password, 10);
-        const result = await query('INSERT INTO users (nombre, email, password_hash, rol, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id, nombre, email, rol, created_at', [nombre.trim(), emailLower, passwordHash, rol]);
+        const perms = rol === 'operador' && permisos ? JSON.stringify(permisos) : '["dashboard", "customer-service", "clientes", "inventario", "productos"]';
+        const result = await query('INSERT INTO users (nombre, email, password_hash, rol, permisos, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id, nombre, email, rol, permisos, created_at', [nombre.trim(), emailLower, passwordHash, rol, perms]);
         res.status(201).json(result[0]);
     }
     catch (error) {
@@ -139,7 +212,7 @@ app.post('/api/users', async (req, res) => {
 // PUT /api/users/:id
 app.put('/api/users/:id', async (req, res) => {
     const { id } = req.params;
-    const { nombre, email, password, rol } = req.body;
+    const { nombre, email, password, rol, permisos } = req.body;
     const currentEmail = req.headers['x-current-user-email'];
     if (!nombre || !email || !rol) {
         return res.status(400).json({ error: 'Nombre, email y rol son requeridos.' });
@@ -161,14 +234,15 @@ app.put('/api/users/:id', async (req, res) => {
         if (existingUser.email === currentEmail && rol !== existingUser.rol) {
             return res.status(400).json({ error: 'No puedes cambiar tu propio rol.' });
         }
+        const perms = rol === 'operador' && permisos ? JSON.stringify(permisos) : '["dashboard", "customer-service", "clientes", "inventario", "productos"]';
         let result;
         if (password && password.trim() !== '') {
             // Hashear nueva contraseña
             const passwordHash = await bcryptjs.hash(password, 10);
-            result = await query('UPDATE users SET nombre = $1, email = $2, password_hash = $3, rol = $4, updated_at = NOW() WHERE id = $5 RETURNING id, nombre, email, rol, created_at', [nombre.trim(), emailLower, passwordHash, rol, id]);
+            result = await query('UPDATE users SET nombre = $1, email = $2, password_hash = $3, rol = $4, permisos = $5, updated_at = NOW() WHERE id = $6 RETURNING id, nombre, email, rol, permisos, created_at', [nombre.trim(), emailLower, passwordHash, rol, perms, id]);
         }
         else {
-            result = await query('UPDATE users SET nombre = $1, email = $2, rol = $3, updated_at = NOW() WHERE id = $4 RETURNING id, nombre, email, rol, created_at', [nombre.trim(), emailLower, rol, id]);
+            result = await query('UPDATE users SET nombre = $1, email = $2, rol = $3, permisos = $4, updated_at = NOW() WHERE id = $5 RETURNING id, nombre, email, rol, permisos, created_at', [nombre.trim(), emailLower, rol, perms, id]);
         }
         res.json(result[0]);
     }
