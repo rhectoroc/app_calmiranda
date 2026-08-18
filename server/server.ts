@@ -33,11 +33,19 @@ const JWT_SECRET = process.env.JWT_SECRET || 'calmiranda-super-secret-key-2026';
 app.use(helmet());
 
 // Configurar CORS
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://app.calmiranda.com', 'https://cal-miranda-app.1m85g5.easypanel.host'];
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:5174', 
+  'http://localhost:5175', 
+  'http://localhost:3000', 
+  'https://app.calmiranda.com', 
+  'https://cal-miranda-app.1m85g5.easypanel.host'
+];
 app.use(cors({
   origin: function (origin, callback) {
     // Permitir si no hay origen (postman, curl) o si está en la lista de permitidos
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // o si es una IP local para desarrollo
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://192.168.') || origin.startsWith('http://localhost:')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -100,7 +108,8 @@ app.use((req, res, next) => {
     if (
       publicPaths.includes(req.path) || 
       req.path.startsWith('/api/test/') || 
-      req.path.startsWith('/api/setup-webhook')
+      req.path.startsWith('/api/setup-webhook') ||
+      (req.method === 'GET' && req.path.match(/^\/api\/chats\/web_[^/]+\/messages$/))
     ) {
       return next();
     }
