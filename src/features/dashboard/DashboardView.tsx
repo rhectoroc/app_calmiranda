@@ -26,8 +26,23 @@ export const DashboardView: React.FC = () => {
   
   useEffect(() => {
     fetch('/api/inventario')
-      .then(res => res.json())
-      .then(data => setInventoryItems(data))
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          // Si el token expiró o no es válido, forzar logout
+          localStorage.removeItem('calmiranda_session');
+          window.location.href = '/login?expired=true';
+          throw new Error('No autorizado');
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInventoryItems(data);
+        } else {
+          console.error('La respuesta no es un array:', data);
+          setInventoryItems([]);
+        }
+      })
       .catch(console.error);
   }, []);
 

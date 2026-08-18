@@ -24,10 +24,23 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       } catch (e) {}
     }
     
-    return originalFetch(input, { ...init, headers });
+    return originalFetch(input, { ...init, headers }).then(res => {
+      // Si el servidor rechaza el token (401 o 403), cerramos sesión forzosamente
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('calmiranda_session');
+        window.location.href = '/login?expired=true';
+      }
+      return res;
+    });
   }
   
-  return originalFetch(input, init);
+  return originalFetch(input, init).then(res => {
+    if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('calmiranda_session');
+        window.location.href = '/login?expired=true';
+    }
+    return res;
+  });
 };
 
 createRoot(document.getElementById('root')!).render(
