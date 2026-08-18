@@ -104,29 +104,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!user) return;
 
     const INACTIVITY_LIMIT = 3 * 60 * 60 * 1000; // 3 horas en milisegundos
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let lastActivityTime = Date.now();
 
-    const resetTimer = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        logout();
-        // Recargar hacia login para limpiar el estado y mostrar que expiró
-        window.location.href = '/login?expired=true';
-      }, INACTIVITY_LIMIT);
+    const updateActivity = () => {
+      lastActivityTime = Date.now();
     };
 
-    // Iniciar temporizador
-    resetTimer();
+    // Verificar cada minuto en lugar de en cada movimiento para evitar sobrecarga de CPU
+    const checkInactivity = setInterval(() => {
+      if (Date.now() - lastActivityTime >= INACTIVITY_LIMIT) {
+        clearInterval(checkInactivity);
+        logout();
+        window.location.href = '/login?expired=true';
+      }
+    }, 60000); // 1 minuto
 
     // Listeners de actividad en la ventana
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
-    const handleActivity = () => resetTimer();
 
-    events.forEach(event => window.addEventListener(event, handleActivity, { passive: true }));
+    // Usar passive: true mejora el rendimiento del scroll
+    events.forEach(event => window.addEventListener(event, updateActivity, { passive: true }));
 
     return () => {
-      clearTimeout(timeoutId);
-      events.forEach(event => window.removeEventListener(event, handleActivity));
+      clearInterval(checkInactivity);
+      events.forEach(event => window.removeEventListener(event, updateActivity));
     };
   }, [user]);
 
