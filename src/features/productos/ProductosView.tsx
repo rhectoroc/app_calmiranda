@@ -252,8 +252,10 @@ export const ProductosView: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-1 md:px-6 py-2 md:py-4">
-                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] sm:text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 break-words max-w-[50px] sm:max-w-none leading-tight">
-                          {prod.categoria}
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 text-center w-full min-w-[50px] leading-tight">
+                          <span className="line-clamp-2 sm:line-clamp-none break-words hyphens-auto" title={prod.categoria}>
+                            {prod.categoria}
+                          </span>
                         </span>
                       </td>
                       <td className="px-1 md:px-6 py-2 md:py-4 text-center hidden sm:table-cell">
