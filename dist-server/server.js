@@ -1,4 +1,3 @@
-process.env.TZ = 'America/Caracas';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -13,6 +12,7 @@ import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
 import { query, getSetting, saveSetting, saveClientChatMessage } from './db.js';
+process.env.TZ = 'America/Caracas';
 // Resolver __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

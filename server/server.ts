@@ -1,4 +1,3 @@
-process.env.TZ = 'America/Caracas';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -13,6 +12,9 @@ import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
 import { query, getSetting, saveSetting, searchClientes, saveClientChatMessage } from './db.js';
+
+process.env.TZ = 'America/Caracas';
+
 
 // Resolver __dirname en módulos ES
 const __filename = fileURLToPath(import.meta.url);
@@ -346,7 +348,7 @@ app.delete('/api/users/:id', async (req, res) => {
 app.post('/webhooks/whatsapp', async (req, res) => {
   console.log(`📥 Webhook recibido en /webhooks/whatsapp: Evento = ${req.body?.event || 'desconocido'}`);
   
-  if (req.body?.event === 'messages.upsert') {
+  if (req.body?.event && req.body.event.toLowerCase() === 'messages.upsert') {
     const data = req.body?.data;
     const sender = data?.key?.remoteJidAlt || data?.key?.remoteJid || 'desconocido';
     const text = data?.message?.conversation || data?.message?.extendedTextMessage?.text || '';
