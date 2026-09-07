@@ -114,8 +114,28 @@ const agentTools: any[] = [
     type: 'function',
     function: {
       name: 'consultar_inventario',
-      description: 'Consulta el stock disponible de productos y formatos en la hoja de Google Sheets de inventario.',
-      parameters: { type: 'object', properties: {} }
+      description: 'Consulta el stock actual, inicial y movimientos de inventario en la base de datos PostgreSQL de CalMiranda, filtrado opcionalmente por sede (Hoyo de la Puerta o Guatire) o por nombre de producto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          sede: { type: 'string', description: 'Nombre de la sede opcional: "Hoyo de la Puerta" o "Guatire"' },
+          producto: { type: 'string', description: 'Nombre o fragmento del nombre del producto a consultar' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'consultar_productos_catalogo',
+      description: 'Consulta el catálogo oficial de productos de CalMiranda directamente desde la base de datos PostgreSQL (incluye nombre, categoría, presentación, peso en kg, precio en USD y sede disponible).',
+      parameters: {
+        type: 'object',
+        properties: {
+          categoria: { type: 'string', description: 'Categoría opcional del producto (ej. "Producto Terminado", "Agregados")' },
+          busqueda: { type: 'string', description: 'Término de búsqueda para filtrar por nombre o presentación' }
+        }
+      }
     }
   },
   {
@@ -256,13 +276,51 @@ async function executeTool(name: string, args: any, sessionId: string): Promise<
       }
 
       case 'consultar_inventario': {
-        // ID: 1GDkxPEvCyKhA2fYR1Ub9Sv-GAAx0_5DkBYGfJqCOydg | Hoja: Productos_Cal Miranda
-        const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
-        const res = await sheets.spreadsheets.values.get({
-          spreadsheetId: '1GDkxPEvCyKhA2fYR1Ub9Sv-GAAx0_5DkBYGfJqCOydg',
-          range: '\'Productos_Cal Miranda\'!A1:F50'
-        });
-        return JSON.stringify(res.data.values || []);
+        let sql = `
+          SELECT sede, categoria, producto, stock_inicial, produccion, salidas,
+                 (stock_inicial + produccion - salidas) as stock_actual,
+                 updated_at
+          FROM inventario
+          WHERE 1=1
+        `;
+        const params: any[] = [];
+        if (args.sede) {
+          params.push(`%${args.sede}%`);
+          sql += ` AND sede ILIKE $${params.length}`;
+        }
+        if (args.producto) {
+          params.push(`%${args.producto}%`);
+          sql += ` AND producto ILIKE $${params.length}`;
+        }
+        sql += ` ORDER BY sede, categoria, producto;`;
+        const rows = await query(sql, params);
+        if (rows.length === 0) {
+          return JSON.stringify({ mensaje: 'No se encontraron registros de inventario para el criterio especificado.' });
+        }
+        return JSON.stringify(rows);
+      }
+
+      case 'consultar_productos_catalogo': {
+        let sql = `
+          SELECT id, nombre, categoria, sku, tipo_medida, peso, presentacion, precio, sede, estado
+          FROM productos
+          WHERE estado = 'Activo'
+        `;
+        const params: any[] = [];
+        if (args.categoria) {
+          params.push(`%${args.categoria}%`);
+          sql += ` AND categoria ILIKE $${params.length}`;
+        }
+        if (args.busqueda) {
+          params.push(`%${args.busqueda}%`);
+          sql += ` AND (nombre ILIKE $${params.length} OR presentacion ILIKE $${params.length} OR sku ILIKE $${params.length})`;
+        }
+        sql += ` ORDER BY categoria, nombre;`;
+        const rows = await query(sql, params);
+        if (rows.length === 0) {
+          return JSON.stringify({ mensaje: 'No se encontraron productos en el catálogo para el criterio solicitado.' });
+        }
+        return JSON.stringify(rows);
       }
 
       case 'Cuentas': {
@@ -752,17 +810,17 @@ TRANSFERENCIAS BANCARIAS:
 
 HERRAMIENTAS DISPONIBLES
 
-    THINK → Analizar mejor tu respuesta (ESENCIAL).
+    consultar_productos_catalogo → Consultar el catálogo de productos oficial de CalMiranda en la base de datos PostgreSQL (nombres, categorías, presentaciones, pesos, precios en USD y sedes disponibles).
+    
+    consultar_inventario → Consultar en tiempo real el stock actual y disponible en PostgreSQL filtrando por producto y sede (Hoyo de la Puerta o Guatire).
 
-    INFORMACION → Consultar productos, precios, detalles técnicos.
+    SQL_specialist → Buscar ficha del cliente en la base de datos de CalMiranda (por nombre, RIF o teléfono).
 
-    TASA → Calcular conversión de USD a Bolívares (OBLIGATORIO).
+    tasa_bcv → Consultar la tasa oficial de cambio vigente del BCV para conversiones a Bolívares.
 
-    BENEFICIOS → Mostrar ventajas de CalMiranda (SOLO UNA VEZ).
+    activar_handoff → Transferir la conversación a un asesor humano cuando se requiera concretar pedidos grandes, soporte técnico o asesoría especializada.
 
-    ADMIN → Activar modo agente humano.
-
-    DATA & TIME → Para lógica de saludos.
+    Calendar_Disponibilidad / Calendar_Agendar → Gestión de citas y reuniones de agenda.
 
 FLUJO DE CONVERSACIÓN INTELIGENTE
 

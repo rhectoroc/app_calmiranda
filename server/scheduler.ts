@@ -3,7 +3,7 @@ import cron from 'node-cron';
 import axios from 'axios';
 import https from 'https';
 import { getSheetsClient } from './googleAuth.js';
-import { saveSetting, getSetting } from './db.js';
+import { saveSetting, getSetting, query } from './db.js';
 import { sendWhatsAppMessage } from './agent.js';
 import { OpenAI } from 'openai';
 
@@ -239,16 +239,58 @@ REGLAS DE FORMATO:
 }
 
 // ----------------------------------------------------
+// CRON 4: Cierre Diario Automático de Inventario (Daily at 6:00 PM / 18:00)
+// ----------------------------------------------------
+export async function runDailyInventoryClosing(): Promise<{ success: boolean; sedesProcessed: string[] }> {
+  console.log('📦 [Auto-Cierre] Ejecutando cierre automático de inventario diario (6:00 PM Venezuela)...');
+  const sedes = ['Hoyo de la Puerta', 'Guatire'];
+  const processed: string[] = [];
+
+  for (const sede of sedes) {
+    try {
+      // 1. Guardar la foto del día en inventario_historial (si ya existe un registro para hoy y esa sede, se actualiza)
+      // Primero eliminamos snapshot previo de hoy para esta sede si existiera para evitar duplicados
+      await query(`
+        DELETE FROM inventario_historial 
+        WHERE fecha = CURRENT_DATE AND sede = $1;
+      `, [sede]);
+
+      // Insertamos el snapshot actual
+      await query(`
+        INSERT INTO inventario_historial (fecha, sede, categoria, producto, stock_inicial, produccion, salidas, stock_final, closed_by)
+        SELECT CURRENT_DATE, sede, categoria, producto, stock_inicial, produccion, salidas, (stock_inicial + produccion - salidas), 'Sistema (Auto-Cierre 6:00 PM)'
+        FROM inventario
+        WHERE sede = $1;
+      `, [sede]);
+
+      // 2. Trasladar stock actual a inicial y reiniciar movimientos a 0 para el siguiente día
+      await query(`
+        UPDATE inventario 
+        SET stock_inicial = stock_inicial + produccion - salidas,
+            produccion = 0,
+            salidas = 0,
+            updated_by = 'Sistema (Auto-Cierre 6:00 PM)',
+            updated_at = NOW()
+        WHERE sede = $1;
+      `, [sede]);
+
+      processed.push(sede);
+      console.log(`✅ [Auto-Cierre] Cierre de inventario completado con éxito para: ${sede}`);
+    } catch (err: any) {
+      console.error(`❌ [Auto-Cierre] Error al cerrar inventario para ${sede}:`, err.message || err);
+    }
+  }
+
+  return { success: true, sedesProcessed: processed };
+}
+
+// ----------------------------------------------------
 // INICIALIZACIÓN DE PLANIFICADORES
 // ----------------------------------------------------
 export function initScheduler(): void {
   console.log('⏰ Inicializando cron scheduler del backend...');
 
   // BuscaTasa_Diamantin: Todos los días a las 9:00 AM (Hora de Caracas)
-  // Nota: Las zonas horarias de Easypanel/VPS suelen estar en UTC. Ajustamos a UTC si es necesario, 
-  // pero node-cron corre en la hora del sistema por defecto.
-  // 9:00 AM en Venezuela (UTC-4) equivale a 1:00 PM UTC.
-  // Si configuramos para Venezuela:
   cron.schedule('0 9 * * *', async () => {
     await runTasaScraper();
   }, {
@@ -256,7 +298,6 @@ export function initScheduler(): void {
   });
 
   // Reporte Financiero: Lunes y Miércoles a las 10:00 AM (Hora de Caracas)
-  // 10:00 AM en Venezuela equivale a 2:00 PM UTC.
   cron.schedule('0 10 * * 1,3', async () => {
     await runFinancialReport();
   }, {
@@ -264,12 +305,19 @@ export function initScheduler(): void {
   });
 
   // Reporte de Nómina: Viernes a las 9:00 AM (Hora de Caracas)
-  // 9:00 AM en Venezuela equivale a 1:00 PM UTC.
   cron.schedule('0 9 * * 5', async () => {
     await runNominaReport();
   }, {
     timezone: 'America/Caracas'
   });
 
-  console.log('🚀 Schedulers registrados: BuscaTasa (9:00 AM diario), Reporte Financiero (Lunes/Miércoles 10:00 AM) y Reporte de Nómina (Viernes 9:00 AM).');
+  // Cierre Diario de Inventario: Todos los días a las 6:00 PM (18:00) (Hora de Caracas)
+  cron.schedule('0 18 * * *', async () => {
+    await runDailyInventoryClosing();
+  }, {
+    timezone: 'America/Caracas'
+  });
+
+  console.log('🚀 Schedulers registrados: BuscaTasa (9:00 AM diario), Reporte Financiero (Lunes/Miércoles 10:00 AM), Reporte de Nómina (Viernes 9:00 AM) y Cierre de Inventario (6:00 PM diario).');
 }
+

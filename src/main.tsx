@@ -25,8 +25,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     }
     
     return originalFetch(input, { ...init, headers }).then(res => {
-      // Si el servidor rechaza el token (401 o 403), cerramos sesión forzosamente
-      if (res.status === 401 || res.status === 403) {
+      // Si el servidor rechaza el token (401 o 403), cerramos sesión forzosamente (excepto en el propio endpoint de login)
+      if ((res.status === 401 || res.status === 403) && !url.includes('/api/auth/login')) {
         localStorage.removeItem('calmiranda_session');
         window.location.href = '/login?expired=true';
       }

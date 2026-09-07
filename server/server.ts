@@ -106,11 +106,9 @@ const publicPaths = [
 
 app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
-    // Excluir endpoints públicos y webhooks/test tools
+    // Excluir estrictamente los endpoints públicos esenciales
     if (
       publicPaths.includes(req.path) || 
-      req.path.startsWith('/api/test/') || 
-      req.path.startsWith('/api/setup-webhook') ||
       (req.method === 'GET' && req.path.match(/^\/api\/chats\/web_[^/]+\/messages$/))
     ) {
       return next();
@@ -733,26 +731,38 @@ app.post('/api/inventario', async (req, res) => {
 app.post('/api/inventario/cerrar-dia', async (req, res) => {
   try {
     const { sede, updated_by } = req.body;
-    
-    // Insertar la foto actual del día en el historial antes de resetear
-    await query(`
-      INSERT INTO inventario_historial (fecha, sede, categoria, producto, stock_inicial, produccion, salidas, stock_final, closed_by)
-      SELECT CURRENT_DATE, sede, categoria, producto, stock_inicial, produccion, salidas, (stock_inicial + produccion - salidas), $2
-      FROM inventario
-      WHERE sede = $1;
-    `, [sede, updated_by || null]);
+    const sedesToClose = (!sede || sede === 'Todas' || sede === 'Todas las Sedes')
+      ? ['Hoyo de la Puerta', 'Guatire']
+      : [sede];
 
-    // Resetear contadores en la tabla operativa
-    await query(`
-      UPDATE inventario 
-      SET stock_inicial = stock_inicial + produccion - salidas,
-          produccion = 0,
-          salidas = 0,
-          updated_by = $2,
-          updated_at = NOW()
-      WHERE sede = $1;
-    `, [sede, updated_by || null]);
-    res.json({ success: true });
+    for (const targetSede of sedesToClose) {
+      // Eliminar snapshot previo del mismo día si ya existiera para evitar duplicados
+      await query(`
+        DELETE FROM inventario_historial 
+        WHERE fecha = CURRENT_DATE AND sede = $1;
+      `, [targetSede]);
+
+      // Insertar la foto actual del día en el historial antes de resetear
+      await query(`
+        INSERT INTO inventario_historial (fecha, sede, categoria, producto, stock_inicial, produccion, salidas, stock_final, closed_by)
+        SELECT CURRENT_DATE, sede, categoria, producto, stock_inicial, produccion, salidas, (stock_inicial + produccion - salidas), $2
+        FROM inventario
+        WHERE sede = $1;
+      `, [targetSede, updated_by || null]);
+
+      // Resetear contadores en la tabla operativa y trasladar saldo final a inicial
+      await query(`
+        UPDATE inventario 
+        SET stock_inicial = stock_inicial + produccion - salidas,
+            produccion = 0,
+            salidas = 0,
+            updated_by = $2,
+            updated_at = NOW()
+        WHERE sede = $1;
+      `, [targetSede, updated_by || null]);
+    }
+
+    res.json({ success: true, closedSedes: sedesToClose });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -760,14 +770,38 @@ app.post('/api/inventario/cerrar-dia', async (req, res) => {
 
 app.get('/api/inventario/historial', async (req, res) => {
   try {
-    const { fecha } = req.query;
+    const { fecha, sede } = req.query;
     if (!fecha) return res.status(400).json({ error: 'Fecha es requerida' });
-    const data = await query('SELECT * FROM inventario_historial WHERE fecha = $1 ORDER BY sede, categoria, id', [fecha]);
+    
+    let sql = 'SELECT * FROM inventario_historial WHERE fecha = $1';
+    const params: any[] = [fecha];
+
+    if (sede && sede !== 'Todas' && sede !== 'Todas las Sedes') {
+      sql += ' AND sede = $2';
+      params.push(sede);
+    }
+    sql += ' ORDER BY sede, categoria, id';
+
+    const data = await query(sql, params);
     res.json(data);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.get('/api/inventario/fechas-disponibles', async (req, res) => {
+  try {
+    const rows = await query(`
+      SELECT DISTINCT fecha::text as fecha 
+      FROM inventario_historial 
+      ORDER BY fecha DESC;
+    `);
+    res.json(rows.map((r: any) => r.fecha));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // ----------------------------------------------------
 // ENDPOINTS PARA CHATS EN TIEMPO REAL (INTEGRACIÓN FRONTEND)
@@ -1138,8 +1172,25 @@ app.post('/api/web-chatbot', async (req, res) => {
     const rows = await query(sql, [finalSessionId]);
     const history = rows.reverse();
 
-    // 5. Cargar directivas dinámicas extras del administrador
+    // 5. Cargar directivas dinámicas extras del administrador y catálogo activo desde la BD
     const extraRulesBot = await getSetting('extra_rules_bot', '');
+
+    let productosDbText = '';
+    try {
+      const activeProducts = await query(`
+        SELECT nombre, categoria, presentacion, peso, precio, sede 
+        FROM productos 
+        WHERE estado = 'Activo' 
+        ORDER BY categoria, nombre;
+      `);
+      if (activeProducts.length > 0) {
+        productosDbText = activeProducts.map(p => 
+          `- ${p.nombre} (${p.categoria}): Presentación ${p.presentacion || 'Estándar'}, Peso ${p.peso ? p.peso + 'kg' : 'N/A'}, Precio: ${Number(p.precio) > 0 ? '$' + Number(p.precio).toFixed(2) : 'A consultar'}, Sede: ${p.sede || 'Ambas'}`
+        ).join('\n    ');
+      }
+    } catch (dbErr) {
+      console.error('Error cargando productos para prompt de web-chatbot:', dbErr);
+    }
 
     // 6. Construir el prompt del sistema
     let systemPrompt = `System Prompt: Diamantin (Sales, Franchises & Strict Guardrails)
@@ -1175,7 +1226,10 @@ CORE COMPANY KNOWLEDGE
 
     Company: INVERSIONES MIRANDA 1311 C.A. | RIF: J-41131658-0. Phones: 0424-257-4698 / 0412-388-3692.
 
-    Products: High-purity lime powder (Cal en polvo), Lime paste in 7kg bags (Cal en pasta), and Eco-friendly paint (Pintura Ecológica). (CRITICAL RULE: Do NOT proactively mention that the 5kg presentation is out of stock or unavailable. Only offer and mention the 7kg presentation. If the client explicitly asks for 5kg, then clarify that it is not available).
+    Catálogo Oficial de Productos (Directo de Base de Datos):
+    ${productosDbText || 'Cal en polvo, Cal en pasta 7kg, Pintura Ecológica, Canto rodado y agregados.'}
+
+    (CRITICAL RULE: Do NOT proactively mention that the 5kg presentation is out of stock or unavailable. Only offer and mention the 7kg presentation. If the client explicitly asks for 5kg, then clarify that it is not available).
 
     Business Hours: Monday to Friday 8:00 AM - 5:00 PM | Saturdays 8:00 AM - 12:00 PM.
 
