@@ -17,6 +17,7 @@ export interface Producto {
   peso: number;
   presentacion: string;
   precio: number;
+  sede?: 'Ambas' | 'Hoyo de la Puerta' | 'Guatire' | string;
   estado: string;
   created_at?: string;
   updated_at?: string;
@@ -26,6 +27,7 @@ export const ProductosView: React.FC = () => {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSedeFilter, setSelectedSedeFilter] = useState<string>('Todas');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProducto, setCurrentProducto] = useState<Producto | null>(null);
@@ -57,18 +59,30 @@ export const ProductosView: React.FC = () => {
     }
   };
 
-  const filteredProductos = productos.filter(p => 
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProductos = productos.filter(p => {
+    const matchesSearch = 
+      p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      p.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesSede = 
+      selectedSedeFilter === 'Todas' || 
+      p.sede === 'Ambas' || 
+      !p.sede || 
+      p.sede === selectedSedeFilter;
+
+    return matchesSearch && matchesSede;
+  });
 
   const handleOpenModal = (producto?: Producto) => {
     setIsNewCategoria(false);
     setIsNewPresentacion(false);
     
     if (producto) {
-      setCurrentProducto(producto);
+      setCurrentProducto({
+        ...producto,
+        sede: producto.sede || 'Ambas'
+      });
     } else {
       setCurrentProducto({
         nombre: '',
@@ -78,6 +92,7 @@ export const ProductosView: React.FC = () => {
         peso: 0,
         presentacion: '',
         precio: 0,
+        sede: 'Ambas',
         estado: 'Activo'
       });
     }
@@ -180,7 +195,7 @@ export const ProductosView: React.FC = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
@@ -190,6 +205,19 @@ export const ProductosView: React.FC = () => {
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-sm text-gray-200 outline-none focus:ring-2 focus:ring-cal-emerald/50"
               />
             </div>
+
+            {/* Filtro por Sede / Almacén */}
+            <select
+              value={selectedSedeFilter}
+              onChange={(e) => setSelectedSedeFilter(e.target.value)}
+              className="w-full sm:w-auto px-3.5 py-2.5 bg-gray-900 border border-gray-700 rounded-xl text-sm text-gray-200 outline-none focus:ring-2 focus:ring-cal-emerald/50 font-medium"
+            >
+              <option value="Todas">Todas las Sedes</option>
+              <option value="Hoyo de la Puerta">Hoyo de la Puerta</option>
+              <option value="Guatire">Guatire (Producción)</option>
+              <option value="Ambas">Ambas Sedes</option>
+            </select>
+
             <button
               onClick={() => setIsCategoryModalOpen(true)}
               className="w-full sm:w-auto flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-xl transition-all font-medium text-sm"
@@ -213,31 +241,33 @@ export const ProductosView: React.FC = () => {
             <table className="w-full text-left border-collapse min-w-full">
               <thead>
                 <tr className="bg-gray-900/50 text-gray-400 text-[8px] sm:text-[9px] md:text-xs uppercase tracking-wider">
-                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[25%]">Producto</th>
-                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[20%]">SKU / Pres.</th>
-                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold w-[15%]">Categoría</th>
-                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center hidden sm:table-cell">Peso</th>
-                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-center w-[15%]">Estado</th>
-                  <th className="px-1 md:px-6 py-2 md:py-4 font-semibold text-right w-[15%]">Acciones</th>
+                  <th className="px-1 md:px-5 py-2 md:py-4 font-semibold w-[22%]">Producto</th>
+                  <th className="px-1 md:px-4 py-2 md:py-4 font-semibold w-[16%]">SKU / Pres.</th>
+                  <th className="px-1 md:px-4 py-2 md:py-4 font-semibold w-[14%]">Categoría</th>
+                  <th className="px-1 md:px-4 py-2 md:py-4 font-semibold text-center w-[12%]">Precio (Ref)</th>
+                  <th className="px-1 md:px-4 py-2 md:py-4 font-semibold text-center w-[14%]">Almacén / Sede</th>
+                  <th className="px-1 md:px-3 py-2 md:py-4 font-semibold text-center hidden sm:table-cell">Peso</th>
+                  <th className="px-1 md:px-3 py-2 md:py-4 font-semibold text-center w-[10%]">Estado</th>
+                  <th className="px-1 md:px-4 py-2 md:py-4 font-semibold text-right w-[10%]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700/50">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={8} className="px-6 py-10 text-center text-gray-400">
                       Cargando productos...
                     </td>
                   </tr>
                 ) : filteredProductos.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={8} className="px-6 py-10 text-center text-gray-400">
                       No se encontraron productos.
                     </td>
                   </tr>
                 ) : (
                   filteredProductos.map((prod) => (
                     <tr key={prod.id} className="hover:bg-gray-700/20 transition-colors">
-                      <td className="px-1 md:px-6 py-2 md:py-4">
+                      <td className="px-1 md:px-5 py-2 md:py-4">
                         <div className="flex items-center gap-1 md:gap-3">
                           <div className="hidden sm:flex p-1.5 md:p-2 bg-gray-900/50 rounded-lg border border-gray-700/50">
                             <Package className="w-3 h-3 md:w-4 md:h-4 text-cal-emerald-light" />
@@ -245,25 +275,44 @@ export const ProductosView: React.FC = () => {
                           <span className="font-medium text-[9px] sm:text-sm text-gray-200 truncate break-words max-w-[80px] sm:max-w-none">{prod.nombre}</span>
                         </div>
                       </td>
-                      <td className="px-1 md:px-6 py-2 md:py-4">
+                      <td className="px-1 md:px-4 py-2 md:py-4">
                         <div className="flex flex-col">
                           <span className="text-[8px] sm:text-sm font-medium text-gray-300 truncate max-w-[70px] sm:max-w-none">{prod.sku || 'N/A'}</span>
                           <span className="text-[8px] sm:text-xs text-gray-500 truncate max-w-[70px] sm:max-w-none">{prod.presentacion || 'Granel'}</span>
                         </div>
                       </td>
-                      <td className="px-1 md:px-6 py-2 md:py-4">
+                      <td className="px-1 md:px-4 py-2 md:py-4">
                         <span className="inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 text-center w-full min-w-[50px] leading-tight">
                           <span className="line-clamp-2 sm:line-clamp-none break-words hyphens-auto" title={prod.categoria}>
                             {prod.categoria}
                           </span>
                         </span>
                       </td>
-                      <td className="px-1 md:px-6 py-2 md:py-4 text-center hidden sm:table-cell">
+                      {/* Precio */}
+                      <td className="px-1 md:px-4 py-2 md:py-4 text-center">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {Number(prod.precio) > 0 ? `$${Number(prod.precio).toFixed(2)}` : 'Ref. 0.00'}
+                        </span>
+                      </td>
+                      {/* Sede / Almacén */}
+                      <td className="px-1 md:px-4 py-2 md:py-4 text-center">
+                        <span className={classNames(
+                          "inline-block px-1.5 py-0.5 rounded text-[8px] sm:text-xs font-medium border text-center leading-tight",
+                          prod.sede === 'Guatire' 
+                            ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                            : prod.sede === 'Hoyo de la Puerta'
+                              ? "bg-blue-500/10 text-blue-300 border-blue-500/20"
+                              : "bg-purple-500/10 text-purple-300 border-purple-500/20"
+                        )}>
+                          {prod.sede || 'Ambas'}
+                        </span>
+                      </td>
+                      <td className="px-1 md:px-3 py-2 md:py-4 text-center hidden sm:table-cell">
                         <span className="text-[9px] sm:text-sm text-gray-300">
                           {prod.peso ? `${prod.peso} kg` : '-'}
                         </span>
                       </td>
-                      <td className="px-1 md:px-6 py-2 md:py-4 text-center">
+                      <td className="px-1 md:px-3 py-2 md:py-4 text-center">
                         <span className={classNames(
                           "inline-flex items-center gap-0.5 px-1 py-0.5 md:gap-1.5 md:px-2 md:py-0.5 rounded md:rounded-full text-[8px] sm:text-xs font-medium border",
                           prod.estado === 'Activo' 
@@ -277,7 +326,7 @@ export const ProductosView: React.FC = () => {
                           {prod.estado}
                         </span>
                       </td>
-                      <td className="px-1 md:px-6 py-2 md:py-4 text-right">
+                      <td className="px-1 md:px-4 py-2 md:py-4 text-right">
                         <div className="flex justify-end gap-1 md:gap-2">
                           <button
                             onClick={() => handleOpenModal(prod)}
@@ -463,6 +512,19 @@ export const ProductosView: React.FC = () => {
                       className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald"
                       placeholder="Ej: 15.00"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Almacén / Sede</label>
+                    <select 
+                      value={currentProducto.sede || 'Ambas'}
+                      onChange={e => setCurrentProducto({...currentProducto, sede: e.target.value})}
+                      className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cal-emerald focus:ring-1 focus:ring-cal-emerald"
+                    >
+                      <option value="Ambas">Ambas Sedes (Global)</option>
+                      <option value="Hoyo de la Puerta">Solo Hoyo de la Puerta</option>
+                      <option value="Guatire">Solo Guatire (Planta)</option>
+                    </select>
                   </div>
                   
                   <div className="space-y-1.5">

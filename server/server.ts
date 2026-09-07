@@ -594,6 +594,11 @@ app.delete('/api/clientes/:id', async (req, res) => {
 // ----------------------------------------------------
 app.get('/api/productos', async (req, res) => {
   try {
+    // Asegurar que la columna sede exista de manera idempotente
+    try {
+      await query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS sede VARCHAR(50) DEFAULT 'Ambas';`);
+    } catch (_) {}
+
     const data = await query('SELECT * FROM productos ORDER BY categoria, nombre');
     res.json(data);
   } catch (error: any) {
@@ -603,12 +608,22 @@ app.get('/api/productos', async (req, res) => {
 
 app.post('/api/productos', async (req, res) => {
   try {
-    const { nombre, categoria, sku, peso, presentacion, tipo_medida, precio, estado } = req.body;
+    const { nombre, categoria, sku, peso, presentacion, tipo_medida, precio, sede, estado } = req.body;
     const result = await query(`
-      INSERT INTO productos (nombre, categoria, sku, peso, presentacion, tipo_medida, precio, estado)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO productos (nombre, categoria, sku, peso, presentacion, tipo_medida, precio, sede, estado)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
-    `, [nombre, categoria, sku || null, peso || 0, presentacion || null, tipo_medida || 'Unidad', precio || 0, estado || 'Activo']);
+    `, [
+      nombre, 
+      categoria, 
+      sku || null, 
+      peso || 0, 
+      presentacion || null, 
+      tipo_medida || 'Unidad', 
+      precio || 0, 
+      sede || 'Ambas', 
+      estado || 'Activo'
+    ]);
     res.json(result[0]);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -618,13 +633,24 @@ app.post('/api/productos', async (req, res) => {
 app.put('/api/productos/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, categoria, sku, peso, presentacion, tipo_medida, precio, estado } = req.body;
+    const { nombre, categoria, sku, peso, presentacion, tipo_medida, precio, sede, estado } = req.body;
     const result = await query(`
       UPDATE productos 
-      SET nombre = $1, categoria = $2, sku = $3, peso = $4, presentacion = $5, tipo_medida = $6, precio = $7, estado = $8, updated_at = NOW()
-      WHERE id = $9
+      SET nombre = $1, categoria = $2, sku = $3, peso = $4, presentacion = $5, tipo_medida = $6, precio = $7, sede = $8, estado = $9, updated_at = NOW()
+      WHERE id = $10
       RETURNING *
-    `, [nombre, categoria, sku || null, peso || 0, presentacion || null, tipo_medida || 'Unidad', precio || 0, estado || 'Activo', id]);
+    `, [
+      nombre, 
+      categoria, 
+      sku || null, 
+      peso || 0, 
+      presentacion || null, 
+      tipo_medida || 'Unidad', 
+      precio || 0, 
+      sede || 'Ambas', 
+      estado || 'Activo', 
+      id
+    ]);
     res.json(result[0] || { success: false });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

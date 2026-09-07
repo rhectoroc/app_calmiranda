@@ -71,10 +71,11 @@ export const InventarioView: React.FC = () => {
 
         setItems(mappedInv);
         
-        // Group active products by category
+        // Group active products by category considering the selected sede
         const grouped: Record<string, {nombre: string, tipo_medida: string}[]> = {};
         prodData.forEach((p: any) => {
-          if (p.estado === 'Activo') {
+          const matchesSede = !p.sede || p.sede === 'Ambas' || p.sede === selectedSede;
+          if (p.estado === 'Activo' && matchesSede) {
             if (!grouped[p.categoria]) grouped[p.categoria] = [];
             grouped[p.categoria].push({ nombre: p.nombre, tipo_medida: p.tipo_medida || 'Unidad' });
           }

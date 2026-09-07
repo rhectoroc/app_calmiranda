@@ -13,9 +13,16 @@ Este documento establece de forma persistente los detalles de infraestructura, c
 
 ---
 
-## 2. Base de Datos (PostgreSQL en VPS / Easypanel)
-* **Cadena de Conexión**: `postgres://postgres:<PASSWORD_DATABASE>@cal-miranda_postgres:5432/cal-miranda?sslmode=disable`
-* **Contenedor en Easypanel**: `cal-miranda_postgres` (resoluble bajo la red interna de Docker en el VPS).
+## 2. Base de Datos (PostgreSQL)
+* **Entorno de Producción (VPS / Easypanel)**:
+  * **Cadena de Conexión**: `postgres://postgres:<PASSWORD_DATABASE>@cal-miranda_postgres:5432/cal-miranda?sslmode=disable`
+  * **Contenedor en Easypanel**: `cal-miranda_postgres` (resoluble bajo la red interna de Docker en el VPS).
+* **Entorno Local de Pruebas (Docker)**:
+  * **Archivo Compose**: `docker-compose.yml` en la raíz del proyecto.
+  * **Contenedor Local**: `calmiranda_db` (imagen `postgres:15-alpine`).
+  * **Puerto Mapeado**: `5433:5432` (para no colisionar con instalaciones locales por defecto en `5432`).
+  * **Base de Datos / Usuario**: `cal-miranda` / `postgres`.
+  * **Propósito**: Simular localmente todo el esquema y comportamiento de producción de forma aislada y segura.
 * **ADVERTENCIA DE SEGURIDAD**: La tabla `clientes` ya contiene información valiosa y activa en producción.
   * **Prohibido**: Ejecutar `DROP TABLE`, `TRUNCATE` o cualquier cambio destructivo sobre la tabla `clientes`.
   * **Autenticación**: Para el inicio de sesión y gestión de accesos (Administradores y Empleados), se debe utilizar una tabla dedicada llamada `users`, la cual es completamente independiente de la tabla comercial `clientes`.

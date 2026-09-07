@@ -466,7 +466,7 @@ export async function handleWebhookMessage(payload) {
     let pushName = 'Cliente';
     let messageText = '';
     // Formato estándar de Evolution API
-    if (payload.event === 'messages.upsert' && payload.data) {
+    if (payload.event && payload.event.toLowerCase() === 'messages.upsert' && payload.data) {
         const data = payload.data;
         messageId = data.key?.id || '';
         // Preferir remoteJidAlt (JID de número de teléfono) si remoteJid es un ID interno @lid

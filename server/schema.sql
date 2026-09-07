@@ -168,10 +168,14 @@ CREATE TABLE IF NOT EXISTS productos (
     peso NUMERIC DEFAULT 0,
     presentacion VARCHAR(50),
     precio NUMERIC DEFAULT 0,
+    sede VARCHAR(50) DEFAULT 'Ambas',
     estado VARCHAR(20) DEFAULT 'Activo',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Asegurar que la columna sede existe en productos
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS sede VARCHAR(50) DEFAULT 'Ambas';
 
 -- ===========================================================================
 -- TABLA: inventario
