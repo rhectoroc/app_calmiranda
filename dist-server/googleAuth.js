@@ -5,6 +5,9 @@ const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'https://app.calmiranda.com/api/auth/google/callback';
 export function createOAuth2Client() {
+    const CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || '').trim();
+    const CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
+    const REDIRECT_URI = (process.env.GOOGLE_REDIRECT_URI || 'https://app.calmiranda.com/api/auth/google/callback').trim();
     if (!CLIENT_ID || !CLIENT_SECRET) {
         throw new Error('Las variables GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no están configuradas.');
     }

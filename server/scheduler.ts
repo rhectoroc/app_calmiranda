@@ -14,7 +14,23 @@ const openai = new OpenAI({
 });
 
 const GOOGLE_ACCOUNT_EMAIL = 'inversionesmiranda1311@gmail.com';
-const JULIO_WHATSAPP_JID = process.env.WHATSAPP_REPORT_RECIPIENT || '584143078681@s.whatsapp.net';
+
+// Destinatarios de los reportes automatizados (Jefe de CalMiranda y Desarrollador)
+const REPORT_RECIPIENTS = [
+  process.env.WHATSAPP_REPORT_RECIPIENT || '584143078681@s.whatsapp.net', // Julio Borges (Jefe)
+  '584140108030@s.whatsapp.net' // Desarrollador (Verificación)
+];
+
+async function sendReportToRecipients(text: string, reportName: string): Promise<void> {
+  for (const jid of REPORT_RECIPIENTS) {
+    try {
+      await sendWhatsAppMessage(jid, text);
+      console.log(`📤 [${reportName}] Enviado exitosamente a: ${jid}`);
+    } catch (err: any) {
+      console.error(`❌ [${reportName}] Error enviando a ${jid}:`, err.message || err);
+    }
+  }
+}
 
 // ----------------------------------------------------
 // CRON 1: BuscaTasa_Diamantin (Daily at 9:00 AM)
@@ -157,11 +173,10 @@ PLANTILLA EXACTA OBLIGATORIA:
 
     console.log('📈 Reporte financiero generado exitosamente.');
 
-    // 3. Enviar mensaje de WhatsApp al Jefe (Julio)
-    await sendWhatsAppMessage(JULIO_WHATSAPP_JID, reportText);
+    // 3. Enviar mensaje de WhatsApp al Jefe y al Desarrollador
+    await sendReportToRecipients(reportText, 'Reporte Financiero');
     
-    // Registrar mensaje en base de datos como conversación con el jefe
-    const cleanNumber = JULIO_WHATSAPP_JID.split('@')[0];
+    // Registrar mensaje en base de datos para auditoría
     await saveSetting('ultimo_reporte_financiero', { fecha: new Date().toLocaleDateString(), texto: reportText });
 
   } catch (error: any) {
@@ -227,8 +242,8 @@ REGLAS DE FORMATO:
 
     console.log('📊 Reporte de nómina generado exitosamente.');
 
-    // Enviar por WhatsApp a Julio Borges
-    await sendWhatsAppMessage(JULIO_WHATSAPP_JID, reportText);
+    // Enviar por WhatsApp al Jefe y al Desarrollador
+    await sendReportToRecipients(reportText, 'Reporte de Nómina');
 
     // Guardar el reporte en configuración para auditoría si es necesario
     await saveSetting('ultimo_reporte_nomina', { fecha: new Date().toLocaleDateString(), texto: reportText });
