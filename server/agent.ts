@@ -32,9 +32,11 @@ const BOSS_NUMBERS = [
   '584143078681@s.whatsapp.net', // Julio Borges (Jefe)
   '584145881113@s.whatsapp.net', // Jefa
   '584222476127@s.whatsapp.net', // Adriel's Systems
+  '584140108030@s.whatsapp.net', // Héctor (Desarrollador / Admin)
   '584143078681', // Alternativos sin sufijo
   '584145881113',
-  '584222476127'
+  '584222476127',
+  '584140108030'
 ];
 
 // Helper para enviar mensaje por Evolution API
