@@ -18,6 +18,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
+// En Easypanel / Docker el tráfico pasa por un reverse proxy (Traefik / Caddy / Nginx).
+// Habilitar trust proxy permite a express-rate-limit identificar correctamente la IP real del cliente.
+app.set('trust proxy', 1);
 // Inicializar OpenAI configurado para DeepSeek
 const openai = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || 'no-key-provided',
