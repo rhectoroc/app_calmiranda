@@ -28,7 +28,7 @@ export function getAuthUrl(): string {
   const oauth2Client = createOAuth2Client();
   return oauth2Client.generateAuthUrl({
     access_type: 'offline', // Imprescindible para obtener el refresh_token
-    prompt: 'consent',      // Forza la ventana de consentimiento para garantizar recibir el refresh_token
+    prompt: 'select_account consent', // Forza selector de cuenta y ventana de consentimiento
     scope: SCOPES
   });
 }

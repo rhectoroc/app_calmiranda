@@ -14,7 +14,7 @@ const openai = new OpenAI({
 });
 
 const GOOGLE_ACCOUNT_EMAIL = 'inversionesmiranda1311@gmail.com';
-const JULIO_WHATSAPP_JID = '584143078681@s.whatsapp.net';
+const JULIO_WHATSAPP_JID = process.env.WHATSAPP_REPORT_RECIPIENT || '584143078681@s.whatsapp.net';
 
 // ----------------------------------------------------
 // CRON 1: BuscaTasa_Diamantin (Daily at 9:00 AM)
