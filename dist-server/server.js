@@ -8,7 +8,7 @@ import bcryptjs from 'bcryptjs';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
-import { getAuthUrl, saveTokensFromCode } from './googleAuth.js';
+import { getAuthUrl, saveTokensFromCode, getSheetsClient } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
 import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
 import { query, getSetting, saveSetting, saveClientChatMessage } from './db.js';
@@ -1227,6 +1227,30 @@ app.post('/api/test/reporte', async (req, res) => {
     try {
         await runFinancialReport();
         res.json({ status: 'ok', message: 'Reporte financiero manual generado y enviado.' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get('/api/test/debug-cuentas', async (req, res) => {
+    try {
+        const sheets = await getSheetsClient('inversionesmiranda1311@gmail.com');
+        const meta = await sheets.spreadsheets.get({
+            spreadsheetId: '1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM'
+        });
+        const sheetTitles = meta.data.sheets?.map(s => ({
+            title: s.properties?.title,
+            sheetId: s.properties?.sheetId,
+            gridProperties: s.properties?.gridProperties
+        }));
+        const valuesRes = await sheets.spreadsheets.values.get({
+            spreadsheetId: '1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM',
+            range: '\'CUENTAS CAL MIRANDA\'!A1:Z60'
+        });
+        res.json({
+            sheetTitles,
+            values: valuesRes.data.values || []
+        });
     }
     catch (error) {
         res.status(500).json({ error: error.message });
