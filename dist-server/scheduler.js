@@ -3,7 +3,7 @@ import cron from 'node-cron';
 import axios from 'axios';
 import https from 'https';
 import { getSheetsClient } from './googleAuth.js';
-import { saveSetting, query } from './db.js';
+import { saveSetting, getSetting, query } from './db.js';
 import { sendWhatsAppMessage } from './agent.js';
 import { OpenAI } from 'openai';
 // Configurar OpenAI configurado para DeepSeek
@@ -163,7 +163,34 @@ PLANTILLA EXACTA OBLIGATORIA:
 export async function runNominaReport() {
     console.log('⏳ Iniciando compilación de Reporte Semanal de Nómina...');
     try {
+        // 1. Obtener la tasa oficial del BCV (desde app_settings, scraping o Google Sheets)
+        let bcvRate = await getSetting('bcv_rate', null);
+        if (!bcvRate || !bcvRate.tasa) {
+            try {
+                await runTasaScraper();
+                bcvRate = await getSetting('bcv_rate', null);
+            }
+            catch (e) {
+                console.warn('⚠️ No se pudo obtener la tasa en caliente del BCV:', e.message || e);
+            }
+        }
         const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
+        if (!bcvRate || !bcvRate.tasa) {
+            try {
+                const tasaRes = await sheets.spreadsheets.values.get({
+                    spreadsheetId: '1_O58lqnRD0lk5vNJp3NLFOkv_jwmtbo-aQgGMy3rHkI',
+                    range: '\'Tasa\'!A1:B100'
+                });
+                const tasaRows = tasaRes.data.values || [];
+                const lastRow = tasaRows[tasaRows.length - 1];
+                if (lastRow && lastRow[1]) {
+                    bcvRate = { fecha: lastRow[0], tasa: parseFloat(String(lastRow[1]).replace(/\./g, '').replace(',', '.')) };
+                }
+            }
+            catch (err) {
+                console.warn('⚠️ No se pudo leer tasa de Google Sheets:', err.message || err);
+            }
+        }
         const res = await sheets.spreadsheets.values.get({
             spreadsheetId: '1M7IoLTEhKPW2HUbwqBKptMG7ZaSdZhWoCT-3Ni0tgHE',
             range: '\'ACTUAL\'!A1:Z100'
@@ -179,19 +206,30 @@ export async function runNominaReport() {
             }
             return cellStr;
         }).join(',')).join('\n');
+        const tasaNum = bcvRate?.tasa ? parseFloat(bcvRate.tasa) : 0;
+        const tasaStr = tasaNum ? tasaNum.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : 'No disponible';
+        const tasaFecha = bcvRate?.fecha || 'Vigente';
         const systemPrompt = `Eres DIAMANTIN, Asistente Ejecutivo de Inversiones Miranda.
 Tu tarea es leer los datos de la hoja de nómina semanal provista en formato CSV y generar un reporte ejecutivo estructurado para el Jefe (Julio Borges).
 
-El reporte debe incluir la siguiente información de forma clara y profesional:
-1. Resumen de Nómina Caracas (listar empleados y montos correspondientes en USD y Bs).
-2. Resumen de Nómina Guatire (listar empleados y montos correspondientes en USD y Bs).
-3. Resumen de Bonos y Otros (listar conceptos/empleados y montos correspondientes en USD y Bs).
-4. Totales generales a pagar resumidos en Dólares (USD) y en Bolívares (Bs.S) utilizando la tasa oficial de cambio indicada en la misma hoja.
+TASA OFICIAL BCV DEL DÍA: ${tasaStr} Bs/USD (Fecha valor: ${tasaFecha}).
+
+REGLAS OBLIGATORIAS DE CÁLCULO EN BOLÍVARES (Bs.):
+1. La hoja contiene montos en Dólares (USD), pero las celdas de Bolívares en la hoja vienen vacías o con guiones ("Bs.S -").
+2. ES OBLIGATORIO Y ESTRICTO CALCULAR el equivalente en Bolívares (Bs.) para CADA empleado y concepto multiplicando su monto en USD por la tasa oficial BCV (${tasaNum} Bs/USD). Ejemplo: si un empleado cobra $30,00, calculas 30 * ${tasaNum} y muestras el resultado exacto en Bs.
+3. Estructura el reporte de la siguiente manera:
+   • 📍 Nómina Caracas: lista cada empleado con su monto en USD y el cálculo exacto en Bs. Al final muestra el Subtotal Caracas en USD y en Bs.
+   • 📍 Nómina Guatire: lista cada empleado con su monto en USD y el cálculo exacto en Bs. Al final muestra el Subtotal Guatire en USD y en Bs.
+   • 🎁 Bonos y Otros: lista cada beneficiario con su monto en USD y en Bs. Al final muestra el Subtotal Bonos en USD y en Bs.
+   • 💰 TOTAL GENERAL A PAGAR:
+     - Total Consolidado en Dólares: [Monto USD exacto]
+     - Total Consolidado en Bolívares: [Monto exacto en Bs.S calculado como Total USD * ${tasaNum}]
+     - Tasa oficial BCV aplicada: ${tasaStr} Bs/USD (Vigencia: ${tasaFecha})
 
 REGLAS DE FORMATO:
-- Sé sumamente profesional, claro y ordenado.
+- Sé sumamente profesional, claro, riguroso con los cálculos matemáticos y bien ordenado.
 - Utiliza emojis apropiados para estructurar y dar formato amigable en WhatsApp.
-- Empieza con un saludo al Jefe (Julio Borges).
+- Empieza con un saludo cordial al Jefe (Julio Borges).
 - Finaliza el reporte con el grito de guerra del bot: "¡Vamos positivo!".`;
         const response = await openai.chat.completions.create({
             model: 'deepseek-chat',
