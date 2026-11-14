@@ -10,7 +10,7 @@ import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import { getAuthUrl, saveTokensFromCode, getSheetsClient } from './googleAuth.js';
 import { handleWebhookMessage, sendWhatsAppMessage, detectHandoffRequest } from './agent.js';
-import { initScheduler, runTasaScraper, runFinancialReport } from './scheduler.js';
+import { initScheduler, runTasaScraper, runFinancialReport, runNominaReport } from './scheduler.js';
 import { query, getSetting, saveSetting, saveClientChatMessage } from './db.js';
 process.env.TZ = 'America/Caracas';
 // Resolver __dirname en módulos ES
@@ -1246,6 +1246,39 @@ app.get('/api/test/debug-cuentas', async (req, res) => {
         const valuesRes = await sheets.spreadsheets.values.get({
             spreadsheetId: '1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM',
             range: '\'CUENTAS CAL MIRANDA\'!A1:Z60'
+        });
+        res.json({
+            sheetTitles,
+            values: valuesRes.data.values || []
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.post('/api/test/nomina', async (req, res) => {
+    try {
+        await runNominaReport();
+        res.json({ status: 'ok', message: 'Reporte de nómina manual generado y enviado.' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+app.get('/api/test/debug-nomina', async (req, res) => {
+    try {
+        const sheets = await getSheetsClient('inversionesmiranda1311@gmail.com');
+        const meta = await sheets.spreadsheets.get({
+            spreadsheetId: '1M7IoLTEhKPW2HUbwqBKptMG7ZaSdZhWoCT-3Ni0tgHE'
+        });
+        const sheetTitles = meta.data.sheets?.map(s => ({
+            title: s.properties?.title,
+            sheetId: s.properties?.sheetId,
+            gridProperties: s.properties?.gridProperties
+        }));
+        const valuesRes = await sheets.spreadsheets.values.get({
+            spreadsheetId: '1M7IoLTEhKPW2HUbwqBKptMG7ZaSdZhWoCT-3Ni0tgHE',
+            range: 'A1:Z100'
         });
         res.json({
             sheetTitles,
