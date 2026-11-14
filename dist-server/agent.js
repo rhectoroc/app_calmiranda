@@ -486,7 +486,7 @@ async function executeTool(name, args, sessionId) {
                     const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
                     const res = await sheets.spreadsheets.values.get({
                         spreadsheetId: '1M7IoLTEhKPW2HUbwqBKptMG7ZaSdZhWoCT-3Ni0tgHE',
-                        range: 'A1:H100'
+                        range: '\'ACTUAL\'!A1:Z100'
                     });
                     const rows = res.data.values || [];
                     if (rows.length === 0) {
