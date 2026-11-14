@@ -42,8 +42,8 @@ export async function runTasaScraper() {
             timeout: 15000
         });
         const html = response.data;
-        // 1. Extraer la tasa del dólar
-        const regexDolar = /<div id="dolar"[\s\S]*?<strong>\s*([\d.,]+)\s*<\/strong>/i;
+        // 1. Extraer la tasa del dólar (soporta atributos como class="strong-tb" en el tag strong)
+        const regexDolar = /<div id="dolar"[\s\S]*?<strong\b[^>]*>\s*([\d.,]+)\s*<\/strong>/i;
         const matchTasa = html.match(regexDolar);
         if (!matchTasa || !matchTasa[1]) {
             throw new Error('No se pudo encontrar la tasa del dólar en el HTML del BCV.');
@@ -206,31 +206,58 @@ export async function runNominaReport() {
             }
             return cellStr;
         }).join(',')).join('\n');
-        const tasaNum = bcvRate?.tasa ? parseFloat(bcvRate.tasa) : 0;
+        // Extraer número de tasa de forma segura
+        let tasaNum = 0;
+        if (bcvRate?.tasa) {
+            if (typeof bcvRate.tasa === 'number') {
+                tasaNum = bcvRate.tasa;
+            }
+            else {
+                const cleaned = String(bcvRate.tasa).trim().replace(/\./g, '').replace(',', '.');
+                tasaNum = parseFloat(cleaned);
+            }
+        }
         const tasaStr = tasaNum ? tasaNum.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : 'No disponible';
         const tasaFecha = bcvRate?.fecha || 'Vigente';
         const systemPrompt = `Eres DIAMANTIN, Asistente Ejecutivo de Inversiones Miranda.
-Tu tarea es leer los datos de la hoja de nómina semanal provista en formato CSV y generar un reporte ejecutivo estructurado para el Jefe (Julio Borges).
+Tu tarea es leer los datos de la nómina semanal provista en formato CSV y generar un reporte ejecutivo CONCISO, BREVE y DIRECTO para el Jefe (Julio Borges).
 
-TASA OFICIAL BCV DEL DÍA: ${tasaStr} Bs/USD (Fecha valor: ${tasaFecha}).
+TASA OFICIAL BCV DEL DÍA: ${tasaStr} Bs/USD (Fecha: ${tasaFecha}).
 
-REGLAS OBLIGATORIAS DE CÁLCULO EN BOLÍVARES (Bs.):
-1. La hoja contiene montos en Dólares (USD), pero las celdas de Bolívares en la hoja vienen vacías o con guiones ("Bs.S -").
-2. ES OBLIGATORIO Y ESTRICTO CALCULAR el equivalente en Bolívares (Bs.) para CADA empleado y concepto multiplicando su monto en USD por la tasa oficial BCV (${tasaNum} Bs/USD). Ejemplo: si un empleado cobra $30,00, calculas 30 * ${tasaNum} y muestras el resultado exacto en Bs.
-3. Estructura el reporte de la siguiente manera:
-   • 📍 Nómina Caracas: lista cada empleado con su monto en USD y el cálculo exacto en Bs. Al final muestra el Subtotal Caracas en USD y en Bs.
-   • 📍 Nómina Guatire: lista cada empleado con su monto en USD y el cálculo exacto en Bs. Al final muestra el Subtotal Guatire en USD y en Bs.
-   • 🎁 Bonos y Otros: lista cada beneficiario con su monto en USD y en Bs. Al final muestra el Subtotal Bonos en USD y en Bs.
-   • 💰 TOTAL GENERAL A PAGAR:
-     - Total Consolidado en Dólares: [Monto USD exacto]
-     - Total Consolidado en Bolívares: [Monto exacto en Bs.S calculado como Total USD * ${tasaNum}]
-     - Tasa oficial BCV aplicada: ${tasaStr} Bs/USD (Vigencia: ${tasaFecha})
+REGLAS ESTRICTAS DE FORMATO Y ESTILO:
+1. PROHIBIDO USAR TABLAS MARKDOWN (|---|---|). En WhatsApp se leen mal e incómodas. Usa exclusivamente viñetas limpias.
+2. Sé sumamente CONCISO y directo al grano. Sin párrafos largos de introducción ni notas explicativas adicionales.
+3. Para CADA empleado, presenta en una sola línea su monto en Dólares y su equivalente calculado en Bolívares multiplicando el monto USD por la tasa BCV de ${tasaNum} Bs/USD.
+   Ejemplo: • Pedrito: $30,00 (Bs. ${tasaNum ? (30 * tasaNum).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '...'})
+4. Presenta los subtotales de cada sede tanto en USD como en Bs.
+5. Presenta el Total General a Pagar en USD y en Bs.
 
-REGLAS DE FORMATO:
-- Sé sumamente profesional, claro, riguroso con los cálculos matemáticos y bien ordenado.
-- Utiliza emojis apropiados para estructurar y dar formato amigable en WhatsApp.
-- Empieza con un saludo cordial al Jefe (Julio Borges).
-- Finaliza el reporte con el grito de guerra del bot: "¡Vamos positivo!".`;
+PLANTILLA EXACTA A SEGUIR:
+
+📊 NÓMINA SEMANAL - INVERSIONES MIRANDA
+Jefe, buen día. Plan de pago de nómina para hoy:
+
+📍 NÓMINA CARACAS:
+• [Empleado 1]: $[Monto USD] (Bs. [Calculado])
+• [Empleado 2]: $[Monto USD] (Bs. [Calculado])
+Subtotal Caracas: $[Total USD] (Bs. [Total Bs])
+
+📍 NÓMINA GUATIRE:
+• [Empleado 1]: $[Monto USD] (Bs. [Calculado])
+• [Empleado 2]: $[Monto USD] (Bs. [Calculado])
+Subtotal Guatire: $[Total USD] (Bs. [Total Bs])
+
+🎁 BONOS Y OTROS:
+• [Empleado/Concepto 1]: $[Monto USD] (Bs. [Calculado])
+• [Empleado/Concepto 2]: $[Monto USD] (Bs. [Calculado])
+Subtotal Bonos: $[Total USD] (Bs. [Total Bs])
+
+💰 TOTAL GENERAL A PAGAR:
+• Total USD: $[Total consolidado USD]
+• Total en Bolívares: Bs. [Total consolidado Bs]
+• Tasa BCV Oficial: ${tasaStr} Bs/USD (${tasaFecha})
+
+¿Autoriza proceder con los pagos, Jefe? Vamos Positivo.`;
         const response = await openai.chat.completions.create({
             model: 'deepseek-chat',
             messages: [

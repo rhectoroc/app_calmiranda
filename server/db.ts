@@ -80,7 +80,16 @@ export async function getSetting<T = any>(key: string, defaultValue: T): Promise
   const sql = `SELECT value FROM app_settings WHERE key = $1`;
   const rows = await query(sql, [key]);
   if (rows.length === 0) return defaultValue;
-  return rows[0].value as T;
+  let val = rows[0].value;
+  if (typeof val === 'string') {
+    try {
+      val = JSON.parse(val);
+      if (typeof val === 'string') {
+        val = JSON.parse(val);
+      }
+    } catch (e) {}
+  }
+  return val as T;
 }
 
 export async function saveSetting(key: string, value: any): Promise<void> {

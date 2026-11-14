@@ -64,7 +64,17 @@ export async function getSetting(key, defaultValue) {
     const rows = await query(sql, [key]);
     if (rows.length === 0)
         return defaultValue;
-    return rows[0].value;
+    let val = rows[0].value;
+    if (typeof val === 'string') {
+        try {
+            val = JSON.parse(val);
+            if (typeof val === 'string') {
+                val = JSON.parse(val);
+            }
+        }
+        catch (e) { }
+    }
+    return val;
 }
 export async function saveSetting(key, value) {
     const sql = `
