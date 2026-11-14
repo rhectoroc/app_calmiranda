@@ -95,22 +95,17 @@ export async function runFinancialReport() {
         const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
         const res = await sheets.spreadsheets.values.get({
             spreadsheetId: '1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM',
-            range: '\'CUENTAS CAL MIRANDA\'!A1:H100'
+            range: '\'CUENTAS CAL MIRANDA\'!A1:Z200'
         });
         const rows = res.data.values || [];
         if (rows.length === 0) {
             throw new Error('La hoja CUENTAS CAL MIRANDA está vacía.');
         }
-        // Convertir filas a formato clave-valor para facilitar análisis
-        const headers = rows[0];
-        const data = rows.slice(1).map(row => {
-            const obj = {};
-            headers.forEach((header, index) => {
-                obj[header] = row[index] || '';
-            });
-            return obj;
-        });
-        const rawDataString = JSON.stringify(data);
+        // Convertir la matriz de filas a formato tabular delimitado por barras para preservar todas las columnas, montos y fechas
+        const rawDataString = rows
+            .filter(row => row && row.length > 0 && row.some(cell => cell && cell.toString().trim() !== ''))
+            .map(row => row.map(cell => (cell ?? '').toString().trim()).join(' | '))
+            .join('\n');
         // 2. Generar el reporte usando DeepSeek
         const systemPrompt = `Eres DIAMANTIN, Asistente Ejecutivo de Inversiones Miranda.
 Tu tarea es leer los datos de "CUENTAS EN TRÁNSITO" a primera hora de la mañana y darle al Jefe un reporte de acción rápida.

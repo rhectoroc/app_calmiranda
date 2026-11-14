@@ -307,7 +307,7 @@ async function executeTool(name, args, sessionId) {
                 const sheets = await getSheetsClient(GOOGLE_ACCOUNT_EMAIL);
                 const res = await sheets.spreadsheets.values.get({
                     spreadsheetId: '1oXz8Irdev0T6WVRmbL4tRfeQtCCm66DaDzFhk0-vBXM',
-                    range: '\'CUENTAS CAL MIRANDA\'!A1:H100'
+                    range: '\'CUENTAS CAL MIRANDA\'!A1:Z200'
                 });
                 return JSON.stringify(res.data.values || []);
             }
