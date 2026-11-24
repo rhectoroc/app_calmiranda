@@ -44,12 +44,15 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     sender VARCHAR NOT NULL, -- 'user', 'bot', 'agent'
     message_text TEXT NOT NULL,
     chat_type VARCHAR NOT NULL DEFAULT 'client', -- 'client' o 'boss'
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    push_name VARCHAR,
+    whatsapp_message_id VARCHAR
 );
 
 -- Crear índices para optimizar búsquedas frecuentes
 CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_chat_type ON chat_messages(chat_type);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_wam_id ON chat_messages(whatsapp_message_id);
 
 -- Migración segura de datos heredados desde las tablas antiguas (Removida por el usuario)
 

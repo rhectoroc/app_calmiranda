@@ -88,19 +88,76 @@ export async function saveSetting(key, value) {
 // ----------------------------------------------------
 // MÉTODOS PARA HISTORIAL DE CHATS
 // ----------------------------------------------------
-export async function saveClientChatMessage(sessionId, sender, text, pushName) {
-    const sql = `
-    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at, push_name)
-    VALUES ($1, $2, $3, 'client', NOW(), $4);
-  `;
-    await query(sql, [sessionId, sender, text, pushName || null]);
+let whatsappMessageIdColumnExists = null;
+async function checkWhatsappMessageIdColumn() {
+    if (whatsappMessageIdColumnExists !== null)
+        return whatsappMessageIdColumnExists;
+    try {
+        // Intentar agregar la columna e índice de forma segura e idempotente si no existe
+        await query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS whatsapp_message_id VARCHAR;`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_chat_messages_wam_id ON chat_messages(whatsapp_message_id);`);
+        whatsappMessageIdColumnExists = true;
+    }
+    catch (err) {
+        try {
+            const res = await query(`SELECT column_name FROM information_schema.columns 
+         WHERE table_name = 'chat_messages' AND column_name = 'whatsapp_message_id';`);
+            whatsappMessageIdColumnExists = res.length > 0;
+        }
+        catch {
+            whatsappMessageIdColumnExists = false;
+        }
+    }
+    return whatsappMessageIdColumnExists;
 }
-export async function saveBossChatMessage(sessionId, sender, text) {
-    const sql = `
-    INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
-    VALUES ($1, $2, $3, 'boss', NOW());
-  `;
-    await query(sql, [sessionId, sender, text]);
+export async function isMessageAlreadyProcessed(whatsappMessageId) {
+    if (!whatsappMessageId)
+        return false;
+    try {
+        const hasColumn = await checkWhatsappMessageIdColumn();
+        if (!hasColumn)
+            return false;
+        const res = await query('SELECT id FROM chat_messages WHERE whatsapp_message_id = $1 LIMIT 1', [whatsappMessageId]);
+        return res.length > 0;
+    }
+    catch (err) {
+        console.error('⚠️ Error verificando whatsapp_message_id en BD:', err);
+        return false;
+    }
+}
+export async function saveClientChatMessage(sessionId, sender, text, pushName, whatsappMessageId) {
+    const hasCol = await checkWhatsappMessageIdColumn();
+    if (hasCol && whatsappMessageId) {
+        const sql = `
+      INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at, push_name, whatsapp_message_id)
+      VALUES ($1, $2, $3, 'client', NOW(), $4, $5);
+    `;
+        await query(sql, [sessionId, sender, text, pushName || null, whatsappMessageId]);
+    }
+    else {
+        const sql = `
+      INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at, push_name)
+      VALUES ($1, $2, $3, 'client', NOW(), $4);
+    `;
+        await query(sql, [sessionId, sender, text, pushName || null]);
+    }
+}
+export async function saveBossChatMessage(sessionId, sender, text, whatsappMessageId) {
+    const hasCol = await checkWhatsappMessageIdColumn();
+    if (hasCol && whatsappMessageId) {
+        const sql = `
+      INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at, whatsapp_message_id)
+      VALUES ($1, $2, $3, 'boss', NOW(), $4);
+    `;
+        await query(sql, [sessionId, sender, text, whatsappMessageId]);
+    }
+    else {
+        const sql = `
+      INSERT INTO chat_messages (session_id, sender, message_text, chat_type, created_at)
+      VALUES ($1, $2, $3, 'boss', NOW());
+    `;
+        await query(sql, [sessionId, sender, text]);
+    }
 }
 export async function searchClientes(searchTerm) {
     const sql = `

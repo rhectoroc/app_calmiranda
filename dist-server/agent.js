@@ -1,7 +1,7 @@
 process.env.TZ = 'America/Caracas';
 import { OpenAI } from 'openai';
 import axios from 'axios';
-import { saveClientChatMessage, saveBossChatMessage, getSetting, saveSetting, query, searchClientes } from './db.js';
+import { saveClientChatMessage, saveBossChatMessage, isMessageAlreadyProcessed, getSetting, saveSetting, query, searchClientes } from './db.js';
 import { getSheetsClient, getGmailClient, getCalendarClient } from './googleAuth.js';
 // Inicializar OpenAI configurado para DeepSeek
 const openai = new OpenAI({
@@ -524,6 +524,7 @@ export async function handleWebhookMessage(payload) {
     let senderJid = '';
     let pushName = 'Cliente';
     let messageText = '';
+    let messageTimestampRaw = null;
     // Formato estándar de Evolution API
     if (payload.event && payload.event.toLowerCase() === 'messages.upsert' && payload.data) {
         const data = payload.data;
@@ -531,6 +532,7 @@ export async function handleWebhookMessage(payload) {
         // Preferir remoteJidAlt (JID de número de teléfono) si remoteJid es un ID interno @lid
         senderJid = data.key?.remoteJidAlt || data.key?.remoteJid || '';
         pushName = payload.pushName || data.pushName || 'Cliente';
+        messageTimestampRaw = data.messageTimestamp ?? payload.data?.messageTimestamp ?? payload.messageTimestamp;
         if (data.message) {
             messageText = data.message.conversation ||
                 data.message.extendedTextMessage?.text ||
@@ -546,6 +548,7 @@ export async function handleWebhookMessage(payload) {
         senderJid = msg.sender?.phone_number || msg.sender?.identifier || '';
         pushName = msg.sender?.name || 'Cliente';
         messageText = msg.text || '';
+        messageTimestampRaw = msg.created_at || msg.timestamp;
     }
     // Si no hay datos mínimos, ignorar
     if (!senderJid || !messageText) {
@@ -571,10 +574,10 @@ export async function handleWebhookMessage(payload) {
             if (recentMatches.length === 0) {
                 // Registrar el mensaje saliente del teléfono (enviado directamente en WhatsApp)
                 if (isBoss) {
-                    await saveBossChatMessage(cleanNumber, 'agent', messageText);
+                    await saveBossChatMessage(cleanNumber, 'agent', messageText, messageId);
                 }
                 else {
-                    await saveClientChatMessage(cleanNumber, 'agent', messageText, pushName);
+                    await saveClientChatMessage(cleanNumber, 'agent', messageText, pushName, messageId);
                 }
                 console.log(`📤 Mensaje saliente registrado en BD para ${cleanNumber} (${chatType})`);
             }
@@ -587,15 +590,54 @@ export async function handleWebhookMessage(payload) {
         }
         return; // El bot no debe responder a sus propios mensajes salientes
     }
-    // 2. De-duplicación (solo para mensajes entrantes)
+    // 1.1 FILTRO ANTI-DESTIEMPO: Validar timestamp del mensaje para descartar replays de sync o mensajes rezagados
+    if (messageTimestampRaw) {
+        let tsSec = null;
+        if (typeof messageTimestampRaw === 'number') {
+            tsSec = messageTimestampRaw > 1e11 ? Math.floor(messageTimestampRaw / 1000) : messageTimestampRaw;
+        }
+        else if (typeof messageTimestampRaw === 'string') {
+            const parsed = Number(messageTimestampRaw);
+            if (!isNaN(parsed) && parsed > 0) {
+                tsSec = parsed > 1e11 ? Math.floor(parsed / 1000) : parsed;
+            }
+            else {
+                const dateParsed = Date.parse(messageTimestampRaw);
+                if (!isNaN(dateParsed)) {
+                    tsSec = Math.floor(dateParsed / 1000);
+                }
+            }
+        }
+        else if (typeof messageTimestampRaw === 'object' && typeof messageTimestampRaw.low === 'number') {
+            tsSec = messageTimestampRaw.low;
+        }
+        if (tsSec) {
+            const nowSec = Math.floor(Date.now() / 1000);
+            const ageSeconds = nowSec - tsSec;
+            // Si el mensaje tiene más de 120 segundos (2 minutos) de antigüedad, se ignora completamente.
+            // Esto previene que reconexiones de Baileys / Evolution API a las 3:00 AM retransmitan mensajes antiguos y activen al bot.
+            if (ageSeconds > 120) {
+                console.log(`⏭️ [ANTI-DESTIEMPO] Ignorando mensaje antiguo/sync replay (${ageSeconds}s de antigüedad > 120s límite). ID: ${messageId} | Remitente: ${cleanNumber}`);
+                return;
+            }
+        }
+    }
+    // 2. De-duplicación robusta (Memoria RAM + Base de datos PostgreSQL)
     if (messageId) {
         if (processedMessageIds.has(messageId)) {
-            console.log(`⏭️ Ignorando mensaje duplicado: ${messageId}`);
+            console.log(`⏭️ [ANTI-DESTIEMPO] Ignorando mensaje duplicado (en memoria): ${messageId}`);
+            return;
+        }
+        // Verificar si ya existe en la base de datos (para sobrevivir reinicios de contenedor a las 3 AM)
+        const alreadyInDb = await isMessageAlreadyProcessed(messageId);
+        if (alreadyInDb) {
+            console.log(`⏭️ [ANTI-DESTIEMPO] Ignorando mensaje ya procesado previamente en base de datos: ${messageId}`);
+            processedMessageIds.add(messageId);
             return;
         }
         processedMessageIds.add(messageId);
-        // Eliminar del caché después de 5 minutos
-        setTimeout(() => processedMessageIds.delete(messageId), 300000);
+        // Eliminar del caché en memoria después de 15 minutos (aumentado de 5 a 15 min)
+        setTimeout(() => processedMessageIds.delete(messageId), 900000);
     }
     // Buscar si el cliente existe en la base de datos de CalMiranda
     let clientExists = false;
@@ -646,12 +688,12 @@ export async function handleWebhookMessage(payload) {
     catch (error) {
         console.error('⚠️ Error cargando historial de chat de Postgres:', error);
     }
-    // Guardar mensaje del usuario en la base de datos
+    // Guardar mensaje del usuario en la base de datos (con su messageId persistido)
     if (isBoss) {
-        await saveBossChatMessage(cleanNumber, 'user', messageText);
+        await saveBossChatMessage(cleanNumber, 'user', messageText, messageId);
     }
     else {
-        await saveClientChatMessage(cleanNumber, 'user', messageText, pushName);
+        await saveClientChatMessage(cleanNumber, 'user', messageText, pushName, messageId);
     }
     // 3. Verificar Handoff (Si el bot está silenciado para este número)
     const botStatus = await getSetting(`bot_status_${cleanNumber}`, 'bot_active');
