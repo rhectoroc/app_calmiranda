@@ -462,6 +462,23 @@ Este archivo resume todos los hitos y desarrollos completados el día de hoy, de
     * **Ampliación de TTL en Memoria**: Se aumentó el tiempo de retención del caché de de-duplicación a 15 minutos (900.000 ms).
   * **Verificación de Compilación**: Proyecto compilado con éxito (`pnpm run build:server` con 0 errores de TypeScript).
 
+* **10. Transformación de Diamantín a Super Agente de Ventas y Sistema de Etiquetas:**
+  * **Objetivo**: Convertir a Diamantín en un asesor comercial de alta conversión para CalMiranda, garantizando cero alucinaciones de precios y productos, consulta estricta a la base de datos PostgreSQL, reconocimiento inteligente de clientes frecuentes con vendedor asignado, y silencio operativo para empleados y transportistas.
+  * **Implementación en Frontend (`CustomerServiceHub.tsx`)**:
+    * Se integró la nueva etiqueta **`Cliente Frecuente`** en el selector desplegable de estatus del chat.
+    * Estilizado distintivo en color ámbar/dorado (`text-amber-400 bg-amber-500/10 border-amber-500/20`) visible tanto en el selector superior como en las tarjetas de la lista de chats en tiempo real.
+  * **Implementación en Backend (`agent.ts`)**:
+    * **Clasificación por Etiqueta**:
+      * `Empleado` / `Transportista` / `Otros`: Silencio absoluto. Registra el mensaje en `chat_messages` para auditoría y control de operaciones diarias sin disparar respuestas automáticas de IA.
+      * `Cliente Frecuente`: Identificación VIP instantánea. Diamantín saluda cordialmente por su nombre al cliente recurrente, le informa que su asesor comercial asignado (extraído de `clientes.vendedor`) le atenderá directamente y activa el handoff humano (`bot_status = agent_active`), apartándose para que el vendedor gestione la venta personalizada.
+      * `Sin Etiqueta` (Clientes Nuevos y Prospectos): Activa el flujo completo de **Super Agente de Ventas**.
+    * **Directivas de Super Agente de Ventas ("Zero Hallucination")**:
+      * Prohibición absoluta de inventar productos o precios: llamada obligatoria a `consultar_productos_catalogo`.
+      * Cotización bimonetaria obligatoria: consulta en caliente a `tasa_bcv` y cálculo exacto en USD y Bolívares oficiales.
+      * Validación de existencias con `consultar_inventario` antes de comprometer retiros o despachos en Guatire o Hoyo de la Puerta.
+      * Transferencia inmediata (`activar_handoff`) en pedidos al mayor (>100 sacos), distribuidores, solicitudes de crédito o dudas químicas avanzadas.
+  * **Verificación de Compilación**: Tanto el frontend (`pnpm run build:client` con Vite) como el backend (`pnpm run build:server` con TypeScript) compilaron con éxito total (0 errores).
+
 ---
 *¡Vamos positivo! Todos los cambios están compilados, verificados y listos para producción.*
 

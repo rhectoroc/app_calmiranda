@@ -22,6 +22,8 @@ const getStatusSelectClass = (estatus?: string) => {
       return 'border-blue-500/30 text-blue-400 focus:border-blue-500 bg-blue-500/10';
     case 'Transportista':
       return 'border-purple-500/30 text-purple-400 focus:border-purple-500 bg-purple-500/10';
+    case 'Cliente Frecuente':
+      return 'border-amber-500/30 text-amber-400 focus:border-amber-500 bg-amber-500/10';
     case 'Otros':
       return 'border-red-500/30 text-red-400 focus:border-red-500 bg-red-500/10';
     default:
@@ -381,10 +383,11 @@ export const CustomerServiceHub: React.FC = () => {
                         <Check size={10} /> Resuelto
                       </span>
                     )}
-                    {chat.channel === 'WhatsApp' && chat.clientEtiqueta && ['Empleado', 'Transportista', 'Otros'].includes(chat.clientEtiqueta) && (
+                    {chat.channel === 'WhatsApp' && chat.clientEtiqueta && ['Empleado', 'Transportista', 'Cliente Frecuente', 'Otros'].includes(chat.clientEtiqueta) && (
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
                         chat.clientEtiqueta === 'Empleado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
                         chat.clientEtiqueta === 'Transportista' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
+                        chat.clientEtiqueta === 'Cliente Frecuente' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' :
                         'text-red-400 bg-red-500/10 border-red-500/20'
                       }`}>{chat.clientEtiqueta}</span>
                     )}
@@ -481,6 +484,7 @@ export const CustomerServiceHub: React.FC = () => {
                           className={`border rounded-lg px-1.5 py-0.5 pr-5 text-[8px] md:text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEtiqueta)}`}
                         >
                           <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
+                          <option value="Cliente Frecuente" className="bg-[#1e2528] text-amber-400">Cliente Frecuente</option>
                           <option value="Empleado" className="bg-[#1e2528] text-blue-400">Empleado</option>
                           <option value="Transportista" className="bg-[#1e2528] text-purple-400">Transportista</option>
                           <option value="Otros" className="bg-[#1e2528] text-red-400">Otros</option>
