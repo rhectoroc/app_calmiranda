@@ -602,8 +602,8 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   }
 
   // Clasificar emisor (Jefe o Cliente)
-  const isBoss = BOSS_NUMBERS.includes(senderJid) || BOSS_NUMBERS.includes(cleanNumber);
-  const chatType = isBoss ? 'boss' : 'client';
+  let isBoss = BOSS_NUMBERS.includes(senderJid) || BOSS_NUMBERS.includes(cleanNumber);
+  let chatType = isBoss ? 'boss' : 'client';
 
   // Si el mensaje es saliente (enviado desde el mismo número del bot)
   const isOutgoing = payload.data?.key?.fromMe === true || payload.conversation?.messages?.[0]?.fromMe === true;
@@ -720,7 +720,17 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
     console.error('⚠️ Error al buscar cliente en base de datos:', err);
   }
 
-  console.log(`🤖 Procesando mensaje de ${clientName} (WhatsApp PushName: ${pushName}) (${cleanNumber}) - Rol: ${isBoss ? 'Jefe' : 'Cliente'} - Estatus: ${clientEstatus} - Etiqueta: ${clientEtiqueta || 'Sin Etiqueta'}`);
+  // Clasificación dinámica según etiqueta del contacto
+  const cleanStatus = (clientEtiqueta || '').trim().toLowerCase();
+  if (cleanStatus === 'admin' || cleanStatus === 'jefe' || cleanStatus === 'administrador') {
+    isBoss = true;
+    chatType = 'boss';
+  } else if (cleanStatus === 'empleado' || cleanStatus === 'transportista' || cleanStatus === 'otros') {
+    // Si fue re-etiquetado por el administrador como Empleado/Transportista/Otros, se respeta el silencio operativo
+    isBoss = false;
+  }
+
+  console.log(`🤖 Procesando mensaje de ${clientName} (WhatsApp PushName: ${pushName}) (${cleanNumber}) - Rol: ${isBoss ? 'Jefe/Admin' : 'Cliente'} - Estatus: ${clientEstatus} - Etiqueta: ${clientEtiqueta || 'Sin Etiqueta'}`);
 
   // 5. Cargar historial de chat de la base de datos
   let history: any[] = [];
@@ -767,7 +777,7 @@ export async function handleWebhookMessage(payload: any): Promise<void> {
   }
 
   // 5. Clasificación y Comportamiento Inteligente según Etiqueta del Contacto
-  const cleanStatus = (clientEtiqueta || '').trim().toLowerCase();
+  // (cleanStatus ya evaluado arriba a partir de clientEtiqueta)
 
   // Caso A: Empleados, Transportistas u Otros -> Silencio total (guardado en BD para operaciones diarias)
   const ignoreStatuses = ['empleado', 'transportista', 'otros'];
@@ -868,13 +878,15 @@ FLUJO DE ATENCIÓN DE VENTAS:
 5. Cierre o transferencia humana según el volumen.`;
 
   // Definir identidad del emisor si es Boss/Administrador
-  let bossIdentity = "del Jefe de Inversiones Miranda";
+  let bossIdentity = "del Jefe / Administrador de Inversiones Miranda";
   if (cleanNumber.endsWith('4140108030')) {
     bossIdentity = "de Héctor Ollarves, Líder de Desarrollo de Software y Administrador de la plataforma tecnológica de CalMiranda. Trátalo por su nombre (Héctor) con respeto, profesionalismo y confianza técnica.";
   } else if (cleanNumber.endsWith('4143078681')) {
     bossIdentity = "de Julio Borges, Director General y Jefe de Inversiones Miranda 1311. Trátalo como Jefe con máxima eficiencia.";
   } else if (cleanNumber.endsWith('4145881113')) {
     bossIdentity = "de la Directora General de CalMiranda. Trátala como Jefa con máxima eficiencia.";
+  } else if (clientName && clientName !== 'Cliente') {
+    bossIdentity = `del Administrador/Jefe de CalMiranda (${clientName}). Trátalo con el máximo respeto ejecutivo y eficiencia.`;
   }
 
   const defaultBossPrompt = `Eres DIAMANTÍN, el Asistente Ejecutivo ${bossIdentity}

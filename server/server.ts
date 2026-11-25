@@ -992,9 +992,28 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
 
     const cleanPhone = sessionId.replace(/\D/g, '');
 
+    // Validación de seguridad estricta: La etiqueta 'Admin' solo puede ser asignada o cambiada por administradores
+    let currentUser = (req as any).user;
+    if (!currentUser && req.headers['x-current-user-email']) {
+      try {
+        const emailLower = String(req.headers['x-current-user-email']).toLowerCase().trim();
+        const uRows = await query('SELECT rol FROM users WHERE email = $1', [emailLower]);
+        if (uRows.length > 0) {
+          currentUser = { rol: uRows[0].rol };
+        }
+      } catch (e) {
+        console.error('Error verificando rol de usuario por header email:', e);
+      }
+    }
+    const userRole = (currentUser?.rol || currentUser?.role || '').toLowerCase();
+    const isUserAdmin = currentUser && (userRole === 'superadmin' || userRole === 'admin');
+    if (estatus === 'Admin' && !isUserAdmin) {
+      return res.status(403).json({ error: 'Permiso denegado: solo los usuarios administradores pueden asignar la etiqueta Admin.' });
+    }
+
     // Buscar si el cliente existe en la tabla comercial clientes usando la normalización por regex
     const clientQuery = `
-      SELECT id_cliente FROM clientes 
+      SELECT id_cliente, etiqueta FROM clientes 
       WHERE regexp_replace(COALESCE(telefono_1, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(movil, ''), '\\D', '', 'g') LIKE $1 
          OR regexp_replace(COALESCE(telefono_2, ''), '\\D', '', 'g') LIKE $1 
@@ -1010,6 +1029,11 @@ app.post('/api/chats/:sessionId/client-status', async (req, res) => {
     const dbClient = await query(clientQuery, [phonePattern]);
 
     if (dbClient.length > 0) {
+      // Si el contacto ya tiene etiqueta Admin y el usuario actual no es admin, prohibir el cambio
+      if (dbClient[0].etiqueta === 'Admin' && estatus !== 'Admin' && !isUserAdmin) {
+        return res.status(403).json({ error: 'Permiso denegado: solo los usuarios administradores pueden modificar un contacto con etiqueta Admin.' });
+      }
+
       // Actualizar el estatus
       const updateSql = `
         UPDATE clientes 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../context/authContext';
+import { useAuth, getAuthHeaders } from '../../context/authContext';
 import type { CustomerChat, ChatMessage } from '../../shared/mockData';
 import { 
   Search, 
@@ -18,6 +18,8 @@ import {
 
 const getStatusSelectClass = (estatus?: string) => {
   switch (estatus) {
+    case 'Admin':
+      return 'border-rose-500/40 text-rose-400 focus:border-rose-500 bg-rose-500/10 shadow-sm shadow-rose-500/10 font-black';
     case 'Empleado':
       return 'border-blue-500/30 text-blue-400 focus:border-blue-500 bg-blue-500/10';
     case 'Transportista':
@@ -33,6 +35,7 @@ const getStatusSelectClass = (estatus?: string) => {
 
 export const CustomerServiceHub: React.FC = () => {
   const { user } = useAuth();
+  const isAdminUser = user?.role === 'superadmin' || user?.role === 'admin';
   const [chats, setChats] = useState<CustomerChat[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -185,7 +188,7 @@ export const CustomerServiceHub: React.FC = () => {
       const chatObj = chats.find(c => c.id === chatId);
       const res = await fetch(`/api/chats/${chatId}/client-status`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ 
           estatus: newEstatus,
           customerName: chatObj?.customerName 
@@ -383,8 +386,9 @@ export const CustomerServiceHub: React.FC = () => {
                         <Check size={10} /> Resuelto
                       </span>
                     )}
-                    {chat.channel === 'WhatsApp' && chat.clientEtiqueta && ['Empleado', 'Transportista', 'Cliente Frecuente', 'Otros'].includes(chat.clientEtiqueta) && (
+                    {chat.channel === 'WhatsApp' && chat.clientEtiqueta && ['Admin', 'Empleado', 'Transportista', 'Cliente Frecuente', 'Otros'].includes(chat.clientEtiqueta) && (
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                        chat.clientEtiqueta === 'Admin' ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' :
                         chat.clientEtiqueta === 'Empleado' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
                         chat.clientEtiqueta === 'Transportista' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
                         chat.clientEtiqueta === 'Cliente Frecuente' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' :
@@ -481,9 +485,16 @@ export const CustomerServiceHub: React.FC = () => {
                         <select
                           value={activeChat.clientEtiqueta || ''}
                           onChange={(e) => handleStatusChange(activeChat.id, e.target.value)}
+                          disabled={!isAdminUser && activeChat.clientEtiqueta === 'Admin'}
                           className={`border rounded-lg px-1.5 py-0.5 pr-5 text-[8px] md:text-[10px] focus:outline-none appearance-none cursor-pointer leading-tight transition-all font-bold tracking-wider uppercase ${getStatusSelectClass(activeChat.clientEtiqueta)}`}
                         >
                           <option value="" className="bg-[#1e2528] text-white">Sin Etiqueta</option>
+                          {isAdminUser && (
+                            <option value="Admin" className="bg-[#1e2528] text-rose-400 font-bold">Admin</option>
+                          )}
+                          {!isAdminUser && activeChat.clientEtiqueta === 'Admin' && (
+                            <option value="Admin" className="bg-[#1e2528] text-rose-400 font-bold">Admin</option>
+                          )}
                           <option value="Cliente Frecuente" className="bg-[#1e2528] text-amber-400">Cliente Frecuente</option>
                           <option value="Empleado" className="bg-[#1e2528] text-blue-400">Empleado</option>
                           <option value="Transportista" className="bg-[#1e2528] text-purple-400">Transportista</option>

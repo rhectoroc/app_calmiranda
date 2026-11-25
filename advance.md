@@ -492,6 +492,26 @@ Este archivo resume todos los hitos y desarrollos completados el día de hoy, de
     * Los administradores ahora pueden abrir estos chats en la interfaz web de Atención al Cliente y asignarles cualquiera de las etiquetas disponibles (`Empleado`, `Cliente Frecuente`, `Transportista`, `Otros` o `Sin Etiqueta`).
   * **Verificación de Compilación**: Servidor y cliente compilados con 0 errores de TypeScript y Vite.
 
+* **12. Etiqueta `Admin` con Control de Acceso RBAC y Asistente Ejecutivo para Jefes:**
+  * **Objetivo**: Incorporar la etiqueta oficial `Admin` para clasificar a los directivos y jefes en la plataforma, asegurando que solo usuarios con rol de administrador (`superadmin` o `admin`) puedan asignarla o modificarla, y configurando a Diamantín para que actúe de inmediato como asistente ejecutivo cuando un contacto tenga dicha etiqueta.
+  * **Control de Acceso en Frontend (`CustomerServiceHub.tsx`)**:
+    * Se agregó la opción `Admin` en el selector de etiquetas con estilizado de alta jerarquía en color rosa/magenta (`border-rose-500/40 text-rose-400 bg-rose-500/10 font-black`).
+    * **Restricción RBAC de visualización y edición**:
+      * La opción `Admin` solo se renderiza en el `<select>` si el usuario autenticado posee rol `superadmin` o `admin`.
+      * Si un contacto ya posee la etiqueta `Admin`, el selector queda deshabilitado (`disabled`) para cualquier usuario sin rol de administrador, impidiendo alteraciones no autorizadas.
+    * Se integró el envío seguro de cabeceras de autorización (`getAuthHeaders()`) al actualizar la etiqueta vía `/api/chats/:sessionId/client-status`.
+  * **Validación de Seguridad Estricta en Backend (`server.ts`)**:
+    * En el endpoint `POST /api/chats/:sessionId/client-status`:
+      * Se extrae y valida el rol del usuario autenticado (`req.user.rol` o `req.user.role`).
+      * Si un usuario sin rol `superadmin` ni `admin` intenta asignar la etiqueta `Admin`, la solicitud es rechazada inmediatamente con código `403 Forbidden` (`Permiso denegado: solo los usuarios administradores pueden asignar la etiqueta Admin.`).
+      * Si un contacto ya tiene asignada la etiqueta `Admin` en base de datos y un usuario no administrador intenta modificarla, también se bloquea con `403 Forbidden`.
+  * **Comportamiento Inteligente de Diamantín (`agent.ts`)**:
+    * Cuando un mensaje proviene de un contacto cuya etiqueta es `Admin`, `Jefe` o `Administrador`, el sistema lo clasifica dinámicamente como `isBoss = true` y `chatType = 'boss'`.
+    * Diamantín activa de inmediato su rol de **Asistente Ejecutivo**, atendiendo consultas financieras, reportes, tasa BCV y operaciones con máxima eficiencia y respeto hacia los directivos.
+  * **Verificación de Compilación**:
+    * Servidor compilado con éxito mediante `pnpm run build:server` (TypeScript 0 errores).
+    * Frontend compilado con éxito mediante `pnpm run build:client` (Vite 0 errores).
+
 ---
 *¡Vamos positivo! Todos los cambios están compilados, verificados y listos para producción.*
 
