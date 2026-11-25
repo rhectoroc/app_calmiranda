@@ -737,7 +737,7 @@ app.get('/api/chats', async (req, res) => {
       WITH latest_messages AS (
         SELECT DISTINCT ON (session_id) session_id, id, sender, message_text, created_at
         FROM chat_messages
-        WHERE chat_type = 'client'
+        WHERE chat_type IN ('client', 'boss')
           AND (NOT (session_id ~ '^[0-9]+$') OR length(session_id) <= 15)
         ORDER BY session_id, id DESC
       )
@@ -807,6 +807,15 @@ app.get('/api/chats', async (req, res) => {
                     if (nameRows.length > 0 && nameRows[0].push_name) {
                         customerName = `${nameRows[0].push_name} (+${cleanPhone})`;
                     }
+                    else if (cleanPhone.endsWith('4140108030')) {
+                        customerName = `Héctor Ollarves (+${cleanPhone})`;
+                    }
+                    else if (cleanPhone.endsWith('4143078681')) {
+                        customerName = `Julio Borges (+${cleanPhone})`;
+                    }
+                    else if (cleanPhone.endsWith('4145881113')) {
+                        customerName = `Jefa CalMiranda (+${cleanPhone})`;
+                    }
                     else {
                         customerName = `Cliente (+${cleanPhone})`;
                     }
@@ -843,7 +852,7 @@ app.get('/api/chats/:sessionId/messages', async (req, res) => {
         const sql = `
       SELECT id, sender, message_text, created_at 
       FROM chat_messages 
-      WHERE session_id = $1 AND chat_type = 'client'
+      WHERE session_id = $1
       ORDER BY id ASC;
     `;
         const rows = await query(sql, [sessionId]);

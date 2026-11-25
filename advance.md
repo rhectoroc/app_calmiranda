@@ -479,6 +479,19 @@ Este archivo resume todos los hitos y desarrollos completados el día de hoy, de
       * Transferencia inmediata (`activar_handoff`) en pedidos al mayor (>100 sacos), distribuidores, solicitudes de crédito o dudas químicas avanzadas.
   * **Verificación de Compilación**: Tanto el frontend (`pnpm run build:client` con Vite) como el backend (`pnpm run build:server` con TypeScript) compilaron con éxito total (0 errores).
 
+* **11. Bloqueo de Talento Humano / CVs y Visualización de Chats de Jefes en la App:**
+  * **Objetivo**: Evitar que Diamantín actúe como Recursos Humanos o solicite CVs, preservando al 100% los datos bancarios y de Pago Móvil, y permitir que las conversaciones de los administradores/jefes aparezcan en la App para poder asignarles etiquetas operativas directamente.
+  * **Blindaje contra funciones de Talento Humano (`agent.ts`)**:
+    * Se preservaron íntegros los datos bancarios oficiales (Pago Móvil Banesco, transferencias Banesco y Mercantil, y correo para pagos de compras).
+    * Se estableció una regla estricta contra alucinaciones laborales: Diamantín tiene prohibido solicitar currículums, pedir archivos PDF, indicar vacantes o decir que canalizará solicitudes de empleo.
+    * Si un usuario escribe preguntando por empleo o enviando su síntesis curricular, Diamantín responde con cortesía aclarando su rol estrictamente comercial y de ventas de cal, sin desviar a correos personales.
+  * **Visualización y Etiquetado de Chats de Jefes en la App (`server.ts`)**:
+    * En `GET /api/chats`, se actualizó la consulta para incluir sesiones tanto de clientes como de jefes (`WHERE chat_type IN ('client', 'boss')`), permitiendo que los chats de Héctor Ollarves, Julio Borges y la Dirección aparezcan en la bandeja de entrada.
+    * En `GET /api/chats/:sessionId/messages`, se eliminó la restricción por tipo de chat para cargar el historial completo de mensajes.
+    * Se agregaron resoluciones automáticas de nombres (`Héctor Ollarves (+584140108030)`, `Julio Borges (+584143078681)`).
+    * Los administradores ahora pueden abrir estos chats en la interfaz web de Atención al Cliente y asignarles cualquiera de las etiquetas disponibles (`Empleado`, `Cliente Frecuente`, `Transportista`, `Otros` o `Sin Etiqueta`).
+  * **Verificación de Compilación**: Servidor y cliente compilados con 0 errores de TypeScript y Vite.
+
 ---
 *¡Vamos positivo! Todos los cambios están compilados, verificados y listos para producción.*
 
