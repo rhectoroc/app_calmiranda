@@ -512,6 +512,52 @@ Este archivo resume todos los hitos y desarrollos completados el día de hoy, de
     * Servidor compilado con éxito mediante `pnpm run build:server` (TypeScript 0 errores).
     * Frontend compilado con éxito mediante `pnpm run build:client` (Vite 0 errores).
 
+* **13. Centro de Control y Monitorización IA (Submenú Agente estilo Practiiko):**
+  * **Objetivo**: Recrear en CalMiranda el panel de supervisión y control del Agente IA implementado en Practiiko, adaptándolo con precisión a la identidad corporativa de CalMiranda y a las 3 secciones seleccionadas expresamente por la Dirección:
+    1. `🧪 Simulador de Pruebas` (Interactive Chat Simulator)
+    2. `📦 Inventario Leído (BD)` (Dynamic Database Catalog & BCV sync)
+    3. `💬 Instrucciones Maestras` (Master Prompt, Rules & Guardrails)
+  * **Estructura y Navegación (`Layout.tsx`, `App.tsx` y `SettingsView.tsx`)**:
+    * **Submenú en la barra lateral**: En el Sidebar, bajo la sección de **Configuración**, se implementó un submenú dedicado con acceso directo a `⚡ Agente IA` (`/settings/agente`) y `General` (`/settings?tab=general`).
+    * **Selector de pestañas superior en Configuración**: En [SettingsView.tsx](file:///c:/Users/rhect/Documents/Proyectos/CalMiranda/CalMiranda_App/src/features/settings/SettingsView.tsx), se diseñó un encabezado tipo pestaña (`Agente (Centro de Control IA)` vs `General / Sistema`) con navegación fluida y persistencia de URL.
+    * **Ruta dedicada**: En [App.tsx](file:///c:/Users/rhect/Documents/Proyectos/CalMiranda/CalMiranda_App/src/App.tsx), se habilitó la ruta protegida `/settings/agente` accesible para administradores.
+  * **Componente Centro de Control (`AgentControlView.tsx`)**:
+    * **Encabezado y Control Maestro**:
+      * Badge superior: `⚡ CENTRO DE CONTROL Y MONITORIZACIÓN IA`.
+      * Título `Agente` con botón switch interactivo: `SUPER AGENTE (ACTIVO)` / `SUPER AGENTE (OFF)` con sincronización reactiva inmediata contra `global_bot_disabled`.
+      * Narrativa dinámica del estado del bot en tiempo real.
+      * Barra de sincronización con marca de tiempo y botón `🔄 Refrescar Monitor`.
+    * **4 Tarjetas de Métricas en Grid Responsivo**:
+      1. **Actividad Mensual (24H)**: Muestra el total de mensajes procesados por la IA contra la cuota mensual, con barra de progreso bicolora y métrica de mensajes de las últimas 24 horas.
+      2. **Base de Datos Sincronizada**: Total de productos activos en PostgreSQL, desglose de categorías y badge `🛡️ Escudo Anti-Alucinación Activo`.
+      3. **Intenciones de Compra**: Contador de chats con handoff activo listos para cierre por asesores humanos, con enlace directo hacia el Hub de Atención al Cliente (`/customer-service`).
+      4. **Actividad Super Agente**: Respuestas automáticas emitidas por Diamantín, clientes únicos atendidos y verificación de cero alucinaciones bloqueadas.
+    * **Sub-Pestañas Operativas**:
+      * **`🧪 Simulador de Pruebas`**:
+        * Entorno de chat interactivo que se comunica directamente con el pipeline de Diamantín vía `/api/web-chatbot` en una sesión aislada (`simulador_admin`).
+        * Burbujas conversacionales con avatares, timestamps y badges técnicos de latencia (`ms`), `🛡️ Escudo Verificado` y estado de handoff.
+        * Botonera de escenarios rápidos de prueba:
+          - 💰 Cotización y Horario
+          - 🚫 Bloqueo de Talento Humano / CV
+          - 📦 Pedido Mayorista (&gt;100 sacos con derivación)
+          - 📍 Validación de Sede Guatire / Retiro
+          - 💳 Datos Bancarios Oficiales y Pago Móvil
+        * Botón de `Reiniciar Simulación` conectado al nuevo endpoint `/api/agent/simulator/clear`.
+      * **`📦 Inventario Leído (BD)`**:
+        * Encabezado con la **Tasa Oficial BCV** del día (Bs/USD).
+        * Buscador reactivo y selector de categorías (Todas, Cal en Polvo, Cal en Pasta, Pinturas, Agregados).
+        * Tarjetas de producto que muestran nombre, presentación, peso en kg, precio base en USD y **conversión matemática exacta en Bolívares oficiales** según la tasa del BCV.
+        * Sede de retiro/despacho y badge `✅ En Catálogo IA`.
+      * **`💬 Instrucciones Maestras`**:
+        * Resumen visual de directivas inviolables: Zero-Hallucination, Bloqueo de Talento Humano / CVs, Derivación de Clientes Frecuentes y Silencio Operativo.
+        * Editor de texto para **Instrucciones Extras y Novedades del Negocio** con botón de guardado y confirmación en tiempo real.
+  * **Endpoints en Servidor (`server.ts`)**:
+    * `GET /api/agent/stats`: Agrega métricas consolidadas de mensajes, productos, categorías, handoffs y clientes.
+    * `POST /api/agent/simulator/clear`: Limpia de forma segura el historial de la sesión de simulación de pruebas sin alterar los datos reales de clientes.
+  * **Verificación de Compilación**:
+    * TypeScript Server: Compilación exitosa (`pnpm run build:server` con 0 errores).
+    * Vite Frontend: Compilación exitosa (`pnpm run build:client` con 0 errores, 1760 módulos transformados).
+
 ---
 *¡Vamos positivo! Todos los cambios están compilados, verificados y listos para producción.*
 

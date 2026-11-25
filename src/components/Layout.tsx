@@ -11,7 +11,8 @@ import {
   X,
   UserCog,
   Package,
-  Tag
+  Tag,
+  Sparkles
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -216,22 +217,66 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-1 md:gap-1.5">
-            {allowedNavItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) => `
-                  flex items-center gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm font-medium transition-all duration-300
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-cal-emerald/90 to-cal-emerald/75 text-white shadow-md shadow-cal-emerald/15 font-semibold' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'}
-                `}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+            {allowedNavItems.map((item) => {
+              const isSettings = item.to === '/settings';
+              const isInSettings = location.pathname.startsWith('/settings');
+
+              return (
+                <div key={item.to} className="flex flex-col">
+                  <NavLink
+                    to={item.to}
+                    onClick={() => setSidebarOpen(false)}
+                    className={({ isActive }) => `
+                      flex items-center gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl md:rounded-2xl text-sm font-medium transition-all duration-300
+                      ${(isActive || (isSettings && isInSettings))
+                        ? 'bg-gradient-to-r from-cal-emerald/90 to-cal-emerald/75 text-white shadow-md shadow-cal-emerald/15 font-semibold' 
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                    `}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </NavLink>
+
+                  {/* Submenú desplegado para Configuración */}
+                  {isSettings && (
+                    <div className="flex flex-col ml-6 pl-3 border-l border-white/10 mt-1 mb-1 space-y-0.5">
+                      <NavLink
+                        to="/settings/agente"
+                        onClick={() => setSidebarOpen(false)}
+                        className={() => {
+                          const isAgenteActive = location.pathname === '/settings/agente' || 
+                            (location.pathname === '/settings' && !location.search.includes('tab=general'));
+                          return `flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                            isAgenteActive
+                              ? 'text-cal-emerald-light bg-cal-emerald/15 font-bold shadow-sm shadow-cal-emerald/10'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          }`;
+                        }}
+                      >
+                        <Sparkles size={13} className="text-cal-emerald-light" />
+                        <span>Agente IA</span>
+                      </NavLink>
+
+                      <NavLink
+                        to="/settings?tab=general"
+                        onClick={() => setSidebarOpen(false)}
+                        className={() => {
+                          const isGeneralActive = location.pathname === '/settings' && location.search.includes('tab=general');
+                          return `flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                            isGeneralActive
+                              ? 'text-cal-emerald-light bg-cal-emerald/15 font-bold shadow-sm shadow-cal-emerald/10'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          }`;
+                        }}
+                      >
+                        <Settings size={13} className="text-gray-400" />
+                        <span>General</span>
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </div>
 

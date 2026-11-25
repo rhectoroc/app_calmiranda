@@ -1,7 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, Save, CheckCircle, ShieldAlert, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Bot, Save, CheckCircle, ShieldAlert, ToggleLeft, ToggleRight, Sparkles, Settings } from 'lucide-react';
+import { AgentControlView } from './AgentControlView';
+import { getAuthHeaders } from '../../context/authContext';
 
 export const SettingsView: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Determinar pestaña activa: 'agente' por defecto o 'general' si se indica expresamente
+  const [activeTab, setActiveTab] = useState<'agente' | 'general'>(() => {
+    if (location.pathname.includes('/agente') || location.search.includes('tab=agente')) return 'agente';
+    if (location.search.includes('tab=general')) return 'general';
+    return 'agente'; // Por defecto abre Agente
+  });
+
+  useEffect(() => {
+    if (location.pathname.includes('/agente') || location.search.includes('tab=agente')) {
+      setActiveTab('agente');
+    } else if (location.search.includes('tab=general')) {
+      setActiveTab('general');
+    }
+  }, [location.pathname, location.search]);
+
   // Prompts de IA (se mantiene assistantPrompt en estado interno para persistencia)
   const [botPrompt, setBotPrompt] = useState('');
   const [assistantPrompt, setAssistantPrompt] = useState('');
@@ -14,7 +35,7 @@ export const SettingsView: React.FC = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch('/api/settings');
+        const res = await fetch('/api/settings', { headers: getAuthHeaders() });
         if (res.ok) {
           const data = await res.json();
           if (data.prompts) {
@@ -46,9 +67,7 @@ export const SettingsView: React.FC = () => {
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           globalBotDisabled: nextVal
         })
@@ -69,9 +88,7 @@ export const SettingsView: React.FC = () => {
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           prompts: {
             bot: botPrompt,
@@ -93,99 +110,140 @@ export const SettingsView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 max-w-3xl mx-auto w-full animate-fade-in">
-      {/* Title */}
-      <div>
-        <h1 className="text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
-          Configuración del Asistente
-        </h1>
-        <p className="text-gray-400 text-sm">
-          Administración de instrucciones y reglas de negocio del bot de atención al cliente Diamantín.
-        </p>
-      </div>
-
-      {/* Bot Global Status Card */}
-      <div className="glass rounded-3xl p-6 border border-white/5 flex items-center justify-between gap-6">
-        <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
-            <span className={`inline-block w-2.5 h-2.5 rounded-full ${globalBotDisabled ? 'bg-red-500 animate-pulse' : 'bg-cal-emerald animate-pulse'}`} />
-            Estado del Chatbot: {globalBotDisabled ? 'Desactivado' : 'Activo'}
-          </h3>
-          <p className="text-xs text-gray-400 leading-normal">
-            {globalBotDisabled 
-              ? 'El bot está apagado. Los mensajes entrantes se guardarán en base de datos para atención humana pero no se enviarán respuestas automáticas por IA.' 
-              : 'El bot está activo y responderá automáticamente en WhatsApp a tus clientes utilizando DeepSeek.'}
-          </p>
-        </div>
+    <div className="flex flex-col gap-6 w-full animate-fade-in">
+      
+      {/* Submenú Superior de Configuración */}
+      <div className="flex items-center gap-2 border-b border-white/10 pb-4 max-w-7xl mx-auto w-full">
         <button
-          type="button"
-          onClick={handleToggleBot}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 border shrink-0 ${
-            globalBotDisabled 
-              ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/25 shadow-md shadow-red-500/5' 
-              : 'bg-cal-emerald/10 hover:bg-cal-emerald/20 text-cal-emerald-light border-cal-emerald/25 shadow-md shadow-cal-emerald/5'
+          onClick={() => {
+            setActiveTab('agente');
+            navigate('/settings/agente');
+          }}
+          className={`flex items-center gap-2.5 px-4 py-2 md:px-5 md:py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all duration-300 cursor-pointer ${
+            activeTab === 'agente'
+              ? 'bg-cal-emerald text-white shadow-lg shadow-cal-emerald/20'
+              : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5'
           }`}
         >
-          {globalBotDisabled ? (
-            <>
-              <ToggleLeft size={16} />
-              <span>Encender Bot</span>
-            </>
-          ) : (
-            <>
-              <ToggleRight size={16} />
-              <span>Apagar Bot</span>
-            </>
-          )}
+          <Sparkles size={16} className={activeTab === 'agente' ? 'text-white' : 'text-cal-emerald-light'} />
+          <span>Agente (Centro de Control IA)</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('general');
+            navigate('/settings?tab=general');
+          }}
+          className={`flex items-center gap-2.5 px-4 py-2 md:px-5 md:py-2.5 rounded-2xl text-xs md:text-sm font-bold transition-all duration-300 cursor-pointer ${
+            activeTab === 'general'
+              ? 'bg-cal-emerald text-white shadow-lg shadow-cal-emerald/20'
+              : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/5'
+          }`}
+        >
+          <Settings size={16} />
+          <span>General / Sistema</span>
         </button>
       </div>
 
-      {saveSuccess && (
-        <div className="p-4 bg-cal-emerald/10 border border-cal-emerald/20 text-cal-emerald-light rounded-2xl flex items-center gap-3 text-sm animate-fade-in">
-          <CheckCircle size={18} />
-          <span>Configuraciones guardadas y sincronizadas exitosamente en el servidor.</span>
+      {/* Renderizado de la Vista Seleccionada */}
+      {activeTab === 'agente' ? (
+        <AgentControlView />
+      ) : (
+        <div className="flex flex-col gap-6 md:gap-8 max-w-3xl mx-auto w-full animate-fade-in">
+          {/* Title */}
+          <div>
+            <h1 className="text-3xl font-bold font-display tracking-tight text-white mb-2 leading-none">
+              Configuración General del Asistente
+            </h1>
+            <p className="text-gray-400 text-sm">
+              Administración de instrucciones y reglas de negocio del bot de atención al cliente Diamantín.
+            </p>
+          </div>
+
+          {/* Bot Global Status Card */}
+          <div className="glass rounded-3xl p-6 border border-white/5 flex items-center justify-between gap-6">
+            <div className="flex flex-col gap-1 min-w-0">
+              <h3 className="text-base font-bold font-display text-white flex items-center gap-2">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${globalBotDisabled ? 'bg-red-500 animate-pulse' : 'bg-cal-emerald animate-pulse'}`} />
+                Estado del Chatbot: {globalBotDisabled ? 'Desactivado' : 'Activo'}
+              </h3>
+              <p className="text-xs text-gray-400 leading-normal">
+                {globalBotDisabled 
+                  ? 'El bot está apagado. Los mensajes entrantes se guardarán en base de datos para atención humana pero no se enviarán respuestas automáticas por IA.' 
+                  : 'El bot está activo y responderá automáticamente en WhatsApp a tus clientes utilizando DeepSeek.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleBot}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all duration-300 border shrink-0 ${
+                globalBotDisabled 
+                  ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/25 shadow-md shadow-red-500/5' 
+                  : 'bg-cal-emerald/10 hover:bg-cal-emerald/20 text-cal-emerald-light border-cal-emerald/25 shadow-md shadow-cal-emerald/5'
+              }`}
+            >
+              {globalBotDisabled ? (
+                <>
+                  <ToggleLeft size={16} />
+                  <span>Encender Bot</span>
+                </>
+              ) : (
+                <>
+                  <ToggleRight size={16} />
+                  <span>Apagar Bot</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {saveSuccess && (
+            <div className="p-4 bg-cal-emerald/10 border border-cal-emerald/20 text-cal-emerald-light rounded-2xl flex items-center gap-3 text-sm animate-fade-in">
+              <CheckCircle size={18} />
+              <span>Configuraciones guardadas y sincronizadas exitosamente en el servidor.</span>
+            </div>
+          )}
+
+          {/* Main Settings Card */}
+          <form onSubmit={handleSave} className="glass rounded-3xl p-6 md:p-8 border border-white/5 flex flex-col gap-6">
+            <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+              <Bot size={22} className="text-cal-emerald-light" />
+              <h3 className="text-lg font-bold font-display text-white">
+                Reglas de Diamantín (Atención al Cliente)
+              </h3>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">
+                  Instrucciones y Reglas Extras (Tiempo Real)
+                </label>
+                <textarea
+                  value={botPrompt}
+                  onChange={(e) => setBotPrompt(e.target.value)}
+                  placeholder="Ingresa reglas de negocio, ofertas de la semana o novedades (ej: 'No hay stock de cal en pasta de 7kg esta semana', 'Cerraremos temprano este sábado por inventario')."
+                  rows={12}
+                  className="w-full bg-white/5 border border-white/5 focus:border-cal-emerald/55 focus:bg-white/10 rounded-2xl p-4 text-base sm:text-sm text-gray-200 focus:outline-none transition-all leading-relaxed"
+                />
+              </div>
+
+              <div className="p-4 rounded-2xl bg-cal-emerald/5 border border-cal-emerald/15 flex gap-3 text-xs text-gray-400 leading-normal">
+                <ShieldAlert size={18} className="text-cal-emerald-light shrink-0 mt-0.5" />
+                <span>
+                  La personalidad básica, el flujo principal y el catálogo base de Diamantín se encuentran protegidos en el servidor. Usa este espacio para agregar indicaciones especiales o condiciones dinámicas del negocio.
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-4 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-base sm:text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cal-emerald/20 cursor-pointer"
+            >
+              <Save size={16} />
+              <span>Guardar Cambios</span>
+            </button>
+          </form>
         </div>
       )}
-
-      {/* Main Settings Card */}
-      <form onSubmit={handleSave} className="glass rounded-3xl p-6 md:p-8 border border-white/5 flex flex-col gap-6">
-        <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-          <Bot size={22} className="text-cal-emerald-light" />
-          <h3 className="text-lg font-bold font-display text-white">
-            Reglas de Diamantín (Atención al Cliente)
-          </h3>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wider">
-              Instrucciones y Reglas Extras (Tiempo Real)
-            </label>
-            <textarea
-              value={botPrompt}
-              onChange={(e) => setBotPrompt(e.target.value)}
-              placeholder="Ingresa reglas de negocio, ofertas de la semana o novedades (ej: 'No hay stock de cal en pasta de 7kg esta semana', 'Cerraremos temprano este sábado por inventario')."
-              rows={12}
-              className="w-full bg-white/5 border border-white/5 focus:border-cal-emerald/55 focus:bg-white/10 rounded-2xl p-4 text-base sm:text-sm text-gray-200 focus:outline-none transition-all leading-relaxed"
-            />
-          </div>
-
-          <div className="p-4 rounded-2xl bg-cal-emerald/5 border border-cal-emerald/15 flex gap-3 text-xs text-gray-400 leading-normal">
-            <ShieldAlert size={18} className="text-cal-emerald-light shrink-0 mt-0.5" />
-            <span>
-              La personalidad básica, el flujo principal y el catálogo base de Diamantín se encuentran protegidos en el servidor. Usa este espacio para agregar indicaciones especiales o condiciones dinámicas del negocio.
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full py-4 bg-cal-emerald hover:bg-cal-emerald-light text-white font-bold text-base sm:text-sm rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-cal-emerald/20 cursor-pointer"
-        >
-          <Save size={16} />
-          <span>Guardar Cambios</span>
-        </button>
-      </form>
     </div>
   );
 };

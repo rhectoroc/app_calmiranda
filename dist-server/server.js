@@ -349,6 +349,82 @@ app.post('/api/settings', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// Estadísticas y métricas para el Centro de Control y Monitorización IA (Agente)
+app.get('/api/agent/stats', async (req, res) => {
+    try {
+        // 1. Mensajes
+        const msgStats = await query(`
+      SELECT 
+        COUNT(*) as total_messages,
+        COUNT(CASE WHEN sender = 'bot' THEN 1 END) as bot_messages,
+        COUNT(CASE WHEN created_at >= NOW() - INTERVAL '24 HOURS' THEN 1 END) as last_24h_messages,
+        COUNT(DISTINCT session_id) as total_sessions
+      FROM chat_messages;
+    `);
+        // 2. Productos
+        const prodStats = await query(`
+      SELECT 
+        COUNT(*) as total_products,
+        COUNT(DISTINCT categoria) as total_categories,
+        COUNT(CASE WHEN precio > 0 THEN 1 END) as priced_products
+      FROM productos 
+      WHERE estado = 'Activo';
+    `);
+        // 3. Handoffs / Chats esperando
+        const handoffStats = await query(`
+      SELECT COUNT(*) as handoffs
+      FROM settings
+      WHERE setting_key LIKE 'bot_status_%' AND setting_value IN ('agent_active', 'waiting_handover');
+    `);
+        // 4. Clientes Frecuentes y Admins
+        const clientStats = await query(`
+      SELECT 
+        COUNT(CASE WHEN etiqueta ILIKE '%frecuente%' THEN 1 END) as clientes_frecuentes,
+        COUNT(CASE WHEN etiqueta ILIKE '%admin%' THEN 1 END) as admins
+      FROM clientes;
+    `);
+        // 5. Tasa BCV y Estado Global
+        const bcvRate = await getSetting('bcv_rate', null);
+        const globalBotDisabled = await getSetting('global_bot_disabled', false);
+        res.json({
+            messages: {
+                total: parseInt(msgStats[0]?.total_messages || '0', 10),
+                bot: parseInt(msgStats[0]?.bot_messages || '0', 10),
+                last24h: parseInt(msgStats[0]?.last_24h_messages || '0', 10),
+                sessions: parseInt(msgStats[0]?.total_sessions || '0', 10)
+            },
+            products: {
+                total: parseInt(prodStats[0]?.total_products || '0', 10),
+                categories: parseInt(prodStats[0]?.total_categories || '0', 10),
+                priced: parseInt(prodStats[0]?.priced_products || '0', 10)
+            },
+            handoffs: parseInt(handoffStats[0]?.handoffs || '0', 10),
+            clients: {
+                frecuentes: parseInt(clientStats[0]?.clientes_frecuentes || '0', 10),
+                admins: parseInt(clientStats[0]?.admins || '0', 10)
+            },
+            bcvRate,
+            globalBotDisabled: !!globalBotDisabled
+        });
+    }
+    catch (error) {
+        console.error('Error obteniendo stats del agente:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// Limpiar historial de pruebas del simulador
+app.post('/api/agent/simulator/clear', async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        const targetSession = sessionId || 'simulador_admin';
+        await query(`DELETE FROM chat_messages WHERE session_id = $1`, [targetSession]);
+        await saveSetting(`bot_status_${targetSession}`, 'bot_active');
+        res.json({ success: true, message: 'Simulación reiniciada correctamente.' });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 // ----------------------------------------------------
 // ENDPOINTS PARA CRUD DE CLIENTES (PAGINACIÓN, BÚSQUEDA Y CRUD)
 // ----------------------------------------------------

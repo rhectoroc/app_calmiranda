@@ -109,6 +109,17 @@ function App() {
           />
 
           <Route 
+            path="/settings/agente" 
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <SettingsView />
+                </AdminRoute>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
             path="/usuarios" 
             element={
               <ProtectedRoute>
